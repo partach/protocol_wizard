@@ -66,23 +66,19 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return ModbusWizardOptionsFlow(config_entry)
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """First step: protocol selection (or skip if only one available)."""
+        """First step: protocol selection."""
         available_protocols = ProtocolRegistry.available_protocols()
         
-        # If only Modbus is available, skip protocol selection
-        if len(available_protocols) == 1 and "modbus" in available_protocols:
-            self._protocol = "modbus"
-            return await self.async_step_modbus_common()
-        
-        # Future: When more protocols are available, show selection
+        # If user selected a protocol
         if user_input is not None:
             self._protocol = user_input.get("protocol", "modbus")
             
             if self._protocol == "modbus":
                 return await self.async_step_modbus_common()
-            # Future: elif self._protocol == "snmp": return await self.async_step_snmp_common()
+            elif self._protocol == "snmp":
+                return await self.async_step_snmp_common()
             
-        # Show protocol selection (future-ready)
+        # Show protocol selection
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
@@ -91,9 +87,9 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         options=[
                             selector.SelectOptionDict(
                                 value=proto,
-                                label=proto.title()
+                                label=proto.upper() if proto == "snmp" else proto.title()
                             )
-                            for proto in available_protocols
+                            for proto in sorted(available_protocols)
                         ],
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
@@ -332,27 +328,77 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     _LOGGER.debug("Error closing Modbus client: %s", err)
 
     # ================================================================
-    # FUTURE: SNMP CONFIG FLOW (Placeholder)
+    # SNMP CONFIG FLOW
     # ================================================================
     
-    # async def async_step_snmp_common(self, user_input=None):
-    #     """SNMP: Common settings."""
-    #     if user_input is not None:
-    #         return self.async_create_entry(
-    #             title=f"SNMP {user_input['host']}",
-    #             data={
-    #                 "protocol": "snmp",
-    #                 "host": user_input["host"],
-    #                 "community": user_input["community"],
-    #                 "version": user_input["version"],
-    #             }
-    #         )
-    #     
-    #     return self.async_show_form(
-    #         step_id="snmp_common",
-    #         data_schema=vol.Schema({
-    #             vol.Required("host"): str,
-    #             vol.Required("community", default="public"): str,
-    #             vol.Required("version", default="2c"): vol.In(["1", "2c", "3"]),
-    #         })
-    #     )
+    async def async_step_snmp_common(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+        """SNMP: Connection settings and test."""
+        errors = {}
+        
+        if user_input is not None:
+            try:
+                final_data = {
+                    "protocol": "snmp",
+                    CONF_NAME: user_input[CONF_NAME],
+                    CONF_HOST: user_input[CONF_HOST],
+                    CONF_PORT: user_input.get(CONF_PORT, 161),
+                    "community": user_input["community"],
+                    "version": user_input["version"],
+                    CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
+                }
+                
+                # Test SNMP connection
+                await self._async_test_snmp_connection(final_data)
+                
+                return self.async_create_entry(
+                    title=f"SNMP {final_data[CONF_HOST]}",
+                    data=final_data
+                )
+                
+            except Exception as err:
+                _LOGGER.exception("SNMP connection test failed: %s", err)
+                errors["base"] = "cannot_connect"
+        
+        return self.async_show_form(
+            step_id="snmp_common",
+            data_schema=vol.Schema({
+                vol.Required(CONF_NAME, default="SNMP Device"): str,
+                vol.Required(CONF_HOST): str,
+                vol.Optional(CONF_PORT, default=161): vol.All(
+                    vol.Coerce(int), vol.Range(min=1, max=65535)
+                ),
+                vol.Required("community", default="public"): str,
+                vol.Required("version", default="2c"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value="1", label="SNMPv1"),
+                            selector.SelectOptionDict(value="2c", label="SNMPv2c"),
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(CONF_UPDATE_INTERVAL, default=30): vol.All(
+                    vol.Coerce(int),
+                    vol.Range(min=10, max=300),
+                ),
+            }),
+            errors=errors,
+        )
+    
+    async def _async_test_snmp_connection(self, data: dict[str, Any]) -> None:
+        """Test SNMP connection by reading sysDescr."""
+        from .protocols.snmp import SNMPClient
+        
+        client = SNMPClient(
+            host=data[CONF_HOST],
+            port=data.get(CONF_PORT, 161),
+            community=data["community"],
+            version=data["version"],
+        )
+        
+        try:
+            # Try to connect (reads sysDescr internally)
+            if not await client.connect():
+                raise ConnectionError("Failed to connect to SNMP device")
+        finally:
+            await client.disconnect()
