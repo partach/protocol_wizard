@@ -261,7 +261,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
     ) -> list[int]:
         """Encode Python value to Modbus registers."""
         data_type = entity_config.get("data_type", "uint16").lower()
-        byte_order = entity_config.get("byte_order", "big")
+  #      byte_order = entity_config.get("byte_order", "big")
         word_order = entity_config.get("word_order", "big")
         
         # Reverse scale/offset
