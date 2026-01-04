@@ -20,7 +20,7 @@ from .const import (
     CONF_ENTITIES,
     CONF_REGISTERS,
     CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_SNMP,
+#    CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
 )
 
@@ -358,7 +358,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
         """Get protocol-specific schema handler."""
         if self.protocol == CONF_PROTOCOL_MODBUS:
             return ModbusSchemaHandler()
-        # Future: elif self.protocol == CONF_PROTOCOL_SNMP : return SNMPSchemaHandler()
+       # elif self.protocol == CONF_PROTOCOL_SNMP: return SNMPSchemaHandler()
         return ModbusSchemaHandler()  # Default
     
     def _save_options(self, updates: dict | None = None) -> None:
