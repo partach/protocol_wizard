@@ -31,7 +31,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for Protocol Wizard (currently Modbus-focused)."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry):
-        self.config_entry = config_entry
+        self._config_entry = config_entry  # Use private attribute to store the value (other one is readonly from the base class)
         # Get protocol from entry, default to modbus for backward compatibility
         self.protocol = config_entry.data.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
         
@@ -39,7 +39,12 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
         config_key = CONF_REGISTERS if self.protocol == CONF_PROTOCOL_MODBUS else CONF_ENTITIES
         self._entities: list[dict] = list(config_entry.options.get(config_key, []))
         self._edit_index: int | None = None
-        
+    
+    @property
+    def config_entry(self) -> config_entries.ConfigEntry:
+        """Return the config entry."""
+        return self._config_entry        
+    
     async def async_step_init(self, user_input=None):
         menu_options = {
             "settings": "Settings",
@@ -149,7 +154,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
                 self.hass.data
                 .get(DOMAIN, {})
                 .get("coordinators", {})
-                .get(self.config_entry.entry_id)
+                .get(self._config_entry.entry_id)
             )
             if coordinator:
                 coordinator.update_interval = timedelta(seconds=interval)
@@ -158,7 +163,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
             self._save_options({CONF_UPDATE_INTERVAL: interval})
             return self.async_abort(reason="settings_updated")
 
-        current = self.config_entry.options.get(CONF_UPDATE_INTERVAL, 10)
+        current = self._config_entry.options.get(CONF_UPDATE_INTERVAL, 10)
 
         return self.async_show_form(
             step_id="settings",
@@ -363,7 +368,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
     
     def _save_options(self, updates: dict | None = None) -> None:
         """Save options, using protocol-aware config key."""
-        new_options = dict(self.config_entry.options)
+        new_options = dict(self._config_entry.options)
         
         # Use protocol-specific config key
         config_key = CONF_REGISTERS if self.protocol == CONF_PROTOCOL_MODBUS else CONF_ENTITIES
@@ -378,13 +383,13 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
             new_options[config_key] = self._entities
         
         self.hass.config_entries.async_update_entry(
-            self.config_entry,
+            self._config_entry,
             options=new_options,
         )
         
         # Trigger reload
         self.hass.async_create_task(
-            self.hass.config_entries.async_reload(self.config_entry.entry_id)
+            self.hass.config_entries.async_reload(self._config_entry.entry_id)
         )
 
 
