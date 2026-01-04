@@ -232,9 +232,18 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     def _get_coordinator(call: ServiceCall):
         entity_id = None
         
+        # Try to get entity_id from multiple sources (for compatibility)
+        entity_id = None
+        
+        # 1. From service_data (when called via WS with entity_id in data)
         if "entity_id" in call.data:
             entity_ids = call.data["entity_id"]
-            entity_id = entity_ids[0] if isinstance(entity_ids, list) else entity_ids
+            if isinstance(entity_ids, list):
+                entity_id = entity_ids[0] if entity_ids else None
+            else:
+                entity_id = entity_ids
+        
+        # 2. From target (when called via UI with target selector)
         elif call.target and call.target.get("entity_id"):
             entity_ids = call.target.get("entity_id")
             entity_id = entity_ids[0] if isinstance(entity_ids, list) else entity_ids
@@ -297,14 +306,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             "word_order": call.data.get("word_order", "big"),
             "register_type": call.data.get("register_type", "holding"),
             "scale": call.data.get("scale", 1.0),
-            "offset": call.data.get("offset", 0.0),
+            "offset": call.data.get("offset", 0.0)
         }
         
         value = await coordinator.async_read_entity(
             address=str(call.data["address"]),
             entity_config=entity_config,
             size=call.data.get("size", 1),
-            raw=call.data.get("raw", False),
+            raw=call.data.get("raw", False)
         )
         
         if value is None:
