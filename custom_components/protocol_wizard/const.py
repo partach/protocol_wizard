@@ -3,7 +3,7 @@
 #------------------------------------------
 """Constants for the Protocol Wizard integration."""
 
-DOMAIN = "ha_modbus_wizard"  # Keep existing domain for backward compatibility
+DOMAIN = "protocol_wizard"  # Keep existing domain for backward compatibility
 
 # Connection types (still relevant for Modbus, may be used by other protocols)
 CONNECTION_TYPE_SERIAL = "serial"
