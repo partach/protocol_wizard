@@ -167,5 +167,5 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false
-  },
+  }
 ]
