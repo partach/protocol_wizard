@@ -113,7 +113,6 @@ read_register:
             - int32
             - float32
             - string
-          translation_key: data_type
     size:
       name: Size
       description: Number of registers/bits to read. Leave empty to auto-detect based on data_type.
