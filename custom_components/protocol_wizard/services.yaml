@@ -1,0 +1,153 @@
+write_register:
+  name: Write Register
+  description: Write a typed value to a Modbus register with proper packing.
+  target:
+    entity:
+      integration: ha_modbus_wizard
+  fields:
+    address:
+      name: Register Address
+      description: Modbus register address.
+      required: true
+      example: 100
+      selector:
+        number:
+          mode: box
+          min: 0
+          max: 65535
+          step: 1
+
+    value:
+      name: Value
+      description: Value to write (will be packed according to data type).
+      required: true
+      selector:
+        text:
+
+    data_type:
+      name: Data Type
+      description: How the value should be encoded.
+      required: false
+      default: uint16
+      selector:
+        select:
+          options:
+            - label: Unsigned 16-bit
+              value: uint16
+            - label: Signed 16-bit
+              value: int16
+            - label: Unsigned 32-bit
+              value: uint32
+            - label: Signed 32-bit
+              value: int32
+            - label: Float 32-bit
+              value: float32
+
+    byte_order:
+      name: Byte Order
+      description: Byte order inside a register.
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - label: Big Endian (AB)
+              value: big
+            - label: Little Endian (BA)
+              value: little
+
+    word_order:
+      name: Word Order
+      description: Register order for multi-register values.
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - label: Big Endian (AB CD)
+              value: big
+            - label: Little Endian (CD AB)
+              value: little
+
+read_register:
+  name: Read Modbus Register
+  description: Read a Modbus register from a Modbus Wizard device and optionally decode it.
+  target:
+    entity:
+      integration: ha_modbus_wizard
+  fields:
+    address:
+      name: Address
+      description: Modbus register address (0-based)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 65535
+          step: 1
+          mode: box
+    register_type:
+      name: Register Type
+      description: Type of register to read. Use "auto" to try all types (recommended).
+      required: false
+      default: auto
+      selector:
+        select:
+          options:
+            - auto
+            - holding
+            - input
+            - coil
+            - discrete
+          translation_key: register_type
+    data_type:
+      name: Data Type
+      description: How to interpret the raw register value(s).
+      required: false
+      default: uint16
+      selector:
+        select:
+          options:
+            - uint16
+            - int16
+            - uint32
+            - int32
+            - float32
+            - string
+          translation_key: data_type
+    size:
+      name: Size
+      description: Number of registers/bits to read. Leave empty to auto-detect based on data_type.
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 20
+          step: 1
+          mode: box
+    byte_order:
+      name: Byte Order
+      description: Byte order for multi-byte values.
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - big
+            - little
+    word_order:
+      name: Word Order
+      description: Word order for multi-register values (e.g., float32 over 2 registers).
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - big
+            - little
+    raw:
+      name: Raw Mode
+      description: If enabled, returns raw register/bit values instead of decoded value.
+      required: false
+      selector:
+        boolean:
