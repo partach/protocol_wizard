@@ -13,6 +13,7 @@ from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, Async
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.service import SupportsResponse
 from datetime import timedelta
+from .protocols.snmp import SNMPClient
 
 from .const import (
     CONF_BAUDRATE,
@@ -121,6 +122,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # ----------------------------------------------------------------
     if protocol_name == "modbus":
         client = await _create_modbus_client(hass, config, entry)
+    elif protocol_name == "snmp":
+        client = _create_snmp_client(config)
     else:
         _LOGGER.error("Protocol %s not yet implemented", protocol_name)
         return False
@@ -225,6 +228,16 @@ async def _create_modbus_client(hass: HomeAssistant, config: dict, entry: Config
     
     return ModbusClient(pymodbus_client, slave_id)
 
+def _create_snmp_client(config: dict) -> SNMPClient:
+    """Create SNMP client (no caching needed - connectionless)."""
+    from .protocols.snmp import SNMPClient
+    
+    return SNMPClient(
+        host=config[CONF_HOST],
+        port=config.get(CONF_PORT, 161),
+        community=config.get("community", "public"),
+        version=config.get("version", "2c"),
+    )
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up protocol-agnostic services."""
