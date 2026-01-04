@@ -36,6 +36,9 @@ CONF_PORT = "port"
 # Entity configuration
 CONF_ENTITIES = "entities"  # Standard key for most protocols
 CONF_REGISTERS = "registers"
+CONF_PROTOCOL_MODBUS = "modbus"
+CONF_PROTOCOL_SNMP = "snmp"
+CONF_PROTOCOL = "protocol"
 
 # Defaults
 DEFAULT_SLAVE_ID = 1
