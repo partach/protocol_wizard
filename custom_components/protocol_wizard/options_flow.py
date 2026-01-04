@@ -18,6 +18,10 @@ from .const import (
     DOMAIN,
     CONF_UPDATE_INTERVAL,
     CONF_ENTITIES,
+    CONF_REGISTERS,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_SNMP,
+    CONF_PROTOCOL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,10 +33,10 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry):
         self.config_entry = config_entry
         # Get protocol from entry, default to modbus for backward compatibility
-        self.protocol = config_entry.data.get("protocol", "modbus")
+        self.protocol = config_entry.data.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
         
         # Use protocol-aware config key
-        config_key = "registers" if self.protocol == "modbus" else "entities"
+        config_key = CONF_REGISTERS if self.protocol == CONF_PROTOCOL_MODBUS else CONF_ENTITIES
         self._entities: list[dict] = list(config_entry.options.get(config_key, []))
         self._edit_index: int | None = None
         
@@ -352,9 +356,9 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
     
     def _get_schema_handler(self):
         """Get protocol-specific schema handler."""
-        if self.protocol == "modbus":
+        if self.protocol == CONF_PROTOCOL_MODBUS:
             return ModbusSchemaHandler()
-        # Future: elif self.protocol == "snmp": return SNMPSchemaHandler()
+        # Future: elif self.protocol == CONF_PROTOCOL_SNMP: return SNMPSchemaHandler()
         return ModbusSchemaHandler()  # Default
     
     def _save_options(self, updates: dict | None = None) -> None:
@@ -362,7 +366,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
         new_options = dict(self.config_entry.options)
         
         # Use protocol-specific config key
-        config_key = "registers" if self.protocol == "modbus" else "entities"
+        config_key = CONF_REGISTERS if self.protocol == CONF_PROTOCOL_MODBUS else CONF_ENTITIES
         
         if updates:
             new_options.update(updates)
