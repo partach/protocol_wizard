@@ -42,6 +42,9 @@ from .const import (
     DEFAULT_STOPBITS,
     DEFAULT_BYTESIZE,
     DOMAIN,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_SNMP,
+    CONF_PROTOCOL,
 )
 from .options_flow import ModbusWizardOptionsFlow
 from .protocols import ProtocolRegistry
@@ -57,7 +60,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._data: dict[str, Any] = {}
-        self._protocol: str = "modbus"  # Default to modbus for now
+        self._protocol: str = CONF_PROTOCOL_MODBUS  # Default to modbus for now
 
     @staticmethod
     @callback
@@ -71,23 +74,23 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         # If user selected a protocol
         if user_input is not None:
-            self._protocol = user_input.get("protocol", "modbus")
+            self._protocol = user_input.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
             
-            if self._protocol == "modbus":
+            if self._protocol == CONF_PROTOCOL_MODBUS:
                 return await self.async_step_modbus_common()
-            elif self._protocol == "snmp":
+            elif self._protocol == CONF_PROTOCOL_SNMP:
                 return await self.async_step_snmp_common()
             
         # Show protocol selection
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
-                vol.Required("protocol", default="modbus"): selector.SelectSelector(
+                vol.Required(CONF_PROTOCOL, default=CONF_PROTOCOL_MODBUS): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=[
                             selector.SelectOptionDict(
                                 value=proto,
-                                label=proto.upper() if proto == "snmp" else proto.title()
+                                label=proto.upper() if proto == CONF_PROTOCOL_SNMP else proto.title()
                             )
                             for proto in sorted(available_protocols)
                         ],
@@ -105,7 +108,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Modbus: Common settings and first register test."""
         if user_input is not None:
             self._data.update(user_input)
-            self._data["protocol"] = "modbus"  # Ensure protocol is set
+            self._data[CONF_PROTOCOL] = CONF_PROTOCOL_MODBUS  # Ensure protocol is set
             
             if user_input[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_SERIAL:
                 return await self.async_step_modbus_serial()
@@ -338,7 +341,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 final_data = {
-                    "protocol": "snmp",
+                    CONF_PROTOCOL: CONF_PROTOCOL_SNMP,
                     CONF_NAME: user_input[CONF_NAME],
                     CONF_HOST: user_input[CONF_HOST],
                     CONF_PORT: user_input.get(CONF_PORT, 161),
