@@ -254,7 +254,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             if len(coordinators) == 1:
                 entry_id = list(coordinators.keys())[0]
             elif len(coordinators) > 1:
-                raise HomeAssistantError(f"Multiple coordinators found, cannot determine which to use")
+                raise HomeAssistantError("Multiple coordinators found, cannot determine which to use")
             else:
                 raise HomeAssistantError("No coordinators found")
         
