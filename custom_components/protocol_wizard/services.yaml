@@ -3,7 +3,7 @@ write_register:
   description: Write a typed value to a Modbus register with proper packing.
   target:
     entity:
-      integration: ha_modbus_wizard
+      integration: protocol_wizard
   fields:
     address:
       name: Register Address
@@ -74,7 +74,7 @@ read_register:
   description: Read a Modbus register from a Modbus Wizard device and optionally decode it.
   target:
     entity:
-      integration: ha_modbus_wizard
+      integration: protocol_wizard
   fields:
     address:
       name: Address
