@@ -35,6 +35,7 @@ CONF_PORT = "port"
 
 # Entity configuration
 CONF_ENTITIES = "entities"  # Standard key for most protocols
+CONF_REGISTERS = "registers"
 
 # Defaults
 DEFAULT_SLAVE_ID = 1
