@@ -324,21 +324,80 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         
         async with self._lock:
             try:
-                values = await self.client.read(
-                    address=addr,
-                    count=size,
-                    register_type=reg_type,
-                )
+                # Handle auto-detect if needed
+                detected_type = reg_type
+                result = None
+                
+                if reg_type == "auto":
+                    methods = [
+                        ("holding", self.client.raw_client.read_holding_registers),
+                        ("input", self.client.raw_client.read_input_registers),
+                        ("coil", self.client.raw_client.read_coils),
+                        ("discrete", self.client.raw_client.read_discrete_inputs),
+                    ]
+                    
+                    for name, method in methods:
+                        try:
+                            result = await method(
+                                address=int(addr),
+                                count=int(size),
+                                device_id=int(self.client.slave_id),
+                            )
+                            if not result.isError():
+                                if name in ("holding", "input") and hasattr(result, "registers"):
+                                    detected_type = name
+                                    break
+                                if name in ("coil", "discrete") and hasattr(result, "bits"):
+                                    detected_type = name
+                                    break
+                        except Exception:
+                            continue
+                    
+                    if result is None or result.isError():
+                        _LOGGER.warning("Auto-detect failed at address %s", addr)
+                        return None
+                    
+                    # Extract values from result
+                    if detected_type in ("coil", "discrete"):
+                        values = result.bits[:size]
+                    else:
+                        values = result.registers[:size]
+                else:
+                    method_map = {
+                        "holding": self.client.read_holding_registers,
+                        "input": self.client.read_input_registers,
+                        "coil": self.client.read_coils,
+                        "discrete": self.client.read_discrete_inputs,
+                    }
+                    method = method_map.get(reg_type)
+                    if method is None:
+                        _LOGGER.error("Invalid register_type: %s", register_type)
+                        return None
+        
+                    try:
+                        result = await method(
+                            address=int(address),
+                            count=int(size),
+                            device_id=int(self.slave_id),
+                        )
+                    except Exception as err:
+                        _LOGGER.error("Read failed for %s register at %d: %s", register_type, address, err)
+                        return None
                 
                 if values is None:
                     return None
                 
+                # Return raw mode with full info
                 if raw:
                     return {
-                        "values": values,
-                        "detected_type": reg_type,
+                        "registers": values if not isinstance(values[0], bool) else [],
+                        "bits": values if isinstance(values[0], bool) else [],
+                        "detected_type": detected_type,
+                        "address": addr,
+                        "size": size,
                     }
                 
+                # Return decoded value
                 return self._decode_value(values, entity_config)
                 
             except Exception as err:
