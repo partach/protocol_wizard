@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Temperature",
+    "address": 0,
+    "data_type": "int16",
+    "register_type": "input",
+    "rw": "read",
+    "unit": "°C",
+    "scale": 0.1,
+    "offset": 0.0
+  },
+  {
+    "name": "Humidity",
+    "address": 1,
+    "data_type": "int16",
+    "register_type": "input",
+    "rw": "read",
+    "unit": "%",
+    "scale": 0.1,
+    "offset": 0.0
+  }
+]

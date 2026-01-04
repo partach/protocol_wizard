@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Relay Control",
+    "address": 0,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": true,
+    "options": {
+      "0": "All Off",
+      "1": "Relay 1 On",
+      "2": "Relay 2 On",
+      "4": "Relay 3 On",
+      "8": "Relay 4 On",
+      "16": "Relay 5 On",
+      "32": "Relay 6 On",
+      "64": "Relay 7 On",
+      "128": "Relay 8 On"
+    }
+  }
+]
