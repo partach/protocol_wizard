@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
+# from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 
 from ..base import BaseProtocolClient
 
