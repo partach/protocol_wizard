@@ -371,17 +371,17 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                     }
                     method = method_map.get(reg_type)
                     if method is None:
-                        _LOGGER.error("Invalid register_type: %s", register_type)
+                        _LOGGER.error("Invalid register_type: %s", reg_type)
                         return None
         
                     try:
                         result = await method(
-                            address=int(address),
+                            address=int(addr),
                             count=int(size),
                             device_id=int(self.slave_id),
                         )
                     except Exception as err:
-                        _LOGGER.error("Read failed for %s register at %d: %s", register_type, address, err)
+                        _LOGGER.error("Read failed for %s register at %d: %s", reg_type, addr, err)
                         return None
                 
                 if values is None:
