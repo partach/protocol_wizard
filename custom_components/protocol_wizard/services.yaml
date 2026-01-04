@@ -99,7 +99,6 @@ read_register:
             - input
             - coil
             - discrete
-          translation_key: register_type
     data_type:
       name: Data Type
       description: How to interpret the raw register value(s).
