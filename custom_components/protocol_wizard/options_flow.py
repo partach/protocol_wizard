@@ -363,7 +363,7 @@ class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
         """Get protocol-specific schema handler."""
         if self.protocol == CONF_PROTOCOL_MODBUS:
             return ModbusSchemaHandler()
-       # elif self.protocol == CONF_PROTOCOL_SNMP: return SNMPSchemaHandler()
+        elif self.protocol == CONF_PROTOCOL_SNMP: return SNMPSchemaHandler()
         return ModbusSchemaHandler()  # Default
     
     def _save_options(self, updates: dict | None = None) -> None:
@@ -472,5 +472,61 @@ class ModbusSchemaHandler:
         # Ensure numeric fields are correct type
         user_input["address"] = int(user_input["address"])
         user_input["size"] = int(user_input.get("size", 1))
+        
+        return user_input
+        
+class SNMPSchemaHandler:
+    """Handles SNMP-specific schema and input processing."""
+    
+    @staticmethod
+    def get_schema(defaults: dict | None = None) -> vol.Schema:
+        """Get SNMP entity schema."""
+        defaults = defaults or {}
+        
+        return vol.Schema({
+            vol.Required("name", default=defaults.get("name")): str,
+            vol.Required("address", default=defaults.get("address")): str,  # OID
+            
+            vol.Required("data_type", default=defaults.get("data_type", "string")): 
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            "string",
+                            "integer",
+                            "counter32",
+                            "counter64",
+                            "gauge32",
+                            "timeticks",
+                            "ipaddress",
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+
+            vol.Required("rw", default=defaults.get("rw", "read")): 
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["read", "write", "rw"],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            
+            vol.Optional("unit", default=defaults.get("unit", "")): str,
+            vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
+            vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
+            vol.Optional("options", default=defaults.get("options", "")): str,
+            
+            vol.Optional("min", default=defaults.get("min")): vol.Any(None, vol.Coerce(float)),
+            vol.Optional("max", default=defaults.get("max")): vol.Any(None, vol.Coerce(float)),
+            vol.Optional("step", default=defaults.get("step", 1)): vol.Coerce(float),
+        })
+    
+    @staticmethod
+    def process_input(user_input: dict) -> dict | None:
+        """Process and validate SNMP-specific input."""
+        # SNMP OIDs are strings, no special processing needed
+        # Just ensure we have the basic fields
+        if "address" not in user_input or not user_input["address"]:
+            return None
         
         return user_input
