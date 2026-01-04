@@ -183,7 +183,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         
         try:
             data_type = entity_config.get("data_type", "uint16").lower()
-            byte_order = entity_config.get("byte_order", "big")
+      #      byte_order = entity_config.get("byte_order", "big")  # not used...?
             word_order = entity_config.get("word_order", "big")
             
             # Handle bit-based registers
