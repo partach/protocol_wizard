@@ -50,9 +50,9 @@ async def async_install_frontend_resource(hass: HomeAssistant):
     """Ensure the frontend JS file is copied to the www/community folder."""
     
     def install():
-        source_path = hass.config.path("custom_components", DOMAIN, "frontend", "ha_modbus_wizard.js")
+        source_path = hass.config.path("custom_components", DOMAIN, "frontend", "protocol_wizard.js")
         target_dir = hass.config.path("www", "community", DOMAIN)
-        target_path = os.path.join(target_dir, "ha_modbus_wizard.js")
+        target_path = os.path.join(target_dir, "protocol_wizard.js")
 
         try:
             if not os.path.exists(target_dir):
