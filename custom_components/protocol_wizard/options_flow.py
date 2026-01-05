@@ -21,6 +21,11 @@ from .const import (
     CONF_PROTOCOL,
     CONF_PROTOCOL_MODBUS,
     CONF_PROTOCOL_SNMP,
+    CONF_ADVANCED,
+    CONF_BYTE_ORDER,
+    CONF_WORD_ORDER,
+    CONF_ALLOW_BITS,
+    CONF_REGISTER_TYPE,
 )
 
 _LOGGER = logging.getLogger(__name__)
