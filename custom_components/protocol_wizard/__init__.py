@@ -19,7 +19,6 @@ from .const import (
     CONF_BAUDRATE,
     CONF_BYTESIZE,
     CONF_CONNECTION_TYPE,
-    CONF_PROTOCOL,
     CONF_HOST,
     CONF_PARITY,
     CONF_PORT,
@@ -37,6 +36,9 @@ from .const import (
     DEFAULT_PARITY,
     DEFAULT_STOPBITS,
     DOMAIN,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_SNMP,
+    CONF_PROTOCOL,
 )
 
 # Import protocol registry and plugins
@@ -108,8 +110,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     config = entry.data
     
-    # Determine protocol (default to modbus for backward compatibility)
-    protocol_name = config.get("protocol", "modbus")
+# ----------------------------------------------------------------
+    # Determine protocol correctly
+    # ----------------------------------------------------------------
+    # Explicit protocol wins (for future SNMP, BACnet, etc.)
+    protocol_name = config.get(CONF_PROTOCOL)
+
+    # Backward compatibility + Modbus detection
+    if protocol_name is None:
+        connection_type = config.get(CONF_CONNECTION_TYPE)
+        if connection_type in (CONNECTION_TYPE_SERIAL, CONNECTION_TYPE_IP):
+            protocol_name = CONF_PROTOCOL_MODBUS
+        else:
+            protocol_name = CONF_PROTOCOL_MODBUS  # safe fallback
     
     # Get protocol-specific coordinator class
     CoordinatorClass = ProtocolRegistry.get_coordinator_class(protocol_name)
@@ -120,12 +133,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # ----------------------------------------------------------------
     # Create protocol-specific client
     # ----------------------------------------------------------------
-    if protocol_name == "modbus":
-        client = await _create_modbus_client(hass, config, entry)
-    elif protocol_name == "snmp":
-        client = _create_snmp_client(config)
-    else:
-        _LOGGER.error("Protocol %s not yet implemented", protocol_name)
+    try:
+        if protocol_name == CONF_PROTOCOL_MODBUS:
+            client = await _create_modbus_client(hass, config, entry)
+        elif protocol_name == CONF_PROTOCOL_SNMP:
+            client = _create_snmp_client(config)
+        else:
+            _LOGGER.error("Protocol %s not yet implemented", protocol_name)
+            return False
+    except Exception as err:
+        _LOGGER.error("Failed to create client for %s: %s", protocol_name, err)
         return False
     
     # ----------------------------------------------------------------
