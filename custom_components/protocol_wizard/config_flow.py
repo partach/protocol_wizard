@@ -239,7 +239,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
 
         return self.async_show_form(
-            step_id="modbus_tcp",
+            step_id="modbus_ip",
             data_schema=vol.Schema({
                 vol.Required(CONF_NAME, default=self._data.get(CONF_NAME, "Modbus Hub")): str,
                 vol.Required(CONF_HOST): str,
