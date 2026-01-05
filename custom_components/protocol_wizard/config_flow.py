@@ -223,7 +223,6 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     **self._data,
                     CONF_HOST: user_input[CONF_HOST],
                     CONF_PORT: user_input[CONF_PORT],
-                    CONF_PROTOCOL: user_input[CONF_PROTOCOL],
                     CONF_IP: user_input[CONF_IP],
                 }
 
