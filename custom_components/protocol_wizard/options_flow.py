@@ -27,7 +27,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class ModbusWizardOptionsFlow(config_entries.OptionsFlow):
+class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for Protocol Wizard (currently Modbus-focused)."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry):
