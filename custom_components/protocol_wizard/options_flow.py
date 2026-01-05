@@ -317,7 +317,17 @@ class ModbusSchemaHandler:
 
             vol.Required("address", default=defaults.get("address")):
                 vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
-
+            
+            vol.Required(
+                CONF_REGISTER_TYPE,
+                default=defaults.get(CONF_REGISTER_TYPE, "input")
+            ):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["auto", "holding", "input", "coil", "discrete"],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
             vol.Required("data_type", default=defaults.get("data_type", "uint16")):
                 selector.SelectSelector(
                     selector.SelectSelectorConfig(
@@ -342,31 +352,6 @@ class ModbusSchemaHandler:
             vol.Optional("unit", default=defaults.get("unit", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
-
-            # the important switch
-            vol.Optional(CONF_ADVANCED, default=defaults.get(CONF_ADVANCED, False)): bool,
-        }
-
-        # Append advanced fields *only when enabled*
-        if defaults.get(CONF_ADVANCED):
-            schema.update(ModbusSchemaHandler._advanced_schema(defaults))
-
-        return vol.Schema(schema)
-        
-    @staticmethod
-    def _advanced_schema(defaults: dict) -> dict:
-        return {
-            vol.Optional(
-                CONF_REGISTER_TYPE,
-                default=defaults.get(CONF_REGISTER_TYPE, "auto")
-            ):
-                selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=["auto", "holding", "input", "coil", "discrete"],
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-
             vol.Optional(
                 CONF_BYTE_ORDER,
                 default=defaults.get(CONF_BYTE_ORDER, "big")
@@ -387,7 +372,11 @@ class ModbusSchemaHandler:
                 CONF_ALLOW_BITS,
                 default=defaults.get(CONF_ALLOW_BITS, False)
             ): bool,
+
         }
+
+
+        return vol.Schema(schema)
 
     @staticmethod
     def process_input(user_input: dict, errors: dict) -> dict | None:
