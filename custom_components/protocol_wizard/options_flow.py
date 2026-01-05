@@ -379,14 +379,14 @@ class ModbusSchemaHandler:
             "uint64": 4, "int64": 4,
         }
 
-    dtype = user_input.get("data_type")
-    if dtype in type_sizes:
-        user_input["size"] = type_sizes[dtype]
-
-    user_input["address"] = int(user_input["address"])
-    user_input["size"] = int(user_input.get("size", 1))
-
-    return user_input
+        dtype = user_input.get("data_type")
+        if dtype in type_sizes:
+            user_input["size"] = type_sizes[dtype]
+    
+        user_input["address"] = int(user_input["address"])
+        user_input["size"] = int(user_input.get("size", 1))
+    
+        return user_input
 
     def get_defaults(self, entity):
         return dict(entity)
