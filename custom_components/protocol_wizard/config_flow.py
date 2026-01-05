@@ -44,6 +44,7 @@ from .const import (
     CONF_PROTOCOL_MODBUS,
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
+    CONF_IP,
 )
 from .options_flow import ProtocolWizardOptionsFlow
 from .protocols import ProtocolRegistry
@@ -244,7 +245,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_PORT, default=DEFAULT_TCP_PORT): vol.All(
                     vol.Coerce(int), vol.Range(min=1, max=65535)
                 ),
-                vol.Required(CONF_PROTOCOL, default=CONNECTION_TYPE_TCP): selector.SelectSelector(
+                vol.Required(CONF_IP, default=CONNECTION_TYPE_TCP): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=[
                             selector.SelectOptionDict(value=CONNECTION_TYPE_TCP, label="TCP"),
@@ -271,7 +272,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     timeout=3,
                     retries=1,
                 )
-            elif data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_IP and data[CONF_PROTOCOL] == CONNECTION_TYPE_UDP:
+            elif data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_IP and data[CONF_IP] == CONNECTION_TYPE_UDP:
                 client = AsyncModbusUdpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
