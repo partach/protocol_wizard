@@ -219,13 +219,13 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
             path = self.hass.config.path(
                 "custom_components", DOMAIN, "templates", f"{name}.json"
             )
-
             try:
                 data = await self.hass.async_add_executor_job(self._load_template, path)
                 added = self.schema_handler.merge_template(self._entities, data)
                 if not added:
                     return self.async_show_form(
                         step_id="load_template",
+                        data_schema=self._get_template_schema(),
                         errors={"base": "template_empty_or_duplicate"},
                     )
                 self._save_entities()
@@ -234,35 +234,48 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
                 _LOGGER.error("Template load failed: %s", err)
                 return self.async_show_form(
                     step_id="load_template",
+                    data_schema=self._get_template_schema(),
                     errors={"base": "load_failed"},
                 )
 
-        templates = []
+        # Async-safe listing of templates
         templates_dir = self.hass.config.path("custom_components", DOMAIN, "templates")
         try:
-            templates = sorted(f[:-5] for f in os.listdir(templates_dir) if f.endswith(".json"))
-        except Exception:
-            pass
+            files = await self.hass.async_add_executor_job(
+                lambda: [
+                    f[:-5] for f in os.listdir(templates_dir)
+                    if f.endswith(".json")
+                ] if os.path.exists(templates_dir) else []
+            )
+            templates = sorted(files)
+        except Exception as err:
+            _LOGGER.debug("Failed to list templates: %s", err)
+            templates = []
 
         if not templates:
             return self.async_abort(reason="no_templates")
 
         return self.async_show_form(
             step_id="load_template",
-            data_schema=vol.Schema({
-                vol.Required("template"): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[selector.SelectOptionDict(value=t, label=t) for t in templates],
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                )
-            }),
+            data_schema=self._get_template_schema(templates),
         )
 
     # ------------------------------------------------------------------
     # INTERNAL
     # ------------------------------------------------------------------
-
+    def _get_template_schema(self, templates=None):
+        """Return schema for template selection."""
+        if templates is None:
+            templates = []
+        return vol.Schema({
+            vol.Required("template"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[selector.SelectOptionDict(value=t, label=t) for t in templates],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            )
+        })
+        
     @staticmethod
     def _load_template(path: str):
         with open(path, "r", encoding="utf-8") as f:
