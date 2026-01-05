@@ -294,8 +294,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             slave_id = int(data[CONF_SLAVE_ID])
 
             methods = [
-                ("holding registers", client.read_holding_registers),
                 ("input registers", client.read_input_registers),
+                ("holding registers", client.read_holding_registers),
                 ("coils", client.read_coils),
                 ("discrete inputs", client.read_discrete_inputs),
             ]
@@ -317,7 +317,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     _LOGGER.debug("Test read failed for %s at addr %d: %s", name, address, inner_err)
 
             if not success:
-                raise ModbusException(
+                 _LOGGER.debug(
                     f"Could not read {count} value(s) from address {address} using any register type. "
                     "Check address, size, slave ID, or device compatibility."
                 )
