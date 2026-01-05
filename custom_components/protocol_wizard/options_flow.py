@@ -283,7 +283,8 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 
     def _save_entities(self):
         options = dict(self._config_entry.options)
-        options[self.schema_handler.config_key] = self._entities
+        config_key = CONF_REGISTERS if self.protocol == CONF_PROTOCOL_MODBUS else CONF_ENTITIES
+        options[config_key] = self._entities
         self.hass.config_entries.async_update_entry(self._config_entry, options=options)
         self.hass.async_create_task(
             self.hass.config_entries.async_reload(self._config_entry.entry_id)
@@ -342,7 +343,7 @@ class ModbusSchemaHandler:
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
 
-            # 👇 the important switch
+            # the important switch
             vol.Optional(CONF_ADVANCED, default=defaults.get(CONF_ADVANCED, False)): bool,
         }
 
