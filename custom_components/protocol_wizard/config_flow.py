@@ -268,21 +268,24 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     parity=data.get(CONF_PARITY, DEFAULT_PARITY),
                     stopbits=data.get(CONF_STOPBITS, DEFAULT_STOPBITS),
                     bytesize=data.get(CONF_BYTESIZE, DEFAULT_BYTESIZE),
-                    timeout=5,
+                    timeout=3,
+                    retries=1,
                 )
             elif data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_IP and data[CONF_PROTOCOL] == CONNECTION_TYPE_UDP:
                 client = AsyncModbusUdpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
 #                    framer=FramerType.SOCKET,
-                    timeout=5,
+                    timeout=3,
+                    retries=1,
                 )
             else:
                 client = AsyncModbusTcpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
  #                   framer=FramerType.SOCKET,
-                    timeout=5,
+                    timeout=3,
+                    retries=1,
                 )
 
             await client.connect()
