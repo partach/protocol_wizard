@@ -14,7 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 # from pymodbus.framer import FramerType
-from pymodbus.exceptions import ModbusException
+# from pymodbus.exceptions import ModbusException
 
 from .const import (
     CONNECTION_TYPE_SERIAL,
