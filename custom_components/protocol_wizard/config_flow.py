@@ -274,14 +274,14 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 client = AsyncModbusUdpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
-                    framer=FramerType.RTU,
+                    framer=FramerType.SOCKET,
                     timeout=5,
                 )
             else:
                 client = AsyncModbusTcpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
-                    framer=FramerType.RTU,
+                    framer=FramerType.SOCKET,
                     timeout=5,
                 )
 
