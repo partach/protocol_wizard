@@ -44,7 +44,12 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 
         self.schema_handler = self._get_schema_handler()
 
-        config_key = self.schema_handler.config_key
+        # Determine the correct config key based on protocol
+        if self.protocol == CONF_PROTOCOL_MODBUS:
+            config_key = CONF_REGISTERS
+        else:
+            config_key = CONF_ENTITIES  # Future-proof for other protocols
+            
         self._entities: list[dict] = list(config_entry.options.get(config_key, []))
         self._edit_index: int | None = None
 
