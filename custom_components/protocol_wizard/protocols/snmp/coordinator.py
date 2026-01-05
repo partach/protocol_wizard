@@ -1,6 +1,3 @@
-#------------------------------------------
-#-- protocol snmp coordinator.py protocol wizard
-#------------------------------------------
 """SNMP protocol coordinator implementation."""
 from __future__ import annotations
 
@@ -96,24 +93,20 @@ class SNMPCoordinator(BaseProtocolCoordinator):
         """
         Decode SNMP value to Python type.
         
-        SNMP values come pre-typed from pysnmp, but we may need to:
-        - Convert to appropriate Python types
-        - Apply scale/offset
-        - Handle string encoding
+        SNMP values come pre-typed from pysnmp, so we convert them to
+        appropriate Python types and apply scale/offset if needed.
         """
         if raw_value is None:
             return None
         
         try:
-            data_type = entity_config.get("data_type", "string").lower()
-            
             # Convert pysnmp types to Python types
             from pysnmp.proto.rfc1902 import (
                 Integer, Integer32, Gauge32, Counter32, Counter64,
                 TimeTicks, IpAddress, OctetString, ObjectIdentifier
             )
             
-            # Handle different SNMP types
+            # Handle different SNMP types based on what pysnmp returned
             if isinstance(raw_value, (Integer, Integer32, Gauge32)):
                 decoded = int(raw_value)
             elif isinstance(raw_value, (Counter32, Counter64)):
@@ -126,7 +119,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                 # Try to decode as UTF-8 string, fallback to hex
                 try:
                     decoded = raw_value.prettyPrint()
-                except:
+                except Exception:
                     decoded = raw_value.hexValue()
             elif isinstance(raw_value, ObjectIdentifier):
                 decoded = raw_value.prettyPrint()
