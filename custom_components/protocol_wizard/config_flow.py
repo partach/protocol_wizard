@@ -45,7 +45,7 @@ from .const import (
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
 )
-from .options_flow import ModbusWizardOptionsFlow
+from .options_flow import ProtocolWizardOptionsFlow
 from .protocols import ProtocolRegistry
 
 _LOGGER = logging.getLogger(__name__)
