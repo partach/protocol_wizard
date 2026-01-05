@@ -20,6 +20,10 @@ from .const import CONF_ENTITIES, TYPE_SIZES, reg_key
 
 _LOGGER = logging.getLogger(__name__)
 
+# Reduce noise from pymodbus
+# Setting parent logger to CRITICAL to catch all sub-loggers
+logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
+logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
 
 @ProtocolRegistry.register("modbus")
 class ModbusCoordinator(BaseProtocolCoordinator):
