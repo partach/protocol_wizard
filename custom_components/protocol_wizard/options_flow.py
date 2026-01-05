@@ -282,21 +282,88 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 # ============================================================================
 
 class ModbusSchemaHandler:
-    config_key = CONF_REGISTERS
+    """Handles Modbus-specific schema and input processing."""
 
-    def get_schema(self, defaults=None):
+    @staticmethod
+    def get_schema(defaults: dict | None = None) -> vol.Schema:
         defaults = defaults or {}
-        return vol.Schema({
+
+        schema = {
             vol.Required("name", default=defaults.get("name")): str,
-            vol.Required("address", default=defaults.get("address")): vol.Coerce(int),
+
+            vol.Required("address", default=defaults.get("address")):
+                vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
+
             vol.Required("data_type", default=defaults.get("data_type", "uint16")):
                 selector.SelectSelector(
                     selector.SelectSelectorConfig(
-                        options=["uint16", "int16", "uint32", "int32", "float32", "uint64", "int64"],
+                        options=[
+                            "uint16", "int16",
+                            "uint32", "int32",
+                            "float32",
+                            "uint64", "int64",
+                        ],
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
-        })
+
+            vol.Required("rw", default=defaults.get("rw", "read")):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["read", "write", "rw"],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+
+            vol.Optional("unit", default=defaults.get("unit", "")): str,
+            vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
+            vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
+
+            # 👇 the important switch
+            vol.Optional(CONF_ADVANCED, default=defaults.get(CONF_ADVANCED, False)): bool,
+        }
+
+        # Append advanced fields *only when enabled*
+        if defaults.get(CONF_ADVANCED):
+            schema.update(ModbusSchemaHandler._advanced_schema(defaults))
+
+        return vol.Schema(schema)
+        
+    @staticmethod
+    def _advanced_schema(defaults: dict) -> dict:
+        return {
+            vol.Optional(
+                CONF_REGISTER_TYPE,
+                default=defaults.get(CONF_REGISTER_TYPE, "auto")
+            ):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["auto", "holding", "input", "coil", "discrete"],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+
+            vol.Optional(
+                CONF_BYTE_ORDER,
+                default=defaults.get(CONF_BYTE_ORDER, "big")
+            ):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(options=["big", "little"])
+                ),
+
+            vol.Optional(
+                CONF_WORD_ORDER,
+                default=defaults.get(CONF_WORD_ORDER, "big")
+            ):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(options=["big", "little"])
+                ),
+
+            vol.Optional(
+                CONF_ALLOW_BITS,
+                default=defaults.get(CONF_ALLOW_BITS, False)
+            ): bool,
+        }
 
     def process_input(self, data, errors):
         data["address"] = int(data["address"])
@@ -336,11 +403,27 @@ class SNMPSchemaHandler:
                 ),
         })
 
-    def process_input(self, data, errors):
-        if not data.get("address"):
-            errors["address"] = "required"
-            return None
-        return data
+    @staticmethod
+    def process_input(user_input: dict) -> dict | None:
+        type_sizes = {
+            "uint16": 1, "int16": 1,
+            "uint32": 2, "int32": 2,
+            "float32": 2,
+            "uint64": 4, "int64": 4,
+        }
+
+        dtype = user_input.get("data_type")
+        if dtype in type_sizes:
+            user_input["size"] = type_sizes[dtype]
+
+        user_input["address"] = int(user_input["address"])
+        user_input["size"] = int(user_input.get("size", 1))
+
+        # Do NOT touch advanced fields here
+        # Decoder / entity will interpret them later
+
+        return user_input
+
 
     def get_defaults(self, entity):
         return dict(entity)
