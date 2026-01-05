@@ -112,7 +112,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
             if user_input[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_SERIAL:
                 return await self.async_step_modbus_serial()
-            return await self.async_step_modbus_tcp()
+            return await self.async_step_modbus_ip()
         
         return self.async_show_form(
             step_id="modbus_common",
@@ -213,7 +213,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_modbus_tcp(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_modbus_ip(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Modbus: TCP/UDP-specific settings."""
         errors = {}
 
@@ -224,6 +224,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_HOST: user_input[CONF_HOST],
                     CONF_PORT: user_input[CONF_PORT],
                     CONF_PROTOCOL: user_input[CONF_PROTOCOL],
+                    CONF_IP: user_input[CONF_IP],
                 }
 
                 await self._async_test_modbus_connection(final_data)
