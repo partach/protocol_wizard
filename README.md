@@ -7,7 +7,6 @@
 [![HACS validated](https://img.shields.io/badge/HACS-validated-41BDF5?style=flat-square)](https://github.com/hacs/integration)
 
 The Protocol Wizard helps you build your home assistant devices without need for any yaml!
-# Protocol Wizard for Home Assistant
 
 **Configure and control devices entirely from the UI — no YAML, no restarts!**<br>
 Currently supports Modbus, SNMP, others to follow.
