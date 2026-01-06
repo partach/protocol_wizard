@@ -1,21 +1,99 @@
 [
   {
-    "name": "Relay Control",
+    "name": "Relay Control 1",
     "address": 0,
     "data_type": "uint16",
     "register_type": "coil",
     "rw": "rw",
-    "allow_bits": true,
+    "allow_bits": false,
     "options": {
-      "0": "All Off",
-      "1": "Relay 1 On",
-      "2": "Relay 2 On",
-      "4": "Relay 3 On",
-      "8": "Relay 4 On",
-      "16": "Relay 5 On",
-      "32": "Relay 6 On",
-      "64": "Relay 7 On",
-      "128": "Relay 8 On"
+      "0": "Relay 1 Off",
+      "1": "Relay 1 On"
+    }
+  },
+  {
+    "name": "Relay Control 2",
+    "address": 1,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 2 Off",
+      "1": "Relay 2 On"
+    }
+  },
+  {
+    "name": "Relay Control 3",
+    "address": 2,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 3 Off",
+      "1": "Relay 3 On"
+    }
+  },
+  {
+    "name": "Relay Control 4",
+    "address": 3,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 4 Off",
+      "1": "Relay 4 On"
+    }
+  },
+  {
+    "name": "Relay Control 5",
+    "address": 4,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 5 Off",
+      "1": "Relay 5 On"
+    }
+  },
+  {
+    "name": "Relay Control 6",
+    "address": 5,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 6 Off",
+      "1": "Relay 6 On"
+    }
+  },
+  {
+    "name": "Relay Control 7",
+    "address": 6,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 7 Off",
+      "1": "Relay 7 On"
+    }
+  },
+  {
+    "name": "Relay Control 8",
+    "address": 7,
+    "data_type": "uint16",
+    "register_type": "coil",
+    "rw": "rw",
+    "allow_bits": false,
+    "options": {
+      "0": "Relay 8 Off",
+      "1": "Relay 8 On"
     }
   }
+
 ]
