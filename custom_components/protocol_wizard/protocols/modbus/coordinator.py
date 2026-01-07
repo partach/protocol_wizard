@@ -155,13 +155,10 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                         _LOGGER.warning("No values returned for register '%s'", reg["name"])
                         continue
                     
-                    # Decode
-                    decoded = self._decode_value(values, reg)
-                    
-                    if decoded is not None:
-                        new_data[key] = decoded
-                    else:
-                        _LOGGER.warning("Decode returned None for register '%s'", reg["name"])
+                    # Decode / format
+                    decoded = self._decode_value(raw_value, entity_config)
+                    formatted = self._format_value(decoded, entity_config)
+                    new_data[key] = formatted
                 
                 except Exception as err:
                     _LOGGER.error(
