@@ -145,26 +145,23 @@ class SNMPClient(BaseProtocolClient):
 
             async for error_indication, error_status, error_index, var_binds in iterator:
                 if error_indication:
-                    _LOGGER.debug("SNMP walk error indication: %s", error_indication)
+                    _LOGGER.error("SNMP walk error indication: %s", error_indication)
                     break
-
                 if error_status:
                     # Normal end of MIB
-                    _LOGGER.debug("SNMP walk end of MIB: %s", error_status.prettyPrint())
                     break
 
-                for oid, value in var_binds:
-                    oid_str = oid.prettyPrint()
-                    # Optional: ensure we're still in the base tree
-                    if not oid_str.startswith(base_oid):
-                        _LOGGER.debug("SNMP walk unexpected result. oid %s: %s", base_oid, oid_str)
-                        return results
-                    results.append((oid_str, value))
+                for var_bind in var_binds:
+                    oid, value = var_bind
+                    results.append((
+                        oid.prettyPrint(),
+                        value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
+                    ))
 
         except Exception as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
 
-        _LOGGER.info("SNMP walk result for %s: %s", base_oid, results)
+  #      _LOGGER.info("SNMP walk result for %s: %s", base_oid, results)
         return results
         
     async def write(self, address: str, value: Any, **kwargs) -> bool:
