@@ -262,12 +262,14 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         self,
         value: Any,
         entity_config: dict,
-    ) -> list[int]:
+    ) -> list[int] | bool:
         """Encode Python value to Modbus registers."""
         data_type = entity_config.get("data_type", "uint16").lower()
   #      byte_order = entity_config.get("byte_order", "big")
         word_order = entity_config.get("word_order", "big")
-        
+        # For coils, return boolean directly
+        if register_type == "coil":
+            return bool(value)
         # Reverse scale/offset
         scale = entity_config.get("scale", 1.0)
         offset = entity_config.get("offset", 0.0)
