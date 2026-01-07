@@ -390,7 +390,12 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                 
                 if values is None:
                     return None
-                
+                if raw and detected_type in ("coil", "discrete") and size == 1:
+                    return {
+                        "value": bool(values[0]),
+                        "detected_type": detected_type,
+                        "address": addr,
+                    }
                 # Return raw mode with full info
                 if raw:
                     return {
@@ -400,7 +405,12 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                         "address": addr,
                         "size": size,
                     }
-                
+                if detected_type in ("coil", "discrete") and len(values) == 1:
+                    decoded_value = bool(values[0])
+                else:
+                    decoded_value = values
+
+                return self._decode_value(decoded_value, entity_config)
                 # Return decoded value
                 return self._decode_value(values, entity_config)
                 
@@ -418,18 +428,26 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         """Write a single Modbus entity (for services/number entities)."""
         if not await self._async_connect():
             return False
-        
+
         try:
-            registers = self._encode_value(value, entity_config)
-            if registers is None:
-                return False
-            
+            reg_type = entity_config.get("register_type", "holding").lower()
+
+            # Special case for coils — expect single bool
+            if reg_type in ("coil", "discrete"):
+                # Convert to 0/1 int for pymodbus
+                write_value = [1 if bool(value) else 0]
+            else:
+                registers = self._encode_value(value, entity_config)
+                if registers is None:
+                    return False
+                write_value = registers
+
             return await self.client.write(
                 address=address,
-                value=registers,
-                register_type=entity_config.get("register_type", "holding"),
+                value=write_value,
+                register_type=reg_type,
             )
-            
+
         except Exception as err:
             _LOGGER.error("Write failed at %s: %s", address, err)
             return False
