@@ -44,7 +44,9 @@ class SNMPCoordinator(BaseProtocolCoordinator):
         if not await self._async_connect():
             _LOGGER.warning("[SNMP] Could not connect to device")
             return {}
-
+        if not self.client.is_connected: # protect prolongued query of snmp if not needed
+            _LOGGER.debug("[Modbus] Hub reports disconnected — skipping entity update")
+            return {}
         entities = self.my_config_entry.options.get(CONF_ENTITIES, [])
         if not entities:
             return {}
