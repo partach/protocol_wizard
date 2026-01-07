@@ -15,7 +15,7 @@ from pysnmp.hlapi.v3arch.asyncio import (
     ObjectIdentity,
     get_cmd,
     set_cmd,
-    next_cmd,
+    walk_cmd,
 )
 
 from ..base import BaseProtocolClient
