@@ -108,6 +108,47 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
             Protocol-specific encoded value
         """
         pass
+
+    def _format_value(self, value: Any, entity_config: dict) -> Any:
+        """Apply user-defined format string to the decoded value."""
+        format_str = entity_config.get("format", "").strip()
+        if not format_str:
+            return value
+
+        try:
+            if isinstance(value, (int, float)):
+                # Uptime formatting: seconds → D:H:M:S
+                if any(token in format_str for token in ["{d}", "{h}", "{m}", "{s}"]):
+                    total_secs = float(value)
+                    days = int(total_secs // 86400)
+                    hours = int((total_secs % 86400) // 3600)
+                    mins = int((total_secs % 3600) // 60)
+                    secs = int(total_secs % 60)
+                    return format_str.format(
+                        d=days, h=hours, m=mins, s=secs, value=value
+                    )
+
+                # Power: Watts → kW with precision
+                if "{kw}" in format_str:
+                    kw = value / 1000
+                    return format_str.format(kw=f"{kw:.2f}", value=value)
+
+                # Generic numeric formatting
+                return format_str.format(value=value)
+
+            # String formatting
+            if isinstance(value, str):
+                if "{upper}" in format_str:
+                    return format_str.format(value=value.upper())
+                if "{lower}" in format_str:
+                    return format_str.format(value=value.lower())
+                return format_str.format(value=value)
+
+            return value
+
+        except Exception as err:
+            _LOGGER.debug("Format string error for %s: %s", entity_config.get("name"), err)
+            return value
     
     @abstractmethod
     async def async_read_entity(
