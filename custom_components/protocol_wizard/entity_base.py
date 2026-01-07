@@ -223,10 +223,16 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
             )
             return
         
-        # Convert to int if not float type
-        data_type = self._config.get("data_type", "uint16").lower()
-        if "float" not in data_type:
-            value = int(round(value))
+        # Check register type
+        register_type = self._config.get("register_type", "holding").lower()
+        
+        # For coils/discrete (bit types), convert to boolean
+        if register_type in ("coil", "discrete"):
+            value = bool(int(float(value)))  # "0" → False, "1" → True
+        elif "float" not in data_type:
+            value = int(round(float(value)))  # Regular registers
+        else:
+            value = float(value)  # Float registers
         
         # Use coordinator's write method
         success = await self.coordinator.async_write_entity(
@@ -290,9 +296,15 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
             return
         
         # Convert to appropriate type
-        data_type = self._config.get("data_type", "uint16").lower()
-        if "float" not in data_type:
-            value = int(round(float(value)))
+        register_type = self._config.get("register_type", "holding").lower()
+        
+        # For coils/discrete (bit types), convert to boolean
+        if register_type in ("coil", "discrete"):
+            value = bool(int(float(value)))  # "0" → False, "1" → True
+        elif "float" not in data_type:
+            value = int(round(float(value)))  # Regular registers
+        else:
+            value = float(value)  # Float registers
         
         # Use coordinator's write method
         success = await self.coordinator.async_write_entity(
