@@ -17,6 +17,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.number import NumberEntity,NumberMode
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers import entity_registry as er
+from homeassistant.components.switch import SwitchEntity
 
 from .protocols.base import BaseProtocolCoordinator
 
@@ -263,6 +264,52 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         else:
             _LOGGER.error("Failed to write value to %s", self._config.get("name"))
 
+class ProtocolWizardSwitchBase(CoordinatorEntity, SwitchEntity):
+    """Protocol-agnostic switch entity (for coils)."""
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+
+    def __init__(
+        self,
+        coordinator,
+        entry: ConfigEntry,
+        unique_id: str,
+        key: str,
+        entity_config: dict,
+        device_info: DeviceInfo,
+    ):
+        super().__init__(coordinator)
+        self._key = key
+        self._config = entity_config
+        self._attr_unique_id = unique_id
+        self._attr_name = entity_config.get("name")
+        self._attr_device_info = device_info
+        self._attr_icon = "mdi:toggle-switch"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if switch is on."""
+        value = self.coordinator.data.get(self._key)
+        return bool(value)
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn the switch on."""
+        await self.coordinator.async_write_entity(
+            address=str(self._config["address"]),
+            value=True,
+            entity_config=self._config,
+        )
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn the switch off."""
+        await self.coordinator.async_write_entity(
+            address=str(self._config["address"]),
+            value=False,
+            entity_config=self._config,
+        )
+        await self.coordinator.async_request_refresh()
 
 class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
     """Protocol-agnostic select entity."""
