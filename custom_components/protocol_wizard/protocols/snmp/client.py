@@ -130,7 +130,6 @@ class SNMPClient(BaseProtocolClient):
         results = []
         try:
             # Use next_cmd for compatibility with v1 and v2c
-            from pysnmp.hlapi.v3arch.asyncio import next_cmd
 
             iterator = next_cmd(
                 self._engine,
