@@ -267,6 +267,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         data_type = entity_config.get("data_type", "uint16").lower()
   #      byte_order = entity_config.get("byte_order", "big")
         word_order = entity_config.get("word_order", "big")
+        register_type = entity_config.get("register_type", "holding")
         # For coils, return boolean directly
         if register_type == "coil":
             return bool(value)
