@@ -156,8 +156,8 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                         continue
                     
                     # Decode / format
-                    decoded = self._decode_value(raw_value, entity_config)
-                    formatted = self._format_value(decoded, entity_config)
+                    decoded = self._decode_value(raw_value, reg)
+                    formatted = self._format_value(decoded, reg)
                     new_data[key] = formatted
                 
                 except Exception as err:
