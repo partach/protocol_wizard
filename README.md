@@ -9,12 +9,12 @@
 The Protocol Wizard helps you build your home assistant devices without need for any yaml!
 
 **Configure and control devices entirely from the UI — no YAML, no restarts!**<br>
-Currently supports Modbus, SNMP, others to follow.
 
-Protocol Wizard lets you discover, test, and integrate devices (serial or IP, TCP/UDP) directly in Home Assistant — all through a simple, powerful interface.
+Protocol Wizard lets you discover, test, and integrate devices (Modbus, SNMP) directly in Home Assistant — all through a simple, powerful interface.<br>
+All run-time!
 
 <p align="center">
-  <img src="https://github.com/partach/ha_modbus_wizard/raw/main/ha-modbus-wizard-config-6.png" width="600" alt="Runtime entity configuration"/>
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config1.png" width="600" alt="Runtime entity configuration"/>
   <br><em>Add and configure sensors at runtime — no reboots required</em>
 </p>
 
@@ -35,7 +35,7 @@ Protocol Wizard lets you discover, test, and integrate devices (serial or IP, TC
 - Advanced options: scaling, offset, byte/word order, endianness, bit handling, and more
 
 <p align="center">
-  <img src="https://github.com/partach/ha_modbus_wizard/raw/main/HA-modbus-wizard-card.png" width="350" alt="Modbus Wizard Card"/>
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-card.png" width="350" alt="Modbus Wizard Card"/>
   <br><em>Probe and control any register in real-time with the included card</em>
 </p>
 
@@ -72,6 +72,11 @@ Too many resistors degrade the signal; none can cause reflections and errors.
 1. Click **+ Add Integration** → Choose **Protoco Wizard**
 2. Select Modbus / SNMP / etc.
 
+<p align="center">
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config3.png" width="600" alt="Runtime entity configuration"/>
+  <br><em>Add and configure sensors at runtime — no reboots required</em>
+</p>
+
 ### Step 2: Add Your Device (Modbus Example)
 1. Select connection type: **Serial** or **IP (TCP/UDP)**
 2. Enter:
@@ -84,13 +89,12 @@ Too many resistors degrade the signal; none can cause reflections and errors.
 → Success? You're ready!
 
 <p align="center">
-  <img src="https://github.com/partach/ha_modbus_wizard/raw/main/HA-modbus-wizard-config-2.png" width="200" alt="Step 1"/>
-  <img src="https://github.com/partach/ha_modbus_wizard/raw/main/HA-modbus-wizard-config-3.png" width="200" alt="Step 2"/>
-  <img src="https://github.com/partach/ha_modbus_wizard/raw/main/HA-modbus-wizard-config-1.png" width="600" alt="Step 3"/>
-  <br><em>Simple 3-step device setup</em>
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config4.png" width="300" alt="Step 1"/>
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config8.png" width="400" alt="Step 2"/>
+  <br><em>Simple device setup</em>
 </p>
 
-### Step 3: Explore with the Card (Recommended for Discovery)
+### Step 3: (Modbus only atm) Explore with the Card (Recommended for Discovery)
 Add the **Protocol Wizard Card** to a dashboard:
 - Edit dashboard → Add card → Search for **"Protocol Wizard Card"**
 - Select your device
@@ -109,14 +113,14 @@ Once you know which registers you want:
 - Advanced options available (click "Show advanced options")
 
 <p align="center">
-  <img src="https://github.com/partach/ha_modbus_wizard/raw/main/HA-modbus-wizard-config-5.png" width="400" alt="Add register form"/>
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config6.png" width="400" alt="Add register form"/>
   <br><em>Full control over sensor configuration</em>
 </p>
 
 Your new sensors appear immediately — no restart needed.  
 You can later edit or delete them from the same options menu.
 
-## Device Templates (Modbus example)
+## Device Templates
 Via the hub configuration (gear symbol) you can read device templates (in standard JSON format).
 These are easy to make (AI can be your friend) and help you import your device (or change) run-time with a few clicks.
 SDM630 basic profile is provided in the code. Just feed this to Grok, ChatGPT, Claude, etc. And ask to get this for device X/Y.
@@ -141,6 +145,34 @@ The Format (entry per register)
   }
 ]
 ```
+SNMP example
+```
+[
+  {
+    "name": "System Description",
+    "address": "1.3.6.1.2.1.1.1.0",
+    "data_type": "string",
+    "read_mode": "get"
+  },
+  {
+    "name": "System Uptime",
+    "address": "1.3.6.1.2.1.1.3.0",
+    "data_type": "integer",
+    "read_mode": "get"
+  },
+  {
+    "name": "System Name",
+    "address": "1.3.6.1.2.1.1.5.0",
+    "data_type": "string",
+    "read_mode": "get"
+  },
+  {
+    "name": "Interface Speeds",
+    "address": "1.3.6.1.2.1.2.2.1.5",
+    "read_mode": "walk"
+  }
+]
+```
 
 ## Register Configuration Fields (Modbus)
 
@@ -159,7 +191,7 @@ When adding or editing a register, the following fields are available:
 | **options**        | No       | -             | JSON mapping for select entity (e.g., `{"0": "Off", "1": "On"}`)                                                 |
 | **byte_order**     | No       | `big`         | Byte order within each word (big/little)                                                                         |
 | **word_order**     | No       | `big`         | Order of the 16-bit words (big/little) for multi-register values                                                 |
-| **allow_bits**     | No       | `False`       | Allow coil/discrete attempts during auto-detection                                                               |
+| **format**         | No       | -             | python formating for read values like {d}d {h}h {m}m for seconds to human readible value                         |
 | **min**            | No       | -             | Minimum value for writeable number entities                                                                       |
 | **max**            | No       | -             | Maximum value for writeable number entities                                                                       |
 | **step**           | No       | `1.0`         | Step size for number entity adjustments                                                                          |
