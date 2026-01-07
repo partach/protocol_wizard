@@ -23,7 +23,6 @@ from .const import (
     CONF_PROTOCOL_SNMP,
     CONF_BYTE_ORDER,
     CONF_WORD_ORDER,
-    CONF_ALLOW_BITS,
     CONF_REGISTER_TYPE,
 )
 
@@ -351,6 +350,7 @@ class ModbusSchemaHandler:
             vol.Optional("unit", default=defaults.get("unit", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
+            vol.Optional("options", default=defaults.get("options", "")): str,
             vol.Optional(
                 CONF_BYTE_ORDER,
                 default=defaults.get(CONF_BYTE_ORDER, "big")
@@ -366,11 +366,6 @@ class ModbusSchemaHandler:
                 selector.SelectSelector(
                     selector.SelectSelectorConfig(options=["big", "little"])
                 ),
-
-            vol.Optional(
-                CONF_ALLOW_BITS,
-                default=defaults.get(CONF_ALLOW_BITS, False)
-            ): bool,
 
         }
 
