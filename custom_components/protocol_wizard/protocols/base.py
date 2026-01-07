@@ -125,26 +125,43 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         try:
             ctx = _SafeFormatDict(value=value)
     
-            # Numeric handling
-            if isinstance(value, (int, float)):
-                # uptime support
-                total = float(value)
-                if total >= 0:
-                    ctx.update({
-                        "d": int(total // 86400),
-                        "h": int((total % 86400) // 3600),
-                        "m": int((total % 3600) // 60),
-                        "s": int(total % 60),
-                    })
-    
-                # scaling
-                scale = float(entity_config.get("scale", 1.0))
-                ctx["scaled"] = value * scale
-    
-            # String helpers
+            # ---------- STRING HELPERS ----------
             if isinstance(value, str):
                 ctx["upper"] = value.upper()
                 ctx["lower"] = value.lower()
+    
+            # ---------- NUMERIC HELPERS ----------
+            if isinstance(value, (int, float)):
+                total = int(value)
+                remaining = total
+    
+                wants_d = "{d}" in format_str
+                wants_h = "{h}" in format_str
+                wants_m = "{m}" in format_str
+                wants_s = "{s}" in format_str
+    
+                if wants_d:
+                    ctx["d"] = remaining // 86400
+                    remaining %= 86400
+    
+                if wants_h:
+                    ctx["h"] = (
+                        remaining // 3600
+                        if wants_d or wants_m or wants_s
+                        else total // 3600
+                    )
+                    remaining %= 3600
+    
+                if wants_m:
+                    ctx["m"] = (
+                        remaining // 60
+                        if wants_h or wants_s
+                        else total // 60
+                    )
+                    remaining %= 60
+    
+                if wants_s:
+                    ctx["s"] = remaining
     
             return format_str.format_map(ctx)
     
