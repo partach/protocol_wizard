@@ -51,131 +51,122 @@ class ModbusCoordinator(BaseProtocolCoordinator):
     # ----------------------------------------------------------------
     # BaseProtocolCoordinator Implementation
     # ----------------------------------------------------------------
-    
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch latest data from configured Modbus entities."""
+        """Fetch latest data from configured entities."""
         if not await self._async_connect():
-            _LOGGER.warning("[Modbus] Could not connect to device")
+            _LOGGER.warning("[Modbus] Could not connect to device — skipping update")
             return {}
-        if not self.client.is_connected: # this is needed to make sure we dont get loooong startup time if there is something wrong with the device
-            _LOGGER.debug("[Modbus] Hub reports disconnected — skipping entity update")
-            return {}        
+
         entities = self.my_config_entry.options.get(CONF_ENTITIES, [])
         if not entities:
             return {}
-        
-        updated_entities = [dict(reg) for reg in entities]
-        options_changed = False
+
         new_data = {}
-        
+        failed_count = 0
+        consecutive_failures = 0
+        max_consecutive_failures = 2
+
         async with self._lock:
-            for idx, reg in enumerate(updated_entities):
-                key = reg_key(reg["name"])
-                address = int(reg["address"])
-                count = int(TYPE_SIZES.get(reg["data_type"].lower(), 1))
-                reg_type = reg.get("register_type", "holding")
-                
-                result = None
-                try:
-                    # Auto-detect register type
-                    if reg_type == "auto":
-                        methods = [
-                            ("holding", self.client.raw_client.read_holding_registers),
-                            ("input", self.client.raw_client.read_input_registers),
-                        ]
-                        if reg.get("allow_bits", False):
-                            methods += [
-                                ("coil", self.client.raw_client.read_coils),
-                                ("discrete", self.client.raw_client.read_discrete_inputs),
-                            ]
-                        
-                        for name, method in methods:
-                            try:
-                                result = await method(
-                                    address=address,
-                                    count=count,
-                                    device_id=self.client.slave_id,
-                                )
-                                if not result.isError():
-                                    if name in ("holding", "input") and hasattr(result, "registers"):
-                                        reg_type = name
-                                        updated_entities[idx]["register_type"] = name
-                                        options_changed = True
-                                        break
-                                    if name in ("coil", "discrete") and hasattr(result, "bits"):
-                                        reg_type = name
-                                        updated_entities[idx]["register_type"] = name
-                                        options_changed = True
-                                        break
-                            except Exception:
-                                continue
-                        
-                        if reg_type == "auto":
-                            _LOGGER.warning(
-                                "Auto-detect failed for register '%s' at address %s",
-                                reg["name"], address
-                            )
-                            continue
-                    
-                    # Direct read if not auto or auto succeeded
-                    if result is None:
-                        try:
-                            raw_client = self.client.raw_client
-                            if reg_type == "holding":
-                                result = await raw_client.read_holding_registers(
-                                    address=address, count=count, device_id=self.client.slave_id
-                                )
-                            elif reg_type == "input":
-                                result = await raw_client.read_input_registers(
-                                    address=address, count=count, device_id=self.client.slave_id
-                                )
-                            elif reg_type == "coil":
-                                result = await raw_client.read_coils(
-                                    address=address, count=count, device_id=self.client.slave_id
-                                )
-                            elif reg_type == "discrete":
-                                result = await raw_client.read_discrete_inputs(
-                                    address=address, count=count, device_id=self.client.slave_id
-                                )
-                            else:
-                                _LOGGER.error("Unknown register_type '%s' for '%s'", reg_type, reg["name"])
-                                continue
-                        except Exception:
-                            _LOGGER.error("Modbus read failed, Device ok?")
-                            continue
-                    if result.isError():
-                        _LOGGER.warning(
-                            "Read failed for '%s' (type=%s, addr=%s): %s",
-                            reg["name"], reg_type, address, result
-                        )
-                        continue
-                    
-                    # Extract values
-                    if reg_type in ("coil", "discrete"):
-                        values = result.bits[:count]
-                    else:
-                        values = result.registers[:count]
-                    
-                    if not values:
-                        _LOGGER.warning("No values returned for register '%s'", reg["name"])
-                        continue
-                    
-                    # Decode / format
-                    decoded = self._decode_value(values, reg)
-                    formatted = self._format_value(decoded, reg)
-                    new_data[key] = formatted
-                
-                except Exception as err:
-                    _LOGGER.error(
-                        "Error updating register '%s': %s",
-                        reg.get("name"), err, exc_info=True
+            for entity in entities:
+                # Early abort if device is clearly dead
+                if consecutive_failures >= max_consecutive_failures:
+                    _LOGGER.warning(
+                        "[Modbus] Too many consecutive failures (%d) — aborting update cycle",
+                        max_consecutive_failures
                     )
-        
-        if options_changed:
-            _LOGGER.info("Detected register types updated")
-        
+                    await self.client.disconnect()
+                    break
+
+                result = await self._read_entity(entity)
+                if result is None:
+                    failed_count += 1
+                    consecutive_failures += 1
+                    continue
+
+                consecutive_failures = 0  # reset on success
+                key = reg_key(entity["name"])
+                decoded = self._decode_value(result.values, entity)
+                formatted = self._format_value(decoded, entity)
+                new_data[key] = formatted
+
+        # Optional final health check
+        if failed_count > len(entities) // 2:
+            _LOGGER.info("[Modbus] High failure rate (%d/%d) — will retry connection", failed_count, len(entities))
+
         return new_data
+
+    async def _read_entity(self, entity: dict) -> Any | None:
+        """Read one entity — handles auto-detect and direct read."""
+        address = int(entity["address"])
+        count = int(TYPE_SIZES.get(entity["data_type"].lower(), 1))
+        reg_type = entity.get("register_type", "holding")
+
+        # Auto-detect
+        if reg_type == "auto":
+            detected = await self._auto_detect_type(address, count)
+            if detected is None:
+                return None
+            reg_type, result = detected
+            entity["register_type"] = reg_type
+        else:
+            result = await self._direct_read(reg_type, address, count)
+
+        if result is None or result.isError():
+            return None
+
+        # Extract values
+        if reg_type in ("coil", "discrete"):
+            values = result.bits[:count]
+        else:
+            values = result.registers[:count]
+
+        if not values:
+            _LOGGER.warning("Empty response for '%s'", entity["name"])
+            return None
+
+        return type("ReadResult", (), {"values": values})()
+
+    async def _auto_detect_type(self, address: int, count: int) -> tuple[str, Any] | None:
+        """Try different register types until one succeeds."""
+        methods = [
+            ("holding", self.client.raw_client.read_holding_registers),
+            ("input", self.client.raw_client.read_input_registers),
+            ("coil", self.client.raw_client.read_coils),
+            ("discrete", self.client.raw_client.read_discrete_inputs),        
+        ]
+
+        for name, method in methods:
+            try:
+                result = await method(address=address, count=count, device_id=self.client.slave_id)
+                if not result.isError():
+                    return name, result
+            except Exception:
+                continue
+
+        _LOGGER.warning("Auto-detect failed at address %d", address)
+        return None
+
+    async def _direct_read(self, reg_type: str, address: int, count: int) -> Any | None:
+        """Perform direct read for known register type."""
+        method_map = {
+            "holding": self.client.raw_client.read_holding_registers,
+            "input": self.client.raw_client.read_input_registers,
+            "coil": self.client.raw_client.read_coils,
+            "discrete": self.client.raw_client.read_discrete_inputs,
+        }
+
+        method = method_map.get(reg_type)
+        if method is None:
+            _LOGGER.error("Unknown register_type '%s'", reg_type)
+            return None
+
+        try:
+            return await method(address=address, count=count, device_id=self.client.slave_id)
+        except Exception as err:
+            _LOGGER.error("Direct read failed for type %s: %s", reg_type, err)
+            return None
     
+   
     def _decode_value(
         self,
         raw_value: Any,
