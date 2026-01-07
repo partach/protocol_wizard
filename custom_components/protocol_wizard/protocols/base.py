@@ -47,7 +47,11 @@ class BaseProtocolClient(ABC):
         """Connection status."""
         pass
 
-
+class _SafeFormatDict(dict):
+    """Returns placeholder unchanged if key is missing."""
+    def __missing__(self, key):
+        return "{" + key + "}"
+            
 class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
     """Abstract coordinator for any protocol."""
     
@@ -110,64 +114,39 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         pass
 
     def _format_value(self, value: Any, entity_config: dict) -> Any:
-        """Apply user-defined format string to the decoded value."""
         format_str = str(entity_config.get("format", "")).strip()
         if not format_str:
             return value
     
-        _LOGGER.debug("Formatting value %s with format '%s'", value, format_str)
+        _LOGGER.debug(
+            "Formatting value %s with format '%s'", value, format_str
+        )
     
         try:
-            # -------------------------
-            # Numeric values
-            # -------------------------
+            ctx = _SafeFormatDict(value=value)
+    
+            # Numeric handling
             if isinstance(value, (int, float)):
+                # uptime support
+                total = float(value)
+                if total >= 0:
+                    ctx.update({
+                        "d": int(total // 86400),
+                        "h": int((total % 86400) // 3600),
+                        "m": int((total % 3600) // 60),
+                        "s": int(total % 60),
+                    })
     
-                # Uptime formatting: seconds → d:h:m:s
-                if any(t in format_str for t in ("{d}", "{h}", "{m}", "{s}")):
-                    try:
-                        total = float(value)
-                        if total < 0:
-                            return value
+                # scaling
+                scale = float(entity_config.get("scale", 1.0))
+                ctx["scaled"] = value * scale
     
-                        d = int(total // 86400)
-                        h = int((total % 86400) // 3600)
-                        m = int((total % 3600) // 60)
-                        s = int(total % 60)
-    
-                        return format_str.format(
-                            d=d, h=h, m=m, s=s, value=value
-                        )
-                    except Exception as err:
-                        _LOGGER.debug("Uptime formatting failed: %s", err)
-                        return value
-    
-                # Scaled formatting
-                if "{scaled" in format_str:
-                    scale = float(entity_config.get("scale", 1.0))
-                    scaled = value * scale
-    
-                    # Let Python handle precision via format string
-                    return format_str.format(
-                        scaled=scaled,
-                        value=value,
-                    )
-    
-                # Generic numeric formatting
-                return format_str.format(value=value)
-    
-            # -------------------------
-            # String values
-            # -------------------------
+            # String helpers
             if isinstance(value, str):
-                if "{upper}" in format_str:
-                    return format_str.replace("{upper}", value.upper())
-                if "{lower}" in format_str:
-                    return format_str.replace("{lower}", value.lower())
+                ctx["upper"] = value.upper()
+                ctx["lower"] = value.lower()
     
-                return format_str.format(value=value)
-    
-            return value
+            return format_str.format_map(ctx)
     
         except Exception as err:
             _LOGGER.debug(
@@ -176,6 +155,7 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
                 err,
             )
             return value
+
     
     @abstractmethod
     async def async_read_entity(
