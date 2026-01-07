@@ -1,0 +1,186 @@
+{
+  "title": "Protocol Wizard",
+  "description": "Universal protocol integration with UI-based device and entity configuration.",
+
+  "config": {
+    "step": {
+      "user": {
+        "title": "Select Protocol",
+        "description": "Choose the protocol for this device.",
+        "data": {
+          "protocol": "Protocol"
+        }
+      },
+      "modbus_common": {
+        "title": "Modbus Device Configuration",
+        "description": "Common settings for Modbus devices.",
+        "data": {
+          "name": "Device Name",
+          "connection_type": "Connection Type",
+          "slave_id": "Slave ID",
+          "first_reg": "First Register Address (for connection test)",
+          "first_reg_size": "Number of Registers to Read (for connection test)",
+          "update_interval": "Update Interval (seconds)"
+        }
+      },
+      "modbus_serial": {
+        "title": "Modbus Serial Configuration",
+        "description": "Serial port settings.",
+        "data": {
+          "serial_port": "Serial Port",
+          "baudrate": "Baud Rate",
+          "parity": "Parity",
+          "stopbits": "Stop Bits",
+          "bytesize": "Data Bits"
+        }
+      },
+      "modbus_ip": {
+        "title": "Modbus TCP/UDP Configuration",
+        "description": "Network settings.",
+        "data": {
+          "host": "Host / IP Address",
+          "port": "Port",
+          "transport_type": "Transport Type"
+        }
+      },
+      "snmp_common": {
+        "title": "SNMP Device Configuration",
+        "description": "SNMP connection settings.",
+        "data": {
+          "name": "Device Name",
+          "host": "Host / IP Address",
+          "port": "Port",
+          "community": "Community String",
+          "version": "SNMP Version",
+          "update_interval": "Update Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the device. Check settings and network/port access.",
+      "invalid_auth": "Invalid authentication credentials.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "no_templates": "No device templates found in the templates folder."
+    }
+  },
+
+  "options": {
+    "step": {
+      "init": {
+        "title": "Protocol Wizard Options",
+        "menu_options": {
+          "settings": "Settings",
+          "add_entity": "Add Entity",
+          "load_template": "Load Template",
+          "list_entities": "Entities",
+          "edit_entity": "Edit Entity"
+        }
+      },
+      "settings": {
+        "title": "Device Settings",
+        "data": {
+          "update_interval": "Update Interval (seconds)"
+        }
+      },
+      "add_entity": {
+        "title": "Add New Entity"
+      },
+      "edit_entity_form": {
+        "title": "Edit Entity"
+      },
+      "load_template": {
+        "title": "Load Device Template",
+        "description": "Available templates: {templates}",
+        "data": {
+          "template": "Template"
+        }
+      }
+    },
+    "error": {
+      "load_failed": "Failed to load template.",
+      "template_empty_or_duplicate": "Template contains no new entities or all are duplicates."
+    }
+  },
+
+  "entity": {
+    "sensor": {
+      "hub": {
+        "name": "{protocol} Hub",
+        "state": {
+          "connected": "Connected",
+          "disconnected": "Disconnected",
+          "unknown": "Unknown"
+        }
+      }
+    }
+  },
+
+  "services": {
+    "read_register": {
+      "name": "Read Register",
+      "description": "Read a Modbus register and optionally decode it.",
+      "fields": {
+        "address": {
+          "name": "Address",
+          "description": "Register address (0-based)"
+        },
+        "register_type": {
+          "name": "Register Type",
+          "description": "Use 'auto' to try all types (recommended)"
+        },
+        "data_type": {
+          "name": "Data Type",
+          "description": "How to interpret the value(s)"
+        },
+        "size": {
+          "name": "Size",
+          "description": "Number of registers/bits to read"
+        },
+        "options": {
+          "name": "Options",
+          "description": "json format for select {"0": "Relay off","1": "Relay on",...}
+        },
+        "byte_order": {
+          "name": "Byte Order",
+          "description": "Byte order for multi-byte values"
+        },
+        "word_order": {
+          "name": "Word Order",
+          "description": "Word order for multi-register values"
+        },
+        "raw": {
+          "name": "Raw Mode",
+          "description": "Return raw register values instead of decoded"
+        }
+      }
+    },
+    "write_register": {
+      "name": "Write Register",
+      "description": "Write a value to a Modbus register with proper encoding.",
+      "fields": {
+        "address": {
+          "name": "Register Address",
+          "description": "Modbus register address"
+        },
+        "value": {
+          "name": "Value",
+          "description": "Value to write (packed according to data type)"
+        },
+        "data_type": {
+          "name": "Data Type",
+          "description": "How the value should be encoded"
+        },
+        "byte_order": {
+          "name": "Byte Order",
+          "description": "Byte order inside a register"
+        },
+        "word_order": {
+          "name": "Word Order",
+          "description": "Register order for multi-register values"
+        }
+      }
+    }
+  }
+}
