@@ -213,6 +213,23 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
     @property
     def native_value(self):
         return self.coordinator.data.get(self._key)
+        
+    @property
+    def native_min_value(self) -> float | None:
+        return self._config.get("min")
+
+    @property
+    def native_max_value(self) -> float | None:
+        return self._config.get("max")
+
+    @property
+    def native_step(self) -> float | None:
+        return self._config.get("step", 1.0)
+
+    @property
+    def mode(self) -> NumberMode:
+        """Return the mode of the number entity."""
+        return NumberMode.BOX  # ← This forces the box input instead of slider
     
     async def async_set_native_value(self, value: float) -> None:
         """Write value to protocol."""
