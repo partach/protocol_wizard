@@ -114,6 +114,7 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         format_str = entity_config.get("format", "").strip()
         if not format_str:
             return value
+        _LOGGER.debug("Formatting for %s with %s",value,format_str)
 
         try:
             if isinstance(value, (int, float)):
