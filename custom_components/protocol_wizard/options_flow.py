@@ -415,6 +415,15 @@ class SNMPSchemaHandler:
         return vol.Schema({
             vol.Required("name", default=defaults.get("name")): str,
             vol.Required("address", default=defaults.get("address")): str,
+            vol.Optional("read_mode", default="get"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "get", "label": "Get (single value)"},
+                        {"value": "walk", "label": "Walk (subtree table)"},
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
             vol.Required("data_type", default=defaults.get("data_type", "string")):
                 selector.SelectSelector(
                     selector.SelectSelectorConfig(
