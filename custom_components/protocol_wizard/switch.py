@@ -26,7 +26,7 @@ class SwitchManager(BaseEntityManager):
         if entity_config.get("options"):
             return False
 
-        return reg_type == "coil" and rw in ("write", "rw")"rw")
+        return reg_type == "coil" and rw in ("write", "rw")
 
     def _create_entity(self, entity_config: dict, unique_id: str, key: str):
         return ProtocolWizardSwitchBase(
