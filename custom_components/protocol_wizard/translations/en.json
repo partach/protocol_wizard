@@ -139,8 +139,8 @@
           "description": "Number of registers/bits to read"
         },
         "options": {
-          "name": "Options",
-          "description": "json format for select {"0": "Relay off","1": "Relay on",...}
+          "name": "Options Mapping",
+          "description": "Optional JSON mapping for select entities (e.g. {\"0\": \"Off\", \"1\": \"On\"}). When provided, a dropdown (select) entity is created instead of a number or switch."
         },
         "byte_order": {
           "name": "Byte Order",
