@@ -64,55 +64,73 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                         if not walk_results:
                             new_data[key] = "No results"
                         else:
-                            # Sort results by OID for clean order
+                            # Sort for consistent order
                             walk_results.sort(key=lambda x: x[0])
 
-                            walk_lines = []
-                            current_entry = None
+                            # Standard column names we care about
+                            STANDARD_COLUMNS = {
+                                "1": "Index",
+                                "2": "Description",
+                                "3": "Type",
+                                "4": "MTU",
+                                "5": "Speed",
+                                "6": "MAC Address",
+                                "7": "Admin Status",
+                                "8": "Oper Status",
+                                "10": "In Octets",
+                                "16": "Out Octets",
+                                "18": "In Discards",
+                                "19": "In Errors",
+                                "24": "Out Discards",
+                                "25": "Out Errors",
+                            }
+
+                            grouped = {}
                             for oid_str, value in walk_results:
                                 parts = oid_str.split('.')
                                 if len(parts) < 2:
-                                    walk_lines.append(f"{oid_str} = {value.prettyPrint() if hasattr(value, 'prettyPrint') else value}")
                                     continue
-
                                 entry_id = parts[-2]
                                 column_id = parts[-1]
 
-                                if entry_id != current_entry:
-                                    if current_entry is not None:
-                                        walk_lines.append("")  # blank line between entries
-                                    walk_lines.append(f"--- Entry {entry_id} ---")
-                                    current_entry = entry_id
-
-                                # Standard column names
-                                col_names = {
-                                    "1": "Index",
-                                    "2": "Description",
-                                    "3": "Type",
-                                    "4": "MTU",
-                                    "5": "Speed",
-                                    "6": "MAC Address",
-                                    "7": "Admin Status",
-                                    "8": "Oper Status",
-                                    "10": "In Octets",
-                                    "16": "Out Octets",
-                                    "18": "In Discards",
-                                    "19": "In Errors",
-                                    "24": "Out Discards",
-                                    "25": "Out Errors",
-                                }
-
-                                col_name = col_names.get(column_id, f"Column {column_id}")
+                                if entry_id not in grouped:
+                                    grouped[entry_id] = {}
 
                                 val_str = value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
+                                grouped[entry_id][column_id] = val_str
 
-                                # Skip boring repeated index values (common in vendor tables)
-                                if val_str == entry_id and column_id not in col_names:
-                                    continue
+                            walk_lines = []
+                            entries = sorted(grouped.keys(), key=lambda x: int(x) if x.isdigit() else 0)
 
-                                walk_lines.append(f"  {col_name}: {val_str}")
+                            for entry_id in entries:
+                                entry = grouped[entry_id]
+                                walk_lines.append(f"--- Port {entry_id} ---")
 
-                            new_data[key] = f"Attr.({len(walk_lines)} lines)"
+                                # Only show standard columns that have non-empty/non-default values
+                                shown = False
+                                for col_id in sorted(entry.keys(), key=lambda x: int(x)):
+                                    if col_id not in STANDARD_COLUMNS:
+                                        continue  # Skip vendor columns entirely
+
+                                    val = entry[col_id]
+                                    # Skip boring defaults (0, empty, index repeat)
+                                    if val in ("0", "", entry_id):
+                                        continue
+
+                                    col_name = STANDARD_COLUMNS[col_id]
+                                    walk_lines.append(f"  {col_name}: {val}")
+                                    shown = True
+
+                                if not shown:
+                                    walk_lines.append("  (no activity)")
+
+                                walk_lines.append("")  # blank line between ports
+
+                            # Remove trailing blank
+                            if walk_lines and not walk_lines[-1]:
+                                walk_lines.pop()
+
+                            new_data[key] = f"Walk complete ({len(entries)} ports)"
                             new_data[f"{key}_raw"] = "\n".join(walk_lines)
                     else:
                         raw_value = await self.client.read(oid)
