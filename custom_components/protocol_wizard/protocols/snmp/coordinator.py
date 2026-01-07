@@ -118,9 +118,10 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                         raw_value = await self.client.read(oid)
                         if raw_value is None:
                             continue
-                        decoded = self._decode_value(raw_value, entity)
-                        if decoded is not None:
-                            new_data[key] = decoded
+                        # Decode / format
+                        decoded = self._decode_value(raw_value, entity_config)
+                        formatted = self._format_value(decoded, entity_config)
+                        new_data[key] = formatted
 
                 except Exception as err:
                     _LOGGER.error("Error processing %s %s: %s", read_mode, oid, err)
