@@ -21,6 +21,11 @@ CONF_UPDATE_INTERVAL = "update_interval"
 CONF_SLAVE_ID = "slave_id"
 CONF_FIRST_REG = "first_register"
 CONF_FIRST_REG_SIZE = "first_register_size"
+CONF_ADVANCED = "advanced"
+CONF_BYTE_ORDER = "byte_order"
+CONF_WORD_ORDER = "word_order"
+CONF_ALLOW_BITS = "allow_bits"
+CONF_REGISTER_TYPE = "register_type"
 
 # Serial settings (Modbus)
 CONF_SERIAL_PORT = "serial_port"
@@ -39,6 +44,7 @@ CONF_REGISTERS = "registers"
 CONF_PROTOCOL_MODBUS = "modbus"
 CONF_PROTOCOL_SNMP = "snmp"
 CONF_PROTOCOL = "protocol"
+CONF_IP = "IP"
 
 # Defaults
 DEFAULT_SLAVE_ID = 1

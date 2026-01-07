@@ -13,8 +13,8 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
-from pymodbus.framer import FramerType
-from pymodbus.exceptions import ModbusException
+# from pymodbus.framer import FramerType
+# from pymodbus.exceptions import ModbusException
 
 from .const import (
     CONNECTION_TYPE_SERIAL,
@@ -44,6 +44,7 @@ from .const import (
     CONF_PROTOCOL_MODBUS,
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
+    CONF_IP,
 )
 from .options_flow import ProtocolWizardOptionsFlow
 from .protocols import ProtocolRegistry
@@ -111,7 +112,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
             if user_input[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_SERIAL:
                 return await self.async_step_modbus_serial()
-            return await self.async_step_modbus_tcp()
+            return await self.async_step_modbus_ip()
         
         return self.async_show_form(
             step_id="modbus_common",
@@ -212,7 +213,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_modbus_tcp(self, user_input: dict[str, Any] | None = None) -> FlowResult:
+    async def async_step_modbus_ip(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Modbus: TCP/UDP-specific settings."""
         errors = {}
 
@@ -222,7 +223,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     **self._data,
                     CONF_HOST: user_input[CONF_HOST],
                     CONF_PORT: user_input[CONF_PORT],
-                    CONF_PROTOCOL: user_input[CONF_PROTOCOL],
+                    CONF_IP: user_input[CONF_IP],
                 }
 
                 await self._async_test_modbus_connection(final_data)
@@ -237,14 +238,14 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
 
         return self.async_show_form(
-            step_id="modbus_tcp",
+            step_id="modbus_ip",
             data_schema=vol.Schema({
                 vol.Required(CONF_NAME, default=self._data.get(CONF_NAME, "Modbus Hub")): str,
                 vol.Required(CONF_HOST): str,
                 vol.Required(CONF_PORT, default=DEFAULT_TCP_PORT): vol.All(
                     vol.Coerce(int), vol.Range(min=1, max=65535)
                 ),
-                vol.Required(CONF_PROTOCOL, default=CONNECTION_TYPE_TCP): selector.SelectSelector(
+                vol.Required(CONF_IP, default=CONNECTION_TYPE_TCP): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=[
                             selector.SelectOptionDict(value=CONNECTION_TYPE_TCP, label="TCP"),
@@ -268,21 +269,24 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     parity=data.get(CONF_PARITY, DEFAULT_PARITY),
                     stopbits=data.get(CONF_STOPBITS, DEFAULT_STOPBITS),
                     bytesize=data.get(CONF_BYTESIZE, DEFAULT_BYTESIZE),
-                    timeout=5,
+                    timeout=3,
+                    retries=1,
                 )
-            elif data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_IP and data[CONF_PROTOCOL] == CONNECTION_TYPE_UDP:
+            elif data[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_IP and data[CONF_IP] == CONNECTION_TYPE_UDP:
                 client = AsyncModbusUdpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
-                    framer=FramerType.RTU,
-                    timeout=5,
+#                    framer=FramerType.SOCKET,
+                    timeout=3,
+                    retries=1,
                 )
             else:
                 client = AsyncModbusTcpClient(
                     host=data[CONF_HOST],
                     port=data[CONF_PORT],
-                    framer=FramerType.RTU,
-                    timeout=5,
+ #                   framer=FramerType.SOCKET,
+                    timeout=3,
+                    retries=1,
                 )
 
             await client.connect()
@@ -294,8 +298,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             slave_id = int(data[CONF_SLAVE_ID])
 
             methods = [
-                ("holding registers", client.read_holding_registers),
                 ("input registers", client.read_input_registers),
+                ("holding registers", client.read_holding_registers),
                 ("coils", client.read_coils),
                 ("discrete inputs", client.read_discrete_inputs),
             ]
@@ -317,7 +321,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     _LOGGER.debug("Test read failed for %s at addr %d: %s", name, address, inner_err)
 
             if not success:
-                raise ModbusException(
+                 _LOGGER.debug(
                     f"Could not read {count} value(s) from address {address} using any register type. "
                     "Check address, size, slave ID, or device compatibility."
                 )
