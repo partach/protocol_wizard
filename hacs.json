@@ -1,0 +1,7 @@
+{
+  "name": "Protocol Wizard",
+  "render_readme": true,
+  "zip_release": false,
+  "homeassistant": "2025.1.0",
+  "hacs": "0.24.0"
+}
