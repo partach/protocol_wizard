@@ -212,14 +212,14 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
     # ------------------------------------------------------------------
 
     async def async_step_load_template(self, user_input=None):
+        """Load a device template — protocol-specific folder."""
         if user_input:
             filename = user_input["template"]
-            # Determine protocol-specific folder
+            # Protocol-specific template directory
+            protocol_subdir = "modbus" if self.protocol == CONF_PROTOCOL_MODBUS else "snmp"
             template_dir = self.hass.config.path(
-                "custom_components", DOMAIN, "templates"
+                "custom_components", DOMAIN, "templates", protocol_subdir
             )
-            if self.protocol == CONF_PROTOCOL_SNMP:
-                template_dir = os.path.join(template_dir, "snmp")
             path = os.path.join(template_dir, f"{filename}.json")
 
             try:
@@ -233,6 +233,13 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
                     )
                 self._save_entities()
                 return await self.async_step_init()
+            except FileNotFoundError:
+                _LOGGER.error("Template file not found: %s", path)
+                return self.async_show_form(
+                    step_id="load_template",
+                    data_schema=self._get_template_schema(),
+                    errors={"base": "template_not_found"},
+                )
             except Exception as err:
                 _LOGGER.error("Template load failed: %s", err)
                 return self.async_show_form(
@@ -241,33 +248,24 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
                     errors={"base": "load_failed"},
                 )
 
-        # List templates — protocol-specific
-        base_dir = self.hass.config.path("custom_components", DOMAIN, "templates")
-        protocol_dir = os.path.join(base_dir, "snmp" if self.protocol == CONF_PROTOCOL_SNMP else "")
+        # List templates from protocol-specific folder
+        protocol_subdir = "modbus" if self.protocol == CONF_PROTOCOL_MODBUS else "snmp"
+        template_dir = self.hass.config.path(
+            "custom_components", DOMAIN, "templates", protocol_subdir
+        )
 
         try:
             files = await self.hass.async_add_executor_job(
                 lambda: [
-                    f[:-5] for f in os.listdir(protocol_dir)
+                    f[:-5]  # strip .json
+                    for f in os.listdir(template_dir)
                     if f.endswith(".json")
-                ] if os.path.exists(protocol_dir) else []
+                ] if os.path.exists(template_dir) else []
             )
             templates = sorted(files)
-        except Exception:
+        except Exception as err:
+            _LOGGER.debug("Failed to list templates in %s: %s", template_dir, err)
             templates = []
-
-        if not templates:
-            # Fallback to general templates if no protocol-specific
-            try:
-                files = await self.hass.async_add_executor_job(
-                    lambda: [
-                        f[:-5] for f in os.listdir(base_dir)
-                        if f.endswith(".json")
-                    ] if os.path.exists(base_dir) else []
-                )
-                templates = sorted(files)
-            except Exception:
-                templates = []
 
         if not templates:
             return self.async_abort(reason="no_templates")
@@ -282,6 +280,7 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
                     )
                 )
             }),
+            description_placeholders={"templates": ", ".join(templates)},
         )
     # ------------------------------------------------------------------
     # INTERNAL
