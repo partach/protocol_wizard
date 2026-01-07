@@ -14,10 +14,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity,NumberMode
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers import entity_registry as er
-from homeassistant.components.number import NumberMode
 
 from .protocols.base import BaseProtocolCoordinator
 
