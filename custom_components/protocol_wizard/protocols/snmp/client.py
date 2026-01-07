@@ -129,9 +129,8 @@ class SNMPClient(BaseProtocolClient):
 
         results = []
         try:
-            # Use next_cmd for compatibility with v1 and v2c
-
-            error_indication, error_status, error_index, var_binds = await next_cmd(
+            # Get the async iterator
+            iterator = await next_cmd(
                 self._engine,
                 self._community_data,
                 self._transport,
@@ -141,16 +140,17 @@ class SNMPClient(BaseProtocolClient):
                 ignoreNonIncreasingOid=True,
             )
 
+            # Iterate over all responses
+            async for error_indication, error_status, error_index, var_binds in iterator:
+                if error_indication:
+                    _LOGGER.error("SNMP walk error indication: %s", error_indication)
+                    break
+                if error_status:
+                    # Normal end of MIB — stop walking
+                    break
 
-            if error_indication:
-                _LOGGER.error("SNMP walk error: %s", error_indication)
-                break
-            if error_status:
-                # End of MIB reached — normal for walk
-                break
-
-            for oid, value in var_binds:
-                results.append((oid.prettyPrint(), value))
+                for oid, value in var_binds:
+                    results.append((oid.prettyPrint(), value))
 
         except Exception as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
