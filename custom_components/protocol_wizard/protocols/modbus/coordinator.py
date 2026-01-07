@@ -156,7 +156,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                         continue
                     
                     # Decode / format
-                    decoded = self._decode_value(raw_value, reg)
+                    decoded = self._decode_value(values, reg)
                     formatted = self._format_value(decoded, reg)
                     new_data[key] = formatted
                 
