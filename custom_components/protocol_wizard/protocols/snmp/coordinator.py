@@ -54,29 +54,38 @@ class SNMPCoordinator(BaseProtocolCoordinator):
         async with self._lock:
             for entity in entities:
                 key = oid_key(entity["name"])
-                oid = entity["address"]  # In SNMP, "address" is the OID string
+                oid = entity["address"]
                 read_mode = entity.get("read_mode", "get")
 
                 try:
                     if read_mode == "walk":
                         walk_results = await self.client.walk(oid)
+
                         if not walk_results:
-                            decoded = "No results"
+                            new_data[key] = "No results"
+                            new_data[f"{key}_walk"] = ""
                         else:
-                            decoded_lines = [
+                            walk_lines = [
                                 f"{oid_str} = {value.prettyPrint() if hasattr(value, 'prettyPrint') else value}"
                                 for oid_str, value in walk_results
                             ]
-                            decoded = "\n".join(decoded_lines)
+                            # Short summary in state (first few entries or count)
+                            summary = f"Walk complete ({len(walk_lines)} entries)"
+                            if len(walk_lines) <= 3:
+                                summary = "\n".join(walk_lines[:3])
+                            new_data[key] = summary
+
+                            # Full walk in dedicated attribute key
+                            new_data[f"{key}_walk"] = "\n".join(walk_lines)
                     else:
                         raw_value = await self.client.read(oid)
                         if raw_value is None:
                             continue
+
                         decoded = self._decode_value(raw_value, entity)
-    
-                    if decoded is not None:
-                        new_data[key] = decoded
-    
+                        if decoded is not None:
+                            new_data[key] = decoded
+
                 except Exception as err:
                     _LOGGER.error("Error processing %s %s: %s", read_mode, oid, err)
 
