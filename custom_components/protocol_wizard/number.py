@@ -27,11 +27,11 @@ class NumberManager(BaseEntityManager):
         if reg_type == "coil":
             return False
 
-    # Do not create if it has options (that's a select)
-    if entity_config.get("options"):
-        return False
-
-    return rw in ("write", "rw")
+        # Do not create if it has options (that's a select)
+        if entity_config.get("options"):
+            return False
+    
+        return rw in ("write", "rw")
     
     def _create_entity(self, entity_config: dict, unique_id: str, key: str):
         """Create a number entity."""
