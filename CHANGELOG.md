@@ -1,8 +1,11 @@
 ## Changelog
 
+### [0.3.0] - Public Release
+- Tried and tested
+
 ### [0.2.1] - Device tamplates and other Major additions
 - Added format strings
-- 
+  
 ### [0.2.0] - Device tamplates and other Major additions
 - Fully tested and working Modbus and SNMP support
 - Many improvements
