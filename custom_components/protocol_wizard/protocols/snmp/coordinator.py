@@ -76,7 +76,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                             new_data[key] = summary
 
                             # Full walk in dedicated attribute key
-                            new_data[f"{key}_walk"] = "\n".join(walk_lines)
+                            new_data[f"{key}_raw"] = "\n".join(walk_lines)
                     else:
                         raw_value = await self.client.read(oid)
                         if raw_value is None:
