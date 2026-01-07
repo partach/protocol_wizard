@@ -175,6 +175,18 @@ class ProtocolWizardSensorBase(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         return self.coordinator.last_update_success and self.coordinator.data is not None
 
+    @property
+    def extra_state_attributes(self):
+        """Return extra state attributes for walk output."""
+        attrs = super().extra_state_attributes or {}
+
+        # Check if coordinator has raw data for this entity
+        raw_key = f"{self._key}_raw"
+        if raw_key in self.coordinator.data:
+            attrs["raw_output"] = self.coordinator.data[raw_key]
+
+        return attrs
+
 
 class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
     """Protocol-agnostic number entity."""
