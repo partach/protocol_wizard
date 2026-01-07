@@ -17,6 +17,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.number import NumberEntity
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers import entity_registry as er
+from homeassistant.components.number import NumberMode
 
 from .protocols.base import BaseProtocolCoordinator
 
