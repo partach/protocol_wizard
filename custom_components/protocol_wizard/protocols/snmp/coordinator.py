@@ -70,7 +70,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                                 for oid_str, value in walk_results
                             ]
                             # Short summary in state (first few entries or count)
-                            summary = f"Walk complete ({len(walk_lines)} entries)"
+                            summary = f"(Attr.{len(walk_lines)} lines)"
                             if len(walk_lines) <= 3:
                                 summary = "\n".join(walk_lines[:3])
                             new_data[key] = summary
