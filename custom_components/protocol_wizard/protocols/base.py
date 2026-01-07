@@ -111,44 +111,70 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
 
     def _format_value(self, value: Any, entity_config: dict) -> Any:
         """Apply user-defined format string to the decoded value."""
-        format_str = entity_config.get("format", "").strip()
+        format_str = str(entity_config.get("format", "")).strip()
         if not format_str:
             return value
-        _LOGGER.debug("Formatting for %s with %s",value,format_str)
-
+    
+        _LOGGER.debug("Formatting value %s with format '%s'", value, format_str)
+    
         try:
+            # -------------------------
+            # Numeric values
+            # -------------------------
             if isinstance(value, (int, float)):
-                # Uptime formatting: seconds → D:H:M:S
-                if any(token in format_str for token in ["{d}", "{h}", "{m}", "{s}"]):
-                    total_secs = float(value)
-                    days = int(total_secs // 86400)
-                    hours = int((total_secs % 86400) // 3600)
-                    mins = int((total_secs % 3600) // 60)
-                    secs = int(total_secs % 60)
+    
+                # Uptime formatting: seconds → d:h:m:s
+                if any(t in format_str for t in ("{d}", "{h}", "{m}", "{s}")):
+                    try:
+                        total = float(value)
+                        if total < 0:
+                            return value
+    
+                        d = int(total // 86400)
+                        h = int((total % 86400) // 3600)
+                        m = int((total % 3600) // 60)
+                        s = int(total % 60)
+    
+                        return format_str.format(
+                            d=d, h=h, m=m, s=s, value=value
+                        )
+                    except Exception as err:
+                        _LOGGER.debug("Uptime formatting failed: %s", err)
+                        return value
+    
+                # Scaled formatting
+                if "{scaled" in format_str:
+                    scale = float(entity_config.get("scale", 1.0))
+                    scaled = value * scale
+    
+                    # Let Python handle precision via format string
                     return format_str.format(
-                        d=days, h=hours, m=mins, s=secs, value=value
+                        scaled=scaled,
+                        value=value,
                     )
-
-                # Power: Watts → kW with precision
-                if "{kw}" in format_str:
-                    kw = value / 1000
-                    return format_str.format(kw=f"{kw:.2f}", value=value)
-
+    
                 # Generic numeric formatting
                 return format_str.format(value=value)
-
-            # String formatting
+    
+            # -------------------------
+            # String values
+            # -------------------------
             if isinstance(value, str):
                 if "{upper}" in format_str:
-                    return format_str.format(value=value.upper())
+                    return format_str.replace("{upper}", value.upper())
                 if "{lower}" in format_str:
-                    return format_str.format(value=value.lower())
+                    return format_str.replace("{lower}", value.lower())
+    
                 return format_str.format(value=value)
-
+    
             return value
-
+    
         except Exception as err:
-            _LOGGER.debug("Format string error for %s: %s", entity_config.get("name"), err)
+            _LOGGER.debug(
+                "Format error for entity '%s': %s",
+                entity_config.get("name"),
+                err,
+            )
             return value
     
     @abstractmethod
