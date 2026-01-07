@@ -21,7 +21,12 @@ class SwitchManager(BaseEntityManager):
         """Create switch for writeable coils only."""
         reg_type = entity_config.get("register_type", "holding").lower()
         rw = entity_config.get("rw", "read")
-        return reg_type == "coil" and rw in ("write", "rw")
+    
+        # If options exist → let select handle it
+        if entity_config.get("options"):
+            return False
+
+        return reg_type == "coil" and rw in ("write", "rw")"rw")
 
     def _create_entity(self, entity_config: dict, unique_id: str, key: str):
         return ProtocolWizardSwitchBase(
