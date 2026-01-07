@@ -15,6 +15,7 @@ from pysnmp.hlapi.v3arch.asyncio import (
     ObjectIdentity,
     get_cmd,
     set_cmd,
+    next_cmd,
 )
 
 from ..base import BaseProtocolClient
@@ -121,7 +122,42 @@ class SNMPClient(BaseProtocolClient):
         except Exception as err:
             _LOGGER.error("SNMP read failed for OID %s: %s", address, err)
             return None
+            
+    async def walk(self, base_oid: str) -> list[tuple[str, Any]]:
+        """Perform SNMP walk on subtree, return list of (oid, value)."""
+        await self._ensure_engine()
 
+        results = []
+        try:
+            # Use next_cmd for compatibility with v1 and v2c
+            from pysnmp.hlapi.v3arch.asyncio import next_cmd
+
+            iterator = next_cmd(
+                self._engine,
+                self._community_data,
+                self._transport,
+                self._context,
+                ObjectType(ObjectIdentity(base_oid)),
+                lexicographicMode=False,
+                ignoreNonIncreasingOid=True,
+            )
+
+            async for error_indication, error_status, error_index, var_binds in iterator:
+                if error_indication:
+                    _LOGGER.error("SNMP walk error: %s", error_indication)
+                    break
+                if error_status:
+                    # End of MIB reached — normal for walk
+                    break
+
+                for oid, value in var_binds:
+                    results.append((oid.prettyPrint(), value))
+
+        except Exception as err:
+            _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
+
+        return results
+        
     async def write(self, address: str, value: Any, **kwargs) -> bool:
         """Write to a single OID."""
         await self._ensure_engine()
