@@ -55,25 +55,30 @@ class SNMPCoordinator(BaseProtocolCoordinator):
             for entity in entities:
                 key = oid_key(entity["name"])
                 oid = entity["address"]  # In SNMP, "address" is the OID string
+                read_mode = entity.get("read_mode", "get")
 
                 try:
-                    raw_value = await self.client.read(oid)
-
-                    if raw_value is None:
-                        _LOGGER.debug("No response for OID %s (%s)", oid, entity["name"])
-                        continue
-
-                    decoded = self._decode_value(raw_value, entity)
+                    if read_mode == "walk":
+                        walk_results = await self.client.walk(oid)
+                        if not walk_results:
+                            decoded = "No results"
+                        else:
+                            decoded_lines = [
+                                f"{oid_str} = {value.prettyPrint() if hasattr(value, 'prettyPrint') else value}"
+                                for oid_str, value in walk_results
+                            ]
+                            decoded = "\n".join(decoded_lines)
+                    else:
+                        raw_value = await self.client.read(oid)
+                        if raw_value is None:
+                            continue
+                        decoded = self._decode_value(raw_value, entity)
+    
                     if decoded is not None:
                         new_data[key] = decoded
-
+    
                 except Exception as err:
-                    _LOGGER.error(
-                        "Error reading OID %s (%s): %s",
-                        oid,
-                        entity.get("name"),
-                        err,
-                    )
+                    _LOGGER.error("Error processing %s %s: %s", read_mode, oid, err)
 
         return new_data
 
