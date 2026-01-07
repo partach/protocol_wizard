@@ -162,10 +162,13 @@ class ProtocolWizardSensorBase(CoordinatorEntity, SensorEntity):
         
         # Set display precision based on data type
         data_type = entity_config.get("data_type", "")
-        if "float" in data_type.lower():
-            self._attr_suggested_display_precision = entity_config.get("precision", 2)
-        elif any(t in data_type.lower() for t in ["int", "uint"]):
-            self._attr_suggested_display_precision = 0
+        if not entity_config.get("format"):
+            self._attr_native_unit_of_measurement = entity_config.get("unit")
+            data_type = entity_config.get("data_type", "")
+            if "float" in data_type.lower():
+                self._attr_suggested_display_precision = entity_config.get("precision", 2)
+            elif any(t in data_type.lower() for t in ["int", "uint"]):
+                self._attr_suggested_display_precision = 0
     
     @property
     def native_value(self):
