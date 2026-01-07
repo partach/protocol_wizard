@@ -162,6 +162,7 @@ class SNMPClient(BaseProtocolClient):
         except Exception as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
 
+        _LOGGER.info("SNMP walk result for %s: %s", base_oid, results)
         return results
         
     async def write(self, address: str, value: Any, **kwargs) -> bool:
