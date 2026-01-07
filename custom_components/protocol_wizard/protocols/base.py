@@ -125,45 +125,34 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         try:
             ctx = _SafeFormatDict(value=value)
     
+            # ---------- TRY NUMERIC ----------
+            numeric = None
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                pass
+    
+            if numeric is not None:
+                total = int(numeric)
+                ctx.update({
+                    "d": total // 86400,
+                    "h": (total % 86400) // 3600,
+                    "m": (total % 3600) // 60,
+                    "s": total % 60,
+                })
+    
             # ---------- STRING HELPERS ----------
             if isinstance(value, str):
                 ctx["upper"] = value.upper()
                 ctx["lower"] = value.lower()
     
-            # ---------- NUMERIC HELPERS ----------
-            if isinstance(value, (int, float)):
-                total = int(value)
-                remaining = total
+            result = format_str.format_map(ctx)
     
-                wants_d = "{d}" in format_str
-                wants_h = "{h}" in format_str
-                wants_m = "{m}" in format_str
-                wants_s = "{s}" in format_str
+            # Never leak format strings
+            if "{" in result:
+                return value
     
-                if wants_d:
-                    ctx["d"] = remaining // 86400
-                    remaining %= 86400
-    
-                if wants_h:
-                    ctx["h"] = (
-                        remaining // 3600
-                        if wants_d or wants_m or wants_s
-                        else total // 3600
-                    )
-                    remaining %= 3600
-    
-                if wants_m:
-                    ctx["m"] = (
-                        remaining // 60
-                        if wants_h or wants_s
-                        else total // 60
-                    )
-                    remaining %= 60
-    
-                if wants_s:
-                    ctx["s"] = remaining
-    
-            return format_str.format_map(ctx)
+            return result
     
         except Exception as err:
             _LOGGER.debug(
