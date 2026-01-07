@@ -372,6 +372,7 @@ class ModbusSchemaHandler:
                 ),
 
             vol.Optional("unit", default=defaults.get("unit", "")): str,
+            vol.Optional("format", default=""): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
             vol.Optional("options", default=defaults.get("options", "")): str,
@@ -455,6 +456,7 @@ class SNMPSchemaHandler:
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
+            vol.Optional("format", default=""): str,
         })
 
     
