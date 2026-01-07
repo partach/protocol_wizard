@@ -204,10 +204,10 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         self._attr_native_step = entity_config.get("step", 1)
         
         # Set display precision
-        data_type = entity_config.get("data_type", "")
-        if "float" in data_type.lower():
+        self.data_type = entity_config.get("data_type", "")
+        if "float" in self.data_type.lower():
             self._attr_suggested_display_precision = entity_config.get("precision", 2)
-        elif any(t in data_type.lower() for t in ["int", "uint"]):
+        elif any(t in self.data_type.lower() for t in ["int", "uint"]):
             self._attr_suggested_display_precision = 0
     
     @property
@@ -229,7 +229,7 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         # For coils/discrete (bit types), convert to boolean
         if register_type in ("coil", "discrete"):
             value = bool(int(float(value)))  # "0" → False, "1" → True
-        elif "float" not in data_type:
+        elif "float" not in self.data_type:
             value = int(round(float(value)))  # Regular registers
         else:
             value = float(value)  # Float registers
@@ -301,7 +301,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         # For coils/discrete (bit types), convert to boolean
         if register_type in ("coil", "discrete"):
             value = bool(int(float(value)))  # "0" → False, "1" → True
-        elif "float" not in data_type:
+        elif "float" not in self.data_type:
             value = int(round(float(value)))  # Regular registers
         else:
             value = float(value)  # Float registers
