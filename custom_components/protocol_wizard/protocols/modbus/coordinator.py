@@ -140,6 +140,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                                 continue
                         except Exception:
                             _LOGGER.error("Modbus read failed, Device ok?")
+                            continue
                     if result.isError():
                         _LOGGER.warning(
                             "Read failed for '%s' (type=%s, addr=%s): %s",
