@@ -19,11 +19,19 @@ class NumberManager(BaseEntityManager):
     """Manages number entities for any protocol."""
     
     def _should_create_entity(self, entity_config: dict) -> bool:
-        """Create number for write or read-write entities (without options)."""
-        # Don't create if it has options (that's a select entity)
-        if entity_config.get("options"):
+        """Create number only for writeable registers that are NOT coils."""
+        rw = entity_config.get("rw", "read")
+        reg_type = entity_config.get("register_type", "holding").lower()
+    
+        # Do not create number for coils (they are binary → use switch/select)
+        if reg_type == "coil":
             return False
-        return entity_config.get("rw") in ("write", "rw")
+
+    # Do not create if it has options (that's a select)
+    if entity_config.get("options"):
+        return False
+
+    return rw in ("write", "rw")
     
     def _create_entity(self, entity_config: dict, unique_id: str, key: str):
         """Create a number entity."""
