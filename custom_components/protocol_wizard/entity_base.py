@@ -156,7 +156,6 @@ class ProtocolWizardSensorBase(CoordinatorEntity, SensorEntity):
         
         self._attr_unique_id = unique_id
         self._attr_name = entity_config.get("name")
-        self._attr_native_unit_of_measurement = entity_config.get("unit")
         self._attr_device_class = entity_config.get("device_class")
         self._attr_device_info = device_info
         
