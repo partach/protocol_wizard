@@ -119,8 +119,8 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                         if raw_value is None:
                             continue
                         # Decode / format
-                        decoded = self._decode_value(raw_value, entity_config)
-                        formatted = self._format_value(decoded, entity_config)
+                        decoded = self._decode_value(raw_value, entity)
+                        formatted = self._format_value(decoded, entity)
                         new_data[key] = formatted
 
                 except Exception as err:
