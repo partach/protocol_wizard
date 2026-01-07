@@ -63,25 +63,59 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
                         if not walk_results:
                             new_data[key] = "No results"
-                            new_data[f"{key}_walk"] = ""
+                            new_data[f"{key}_raw"] = ""
                         else:
-                            walk_lines = [
-                                f"{oid_str} = {value.prettyPrint() if hasattr(value, 'prettyPrint') else value}"
-                                for oid_str, value in walk_results
-                            ]
-                            # Short summary in state (first few entries or count)
-                            summary = f"(Attr.{len(walk_lines)} lines)"
-                            if len(walk_lines) <= 3:
-                                summary = "\n".join(walk_lines[:3])
-                            new_data[key] = summary
+                            # Group by table entry for readability
+                            grouped = {}
+                            for oid_str, value in walk_results:
+                                parts = oid_str.split('.')
+                                if len(parts) >= 2:
+                                    entry_id = parts[-2]  # Second-to-last = entry index
+                                    column_id = parts[-1]  # Last = column
+                                else:
+                                    entry_id = "0"
+                                    column_id = "0"
 
-                            # Full walk in dedicated attribute key
+                                if entry_id not in grouped:
+                                    grouped[entry_id] = {}
+                                val_str = value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
+                                grouped[entry_id][column_id] = val_str
+
+                            # Common column names (MIB-2 standard)
+                            COLUMN_NAMES = {
+                                "1": "Index",
+                                "2": "Description",
+                                "3": "Type",
+                                "4": "MTU",
+                                "5": "Speed",
+                                "6": "MAC Address",
+                                "7": "Admin Status",
+                                "8": "Oper Status",
+                                "10": "In Octets",
+                                "16": "Out Octets",
+                            }
+
+                            walk_lines = []
+                            for entry_id in sorted(grouped.keys(), key=lambda x: int(x)):
+                                entry = grouped[entry_id]
+                                walk_lines.append(f"[Entry {entry_id}]")
+                                for col_id in sorted(entry.keys(), key=lambda x: int(x)):
+                                    col_name = COLUMN_NAMES.get(col_id, f"Column {col_id}")
+                                    walk_lines.append(f"  {col_name}: {entry[col_id]}")
+
+                            total_entries = len(grouped)
+                            new_data[key] = f"Walk complete ({total_entries} entries)"
+
+                            # Full pretty output in raw attribute
                             new_data[f"{key}_raw"] = "\n".join(walk_lines)
+
+                            # Optional: add raw OID dump as second attribute if needed
+                            # raw_lines = [f"{oid_str} = {val_str}" for oid_str, val_str in walk_results]
+                            # new_data[f"{key}_raw_oid"] = "\n".join(raw_lines)
                     else:
                         raw_value = await self.client.read(oid)
                         if raw_value is None:
                             continue
-
                         decoded = self._decode_value(raw_value, entity)
                         if decoded is not None:
                             new_data[key] = decoded
