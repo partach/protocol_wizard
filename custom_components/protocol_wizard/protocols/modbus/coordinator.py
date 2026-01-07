@@ -117,27 +117,29 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                     
                     # Direct read if not auto or auto succeeded
                     if result is None:
-                        raw_client = self.client.raw_client
-                        if reg_type == "holding":
-                            result = await raw_client.read_holding_registers(
-                                address=address, count=count, device_id=self.client.slave_id
-                            )
-                        elif reg_type == "input":
-                            result = await raw_client.read_input_registers(
-                                address=address, count=count, device_id=self.client.slave_id
-                            )
-                        elif reg_type == "coil":
-                            result = await raw_client.read_coils(
-                                address=address, count=count, device_id=self.client.slave_id
-                            )
-                        elif reg_type == "discrete":
-                            result = await raw_client.read_discrete_inputs(
-                                address=address, count=count, device_id=self.client.slave_id
-                            )
-                        else:
-                            _LOGGER.error("Unknown register_type '%s' for '%s'", reg_type, reg["name"])
-                            continue
-                    
+                        try:
+                            raw_client = self.client.raw_client
+                            if reg_type == "holding":
+                                result = await raw_client.read_holding_registers(
+                                    address=address, count=count, device_id=self.client.slave_id
+                                )
+                            elif reg_type == "input":
+                                result = await raw_client.read_input_registers(
+                                    address=address, count=count, device_id=self.client.slave_id
+                                )
+                            elif reg_type == "coil":
+                                result = await raw_client.read_coils(
+                                    address=address, count=count, device_id=self.client.slave_id
+                                )
+                            elif reg_type == "discrete":
+                                result = await raw_client.read_discrete_inputs(
+                                    address=address, count=count, device_id=self.client.slave_id
+                                )
+                            else:
+                                _LOGGER.error("Unknown register_type '%s' for '%s'", reg_type, reg["name"])
+                                continue
+                        except Exception:
+                            _LOGGER.error("Modbus read failed, Device ok?")
                     if result.isError():
                         _LOGGER.warning(
                             "Read failed for '%s' (type=%s, addr=%s): %s",
