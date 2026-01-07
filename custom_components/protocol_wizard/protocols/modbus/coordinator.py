@@ -57,7 +57,9 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         if not await self._async_connect():
             _LOGGER.warning("[Modbus] Could not connect to device")
             return {}
-        
+        if not self.client.is_connected: # this is needed to make sure we dont get loooong startup time if there is something wrong with the device
+            _LOGGER.debug("[Modbus] Hub reports disconnected — skipping entity update")
+            return {}        
         entities = self.my_config_entry.options.get(CONF_ENTITIES, [])
         if not entities:
             return {}
