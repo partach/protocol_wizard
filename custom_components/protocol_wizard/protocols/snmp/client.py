@@ -127,10 +127,12 @@ class SNMPClient(BaseProtocolClient):
         """Perform SNMP walk on subtree, return list of (oid, value)."""
         await self._ensure_engine()
 
+        if not base_oid or not base_oid.strip():
+            return []
+
         results = []
         try:
-            # Get the async iterator
-            iterator = await next_cmd(
+            iterator = walk_cmd(
                 self._engine,
                 self._community_data,
                 self._transport,
@@ -140,17 +142,22 @@ class SNMPClient(BaseProtocolClient):
                 ignoreNonIncreasingOid=True,
             )
 
-            # Iterate over all responses
             async for error_indication, error_status, error_index, var_binds in iterator:
                 if error_indication:
-                    _LOGGER.error("SNMP walk error indication: %s", error_indication)
+                    _LOGGER.debug("SNMP walk error indication: %s", error_indication)
                     break
+
                 if error_status:
-                    # Normal end of MIB — stop walking
+                    # Normal end of MIB
+                    _LOGGER.debug("SNMP walk end of MIB: %s", error_status.prettyPrint())
                     break
 
                 for oid, value in var_binds:
-                    results.append((oid.prettyPrint(), value))
+                    oid_str = oid.prettyPrint()
+                    # Optional: ensure we're still in the base tree
+                    if not oid_str.startswith(base_oid):
+                        return results
+                    results.append((oid_str, value))
 
         except Exception as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
