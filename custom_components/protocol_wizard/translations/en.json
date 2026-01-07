@@ -74,7 +74,7 @@
           "settings": "Settings",
           "add_entity": "Add Entity",
           "load_template": "Load Template",
-          "list_entities": "Entities",
+          "list_entities": "View Entities",
           "edit_entity": "Edit Entity"
         }
       },
@@ -85,10 +85,23 @@
         }
       },
       "add_entity": {
-        "title": "Add New Entity"
+        "title": "Add New Entity",
+        "data_description": {
+          "name": "Unique name for this entity",
+          "address": "Register address (Modbus) or OID (SNMP)",
+          "data_type": "How to interpret the raw value",
+          "rw": "Read-only, write-only, or both",
+          "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
+          "format": "Optional format string (e.g. '{d}d {h}h {m}m' for uptime seconds)",
+          "options": "Optional JSON mapping for dropdown (e.g. {\"0\": \"Off\", \"1\": \"On\"})"
+        }
       },
       "edit_entity_form": {
-        "title": "Edit Entity"
+        "title": "Edit Entity",
+        "data_description": {
+          "format": "Optional format string (e.g. '{d}d {h}h {m}m' for uptime seconds)",
+          "options": "Optional JSON mapping for dropdown (e.g. {\"0\": \"Off\", \"1\": \"On\"})"
+        }
       },
       "load_template": {
         "title": "Load Device Template",
@@ -100,7 +113,8 @@
     },
     "error": {
       "load_failed": "Failed to load template.",
-      "template_empty_or_duplicate": "Template contains no new entities or all are duplicates."
+      "template_empty_or_duplicate": "Template contains no new entities or all are duplicates.",
+      "template_not_found": "Template file not found."
     }
   },
 
@@ -137,10 +151,6 @@
         "size": {
           "name": "Size",
           "description": "Number of registers/bits to read"
-        },
-        "options": {
-          "name": "Options Mapping",
-          "description": "Optional JSON mapping for select entities (e.g. {\"0\": \"Off\", \"1\": \"On\"}). When provided, a dropdown (select) entity is created instead of a number or switch."
         },
         "byte_order": {
           "name": "Byte Order",
