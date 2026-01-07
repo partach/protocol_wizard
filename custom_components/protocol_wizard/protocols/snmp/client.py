@@ -128,6 +128,7 @@ class SNMPClient(BaseProtocolClient):
         await self._ensure_engine()
 
         if not base_oid or not base_oid.strip():
+            _LOGGER.debug("SNMP walk no oid %s", base_oid)
             return []
 
         results = []
@@ -156,6 +157,7 @@ class SNMPClient(BaseProtocolClient):
                     oid_str = oid.prettyPrint()
                     # Optional: ensure we're still in the base tree
                     if not oid_str.startswith(base_oid):
+                        _LOGGER.debug("SNMP walk unexpected result. oid %s: %s", base_oid, oid_str)
                         return results
                     results.append((oid_str, value))
 
