@@ -213,10 +213,15 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_load_template(self, user_input=None):
         if user_input:
-            name = user_input["template"]
-            path = self.hass.config.path(
-                "custom_components", DOMAIN, "templates", f"{name}.json"
+            filename = user_input["template"]
+            # Determine protocol-specific folder
+            template_dir = self.hass.config.path(
+                "custom_components", DOMAIN, "templates"
             )
+            if self.protocol == CONF_PROTOCOL_SNMP:
+                template_dir = os.path.join(template_dir, "snmp")
+            path = os.path.join(template_dir, f"{filename}.json")
+
             try:
                 data = await self.hass.async_add_executor_job(self._load_template, path)
                 added = self.schema_handler.merge_template(self._entities, data)
@@ -236,28 +241,48 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
                     errors={"base": "load_failed"},
                 )
 
-        # Async-safe listing of templates
-        templates_dir = self.hass.config.path("custom_components", DOMAIN, "templates")
+        # List templates — protocol-specific
+        base_dir = self.hass.config.path("custom_components", DOMAIN, "templates")
+        protocol_dir = os.path.join(base_dir, "snmp" if self.protocol == CONF_PROTOCOL_SNMP else "")
+
         try:
             files = await self.hass.async_add_executor_job(
                 lambda: [
-                    f[:-5] for f in os.listdir(templates_dir)
+                    f[:-5] for f in os.listdir(protocol_dir)
                     if f.endswith(".json")
-                ] if os.path.exists(templates_dir) else []
+                ] if os.path.exists(protocol_dir) else []
             )
             templates = sorted(files)
-        except Exception as err:
-            _LOGGER.debug("Failed to list templates: %s", err)
+        except Exception:
             templates = []
+
+        if not templates:
+            # Fallback to general templates if no protocol-specific
+            try:
+                files = await self.hass.async_add_executor_job(
+                    lambda: [
+                        f[:-5] for f in os.listdir(base_dir)
+                        if f.endswith(".json")
+                    ] if os.path.exists(base_dir) else []
+                )
+                templates = sorted(files)
+            except Exception:
+                templates = []
 
         if not templates:
             return self.async_abort(reason="no_templates")
 
         return self.async_show_form(
             step_id="load_template",
-            data_schema=self._get_template_schema(templates),
+            data_schema=vol.Schema({
+                vol.Required("template"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[selector.SelectOptionDict(value=t, label=t) for t in templates],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }),
         )
-
     # ------------------------------------------------------------------
     # INTERNAL
     # ------------------------------------------------------------------
