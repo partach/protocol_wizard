@@ -63,6 +63,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
                         if not walk_results:
                             new_data[key] = "No results"
+                            new_data[f"{key}_raw"] = []  # empty list
                         else:
                             # Simple, straight OID = value dump
                             walk_lines = [
@@ -71,7 +72,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                             ]
 
                             new_data[key] = f"Attr.({len(walk_lines)} lines)"
-                            new_data[f"{key}_raw"] = "\n".join(walk_lines)
+                            new_data[f"{key}_raw"] = walk_lines
                     else:
                         raw_value = await self.client.read(oid)
                         if raw_value is None:
