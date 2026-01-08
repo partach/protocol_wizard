@@ -324,10 +324,13 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         
         async with self._lock:
             try:
-                # Handle auto-detect if needed
                 detected_type = reg_type
                 result = None
+                values = None
                 
+                # ============================================================
+                # AUTO-DETECT: Try different register types
+                # ============================================================
                 if reg_type == "auto":
                     methods = [
                         ("holding", self.client.raw_client.read_holding_registers),
@@ -346,28 +349,29 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                             if not result.isError():
                                 if name in ("holding", "input") and hasattr(result, "registers"):
                                     detected_type = name
+                                    values = result.registers[:size]
                                     break
-                                if name in ("coil", "discrete") and hasattr(result, "bits"):
+                                elif name in ("coil", "discrete") and hasattr(result, "bits"):
                                     detected_type = name
+                                    values = result.bits[:size]
                                     break
-                        except Exception:
+                        except Exception as err:
+                            _LOGGER.debug("Auto-detect failed for %s at %d: %s", name, addr, err)
                             continue
                     
-                    if result is None or result.isError():
+                    if values is None:
                         _LOGGER.warning("Auto-detect failed at address %s", addr)
                         return None
-                    
-                    # Extract values from result
-                    if detected_type in ("coil", "discrete"):
-                        values = result.bits[:size]
-                    else:
-                        values = result.registers[:size]
+                
+                # ============================================================
+                # DIRECT READ: Known register type
+                # ============================================================
                 else:
                     method_map = {
-                        "holding": self.client.read_holding_registers,
-                        "input": self.client.read_input_registers,
-                        "coil": self.client.read_coils,
-                        "discrete": self.client.read_discrete_inputs,
+                        "holding": self.client.raw_client.read_holding_registers,
+                        "input": self.client.raw_client.read_input_registers,
+                        "coil": self.client.raw_client.read_coils,
+                        "discrete": self.client.raw_client.read_discrete_inputs,
                     }
                     method = method_map.get(reg_type)
                     if method is None:
@@ -378,37 +382,64 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                         result = await method(
                             address=int(addr),
                             count=int(size),
-                            device_id=int(self.slave_id),
+                            device_id=int(self.client.slave_id),
                         )
+                        
+                        if result.isError():
+                            _LOGGER.error("Read failed for %s register at %d: error response", reg_type, addr)
+                            return None
+                        
+                        # Extract values based on register type
+                        if reg_type in ("coil", "discrete"):
+                            if hasattr(result, "bits"):
+                                values = result.bits[:size]
+                            else:
+                                _LOGGER.error("Coil/discrete result missing 'bits' attribute")
+                                return None
+                        else:
+                            if hasattr(result, "registers"):
+                                values = result.registers[:size]
+                            else:
+                                _LOGGER.error("Register result missing 'registers' attribute")
+                                return None
+                                
                     except Exception as err:
                         _LOGGER.error("Read failed for %s register at %d: %s", reg_type, addr, err)
                         return None
                 
-                if values is None:
+                # ============================================================
+                # RETURN LOGIC
+                # ============================================================
+                if values is None or len(values) == 0:
+                    _LOGGER.warning("No values returned for address %s", addr)
                     return None
-                if raw and detected_type in ("coil", "discrete") and size == 1:
-                    return {
-                        "value": bool(values[0]),
-                        "detected_type": detected_type,
-                        "address": addr,
-                    }
-                # Return raw mode with full info
+                
+                # RAW MODE: Return raw register/bit values with metadata
                 if raw:
-                    return {
-                        "registers": values if not isinstance(values[0], bool) else [],
-                        "bits": values if isinstance(values[0], bool) else [],
-                        "detected_type": detected_type,
-                        "address": addr,
-                        "size": size,
-                    }
+                    if detected_type in ("coil", "discrete"):
+                        return {
+                            "value": bool(values[0]) if size == 1 else [bool(v) for v in values],
+                            "bits": [bool(v) for v in values],
+                            "detected_type": detected_type,
+                            "address": addr,
+                            "size": size,
+                        }
+                    else:
+                        return {
+                            "value": values[0] if size == 1 else values,
+                            "registers": list(values),
+                            "detected_type": detected_type,
+                            "address": addr,
+                            "size": size,
+                        }
+                
+                # DECODED MODE: Process through _decode_value
                 if detected_type in ("coil", "discrete") and len(values) == 1:
                     decoded_value = bool(values[0])
                 else:
                     decoded_value = values
 
                 return self._decode_value(decoded_value, entity_config)
-                # Return decoded value
-                return self._decode_value(values, entity_config)
                 
             except Exception as err:
                 _LOGGER.error("Read failed at %s: %s", address, err)
