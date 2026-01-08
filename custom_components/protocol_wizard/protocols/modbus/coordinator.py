@@ -358,18 +358,24 @@ class ModbusCoordinator(BaseProtocolCoordinator):
     
     async def async_write_entity(self, address: str, value: Any, entity_config: dict, **kwargs) -> bool:
         if not await self._async_connect():
+            _LOGGER.error("Write failed – could not connect to device")
             return False
-
-        try:
-            encoded_value = self._encode_value(value, entity_config)
-            if encoded_value is None:
-                return False
-
-            return await self.client.write(
-                address=address,
-                value=encoded_value,
-                register_type=entity_config.get("register_type", "holding"),
-            )
-        except Exception as err:
-            _LOGGER.error("Write failed at %s: %s", address, err)
+    
+        encoded_value = self._encode_value(value, entity_config)
+        if encoded_value is None:
+            _LOGGER.error("Write failed – encoding returned None for value %r", value)
             return False
+    
+        _LOGGER.debug("Calling client.write: address=%s, encoded=%r, register_type=%s", 
+                      address, encoded_value, entity_config.get("register_type", "holding"))
+    
+        success = await self.client.write(
+            address=address,
+            value=encoded_value,
+            register_type=entity_config.get("register_type", "holding"),
+        )
+    
+        if not success:
+            _LOGGER.error("client.write returned False – check device logs or connection")
+        
+        return success
