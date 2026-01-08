@@ -167,83 +167,55 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             return None
     
    
-    def _decode_value(
-        self,
-        raw_value: Any,
-        entity_config: dict,
-    ) -> Any | None:
-        """Decode Modbus registers/bits to Python values."""
-        values = raw_value  # values is list[int] or list[bool]
-        
+    def _decode_value(self, raw_value: Any, entity_config: dict) -> Any | None:
+        values = raw_value
         if not values:
             return None
-        
+
         try:
             data_type = entity_config.get("data_type", "uint16").lower()
-      #      byte_order = entity_config.get("byte_order", "big")  # not used...?
             word_order = entity_config.get("word_order", "big")
-            
-            # Handle bit-based registers
+
             if isinstance(values[0], bool):
                 if len(values) == 1:
                     return bool(values[0])
-                # Multi-bit → pack into integer
                 return int("".join("1" if b else "0" for b in values[::-1]), 2)
-            
-            # Single register types
-            if data_type in ("uint16", "int16") and len(values) == 1:
-                decoded = values[0]
-                if data_type == "int16" and decoded > 32767:
-                    decoded = decoded - 65536
-            else:
-                # Multi-register types
-                expected = TYPE_SIZES.get(data_type)
-                if expected and len(values) != expected:
-                    _LOGGER.warning(
-                        "Register size mismatch for %s at addr %s: got %d, expected %d",
-                        data_type, entity_config.get("address"), len(values), expected
-                    )
-                    if len(values) < expected:
-                        return None
-                    values = values[:expected]
-                
-                # Map data type to pymodbus enum
-                dt_map = {
-                    "uint16": ModbusClientMixin.DATATYPE.UINT16,
-                    "int16": ModbusClientMixin.DATATYPE.INT16,
-                    "uint32": ModbusClientMixin.DATATYPE.UINT32,
-                    "int32": ModbusClientMixin.DATATYPE.INT32,
-                    "float32": ModbusClientMixin.DATATYPE.FLOAT32,
-                    "uint64": ModbusClientMixin.DATATYPE.UINT64,
-                    "int64": ModbusClientMixin.DATATYPE.INT64,
-                    "string": ModbusClientMixin.DATATYPE.STRING,
-                }
-                target_type = dt_map.get(data_type, ModbusClientMixin.DATATYPE.UINT16)
-                
-                try:
-                    decoded = self.client.raw_client.convert_from_registers(
-                        registers=values,
-                        data_type=target_type,
-                        word_order=0 if word_order.lower() == "big" else 1,
-                    )
-                except Exception as err:
-                    _LOGGER.warning("Failed to decode %s as %s: %s", values, data_type, err)
-                    return None
-            
-            # Post-processing
+
+            expected = TYPE_SIZES.get(data_type, 1)
+            if len(values) < expected:
+                return None
+            values = values[:expected]
+
+            dt_map = {
+                "uint16": ModbusClientMixin.DATATYPE.UINT16,
+                "int16": ModbusClientMixin.DATATYPE.INT16,
+                "uint32": ModbusClientMixin.DATATYPE.UINT32,
+                "int32": ModbusClientMixin.DATATYPE.INT32,
+                "float32": ModbusClientMixin.DATATYPE.FLOAT32,
+                "uint64": ModbusClientMixin.DATATYPE.UINT64,
+                "int64": ModbusClientMixin.DATATYPE.INT64,
+                "string": ModbusClientMixin.DATATYPE.STRING,
+            }
+            target_type = dt_map.get(data_type, ModbusClientMixin.DATATYPE.UINT16)
+
+            decoded = self.client.raw_client.convert_from_registers(
+                registers=values,
+                data_type=target_type,
+                word_order=0 if word_order.lower() == "big" else 1,
+            )
+
             if data_type == "float32" and isinstance(decoded, float):
                 decoded = round(decoded, 6)
             if data_type == "string" and isinstance(decoded, str):
                 decoded = decoded.rstrip("\x00")
-            
-            # Apply scale and offset
+
             if isinstance(decoded, (int, float)):
                 scale = entity_config.get("scale", 1.0)
                 offset = entity_config.get("offset", 0.0)
                 decoded = decoded * scale + offset
-            
+
             return decoded
-            
+
         except Exception as err:
             _LOGGER.error(
                 "Error decoding register '%s' at address %s: %s",
@@ -251,37 +223,27 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             )
             return None
     
-    def _encode_value(
-        self,
-        value: Any,
-        entity_config: dict,
-    ) -> list[int] | bool:
-        """Encode Python value to Modbus registers."""
+    def _encode_value(self, value: Any, entity_config: dict) -> list[int] | bool | None:
         data_type = entity_config.get("data_type", "uint16").lower()
-  #      byte_order = entity_config.get("byte_order", "big")
         word_order = entity_config.get("word_order", "big")
         register_type = entity_config.get("register_type", "holding")
-        # For coils, return boolean directly
+
         if register_type == "coil":
             return bool(value)
-        # Reverse scale/offset
+
         scale = entity_config.get("scale", 1.0)
         offset = entity_config.get("offset", 0.0)
         if scale != 0 and isinstance(value, (int, float)):
             value = (value - offset) / scale
-        
-        # Single register types
+
         if data_type in ("uint16", "int16"):
             if isinstance(value, float):
                 value = int(round(value))
-            
             if data_type == "int16" and value < 0:
                 value = value + 65536
-            
             value = max(0, min(65535, value))
             return [value]
-        
-        # Multi-register types
+
         dt_map = {
             "uint32": ModbusClientMixin.DATATYPE.UINT32,
             "int32": ModbusClientMixin.DATATYPE.INT32,
@@ -290,13 +252,13 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             "int64": ModbusClientMixin.DATATYPE.INT64,
         }
         target_type = dt_map.get(data_type, ModbusClientMixin.DATATYPE.UINT16)
-        
+
         if target_type != ModbusClientMixin.DATATYPE.FLOAT32:
             if isinstance(value, float):
                 value = int(round(value))
         else:
             value = float(value)
-        
+
         try:
             return self.client.raw_client.convert_to_registers(
                 value=value,
@@ -306,189 +268,68 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         except Exception as err:
             _LOGGER.error("Failed to encode %s as %s: %s", value, data_type, err)
             return None
+    # ----------------------------------------------------------------------------
+    # the service read method (naming a bit close to later refactoring above...
+    #------------------------------------------------------------------------------
     
-    async def async_read_entity(
-        self,
-        address: str,
-        entity_config: dict,
-        **kwargs
-    ) -> Any | None:
-        """Read a single Modbus entity (for services)."""
+    async def async_read_entity(self, address: str, entity_config: dict, **kwargs) -> Any | None:
         if not await self._async_connect():
             return None
-        
+    
         addr = int(address)
         size = kwargs.get("size") or TYPE_SIZES.get(entity_config.get("data_type", "uint16").lower(), 1)
         reg_type = kwargs.get("register_type") or entity_config.get("register_type", "holding")
         raw = kwargs.get("raw", False)
-        
+    
         async with self._lock:
-            try:
-                detected_type = reg_type
-                result = None
-                values = None
-                
-                # ============================================================
-                # AUTO-DETECT: Try different register types
-                # ============================================================
-                if reg_type == "auto":
-                    methods = [
-                        ("holding", self.client.raw_client.read_holding_registers),
-                        ("input", self.client.raw_client.read_input_registers),
-                        ("coil", self.client.raw_client.read_coils),
-                        ("discrete", self.client.raw_client.read_discrete_inputs),
-                    ]
-                    
-                    for name, method in methods:
-                        try:
-                            read_count = max(size, 8) if name in ("coil", "discrete") else size
-                    
-                            result = await method(
-                                address=addr,
-                                count=read_count,
-                                device_id=int(self.client.slave_id),
-                            )
-                    
-                            if result.isError():
-                                continue
-                    
-                            if name in ("holding", "input") and hasattr(result, "registers"):
-                                detected_type = name
-                                values = result.registers[:size]
-                                break
-                    
-                            if name in ("coil", "discrete") and hasattr(result, "bits"):
-                                detected_type = name
-                                values = result.bits[:size]
-                                break
-                        except Exception as err:
-                            _LOGGER.debug("Auto-detect failed for %s at %d: %s", name, addr, err)
-                            continue
-                    
-                    if values is None:
-                        _LOGGER.warning("Auto-detect failed at address %s", addr)
-                        return None
-                
-                # ============================================================
-                # DIRECT READ: Known register type
-                # ============================================================
-                else:
-                    method_map = {
-                        "holding": self.client.raw_client.read_holding_registers,
-                        "input": self.client.raw_client.read_input_registers,
-                        "coil": self.client.raw_client.read_coils,
-                        "discrete": self.client.raw_client.read_discrete_inputs,
-                    }
-                    method = method_map.get(reg_type)
-                    if method is None:
-                        _LOGGER.error("Invalid register_type: %s", reg_type)
-                        return None
-                    read_count = max(size, 2) if reg_type in ("coil", "discrete") else size      
-                    try:
-                        result = await method(
-                            address=int(addr),
-                            count=int(read_count),
-                            device_id=int(self.client.slave_id),
-                        )
-                        
-                        if result.isError():
-                            _LOGGER.error("Read failed for %s register at %d: error response", reg_type, addr)
-                            return None
-                        
-                        # Extract values based on register type
-                        if reg_type in ("coil", "discrete"):
-                            if hasattr(result, "bits"):
-                                values = result.bits[:size]
-                            else:
-                                _LOGGER.error("Coil/discrete result missing 'bits' attribute")
-                                return None
-                        else:
-                            if hasattr(result, "registers"):
-                                values = result.registers[:size]
-                            else:
-                                _LOGGER.error("Register result missing 'registers' attribute")
-                                return None
-                                
-                    except Exception as err:
-                        _LOGGER.error("Read failed for %s register at %d: %s", reg_type, addr, err)
-                        return None
-                
-                # ============================================================
-                # RETURN LOGIC
-                # ============================================================
-                if values is None or len(values) == 0:
-                    _LOGGER.warning("No values returned for address %s", addr)
-                    return None
-                
-                # RAW MODE: Return raw register/bit values with metadata
-                if raw:
-                    if detected_type in ("coil", "discrete"):
-                        return {
-                            "value": bool(values[0]) if size == 1 else [bool(v) for v in values],
-                            "bits": [bool(v) for v in values],
-                            "detected_type": detected_type,
-                            "address": addr,
-                            "size": size,
-                        }
-                    else:
-                        return {
-                            "value": values[0] if size == 1 else values,
-                            "registers": list(values),
-                            "detected_type": detected_type,
-                            "address": addr,
-                            "size": size,
-                        }
-                
-                # DECODED MODE: Process through _decode_value
-                if detected_type in ("coil", "discrete") and len(values) == 1:
-                    decoded_value = bool(values[0])
-                else:
-                    decoded_value = values
-
-                return self._decode_value(decoded_value, entity_config)
-                
-            except Exception as err:
-                _LOGGER.error("Read failed at %s: %s", address, err)
+            values = None
+            detected_type = reg_type
+    
+            # If explicitly not auto, just read once
+            if reg_type != "auto":
+                values = await self.client.read(address=address, count=size, register_type=reg_type)
+    
+            else:
+                # Proper auto-detect: try in sensible order (same as bulk)
+                for test_type in ["holding", "input", "coil", "discrete"]:
+                    test_values = await self.client.read(address=address, count=size, register_type=test_type)
+                    if test_values is not None:
+                        values = test_values
+                        detected_type = test_type
+                        break
+    
+            if values is None or len(values) == 0:
+                _LOGGER.warning("Read failed for address %s", address)
                 return None
     
-    async def async_write_entity(
-        self,
-        address: str,
-        value: Any,
-        entity_config: dict,
-        **kwargs
-    ) -> bool:
-        """Write a single Modbus entity (for services/number entities)."""
+            # Raw mode for Wizard card debugging
+            if raw:
+                is_coil = isinstance(values[0], bool) if values else False
+                return {
+                    "value": bool(values[0]) if size == 1 else values,
+                    "registers": list(values) if not is_coil else None,
+                    "bits": [bool(v) for v in values] if is_coil else None,
+                    "detected_type": detected_type,
+                    "address": addr,
+                    "size": size,
+                }
+    
+            return self._decode_value(values, entity_config)
+    
+    async def async_write_entity(self, address: str, value: Any, entity_config: dict, **kwargs) -> bool:
         if not await self._async_connect():
             return False
 
         try:
-            reg_type = entity_config.get("register_type", "holding").lower()
-            # this could potentially override type. So if the user makes a mistake...
-            size = kwargs.get("size") or TYPE_SIZES.get(entity_config.get("data_type", "uint16").lower(), 1)
-            # Special case for coils — expect single bool
-            if reg_type in ("coil"):
-                 return await self.client.raw_client.write_coil(
-                    address=int(address),
-                    value=bool(value),
-                    device_id=int(self.client.slave_id),
-                )
-            elif reg_type in ("discrete"):
-                # this is readonly by design?
-                _LOGGER.error("Discrete inputs are read-only")
+            encoded_value = self._encode_value(value, entity_config)
+            if encoded_value is None:
                 return False
-            else:
-                registers = self._encode_value(value, entity_config)
-                if registers is None:
-                    return False
-                write_value = registers
 
             return await self.client.write(
                 address=address,
-                value=write_value,
-                register_type=reg_type,
+                value=encoded_value,
+                register_type=entity_config.get("register_type", "holding"),
             )
-
         except Exception as err:
             _LOGGER.error("Write failed at %s: %s", address, err)
             return False
