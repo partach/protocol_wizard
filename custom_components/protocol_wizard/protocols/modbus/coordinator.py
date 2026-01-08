@@ -227,26 +227,42 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         data_type = entity_config.get("data_type", "uint16").lower()
         word_order = entity_config.get("word_order", "big")
         register_type = entity_config.get("register_type", "holding")
-
+    
         if register_type == "coil":
-            # Coil: accept bool/str "true"/"1"
             if isinstance(value, str):
-                value = value.strip().lower() in ("true", "1", "on", "yes")
-            return bool(value)
-
-        # Convert string input to numeric (from card/service)
-        if isinstance(value, str):
-            try:
-                value = float(value) if "float" in data_type else int(value)
-            except ValueError:
-                _LOGGER.error("Invalid value '%s' for data_type %s", value, data_type)
+                stripped = value.strip().lower()
+                if stripped in ("true", "1", "on", "yes"):
+                    return True
+                if stripped in ("false", "0", "off", "no"):
+                    return False
+                _LOGGER.error("Invalid coil value '%s' – use true/false or 1/0", value)
                 return None
-
+            return bool(value)
+    
+        # Handle string input for numeric types
+        if isinstance(value, str):
+            stripped = value.strip().lower()
+            # Special bool-like strings for integer types
+            if stripped in ("true", "1", "on", "yes"):
+                value = 1
+            elif stripped in ("false", "0", "off", "no"):
+                value = 0
+            else:
+                try:
+                    value = float(value)  # float first to catch "123.45"
+                    if "float" not in data_type:
+                        value = int(round(value))  # round to int for uint16 etc.
+                except ValueError:
+                    _LOGGER.error("Invalid numeric value '%s' for data_type %s", value, data_type)
+                    return None
+    
+        # Reverse scale/offset
         scale = entity_config.get("scale", 1.0)
         offset = entity_config.get("offset", 0.0)
         if scale != 0 and isinstance(value, (int, float)):
             value = (value - offset) / scale
-
+    
+        # Rest of your existing code unchanged...
         if data_type in ("uint16", "int16"):
             if isinstance(value, float):
                 value = int(round(value))
