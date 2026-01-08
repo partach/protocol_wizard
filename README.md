@@ -50,7 +50,7 @@ Once available in HACS default repository, install with one click.
    URL: `https://github.com/partach/protocol_wizard`  
    Category: **Integration**
 3. Click **Add**
-4. Search for "Protocol Wizard" and install
+4. Go to devices and service, add integration, Search for "Protocol Wizard" and install.
 5. **Restart Home Assistant**
 6. Go to **Settings → Devices & Services → + Add Integration** → Search for **Protocol Wizard**
 
