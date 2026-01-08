@@ -18,7 +18,12 @@ from homeassistant.components.number import NumberEntity,NumberMode
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers import entity_registry as er
 from homeassistant.components.switch import SwitchEntity
-
+from .const import (
+    CONF_ENTITIES,
+    CONF_REGISTERS,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL,
+)
 from .protocols.base import BaseProtocolCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,11 +68,11 @@ class BaseEntityManager(ABC):
     
     def _get_entities_config_key(self) -> str:
         """Get the config key for entities list. Override if protocol uses different key."""
-        # Most protocols will use "entities" but Modbus uses "registers"
-        protocol = self.entry.data.get("protocol", "modbus")
-        if protocol == "modbus":
-            return "registers"
-        return "entities"
+        # Most protocols will use CONF_ENTITIES but Modbus uses CONF_REGISTERS
+        protocol = self.entry.data.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
+        if protocol == CONF_PROTOCOL_MODBUS:
+            return CONF_REGISTERS
+        return CONF_ENTITIES
     
     def _entity_key(self, name: str) -> str:
         """Generate consistent key from entity name."""
