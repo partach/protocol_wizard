@@ -74,7 +74,7 @@ Too many resistors degrade the signal; none can cause reflections and errors.
 
 <p align="center">
   <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config3.png" width="600" alt="Runtime entity configuration"/>
-  <br><em>Add and configure sensors at runtime — no reboots required</em>
+  <br><em>Choose Protocol - no restarts required</em>
 </p>
 
 ### Step 2: Add Your Device (Modbus Example)
@@ -109,6 +109,11 @@ Perfect for reverse-engineering undocumented devices!
 ### Step 4: Create Permanent Sensors
 Once you know which registers you want:
 - Go to your Protocol Wizard device → **Configure** → **Add register**
+
+<p align="center">
+  <img src="https://github.com/partach/protocol_wizard/raw/main/pictures/pwz-config5.png" width="600" alt="Runtime entity configuration"/>
+  <br><em>Add and/or configure your device, add/delete/edit entities</em>
+</p>
 - Fill in name, address, data type, unit, scaling, etc.
 - Advanced options available (click "Show advanced options")
 
@@ -209,8 +214,8 @@ When adding or editing a register, the following fields are available:
 - **Full control** — bit-level access, custom scaling, endianness, raw mode
 
 ## Roadmap & Planned Features
-- **Templates for common devices**: Pre-load register sets for popular boards like WaveShare RS485 series (save typing, reduce errors)
-- **Enhanced card display**: HEX, ASCII, and bitwise views for raw register data
+- More **Templates for common devices**: Pre-load register sets for popular boards like WaveShare RS485 series (save typing, reduce errors)
+- **Enhanced card display**: Support also SNMP, for Modbus enhancements, other protocols
 - **Diagnostic export**: One-click YAML/JSON report of all registers and values for troubleshooting
 
 ## Support & Feedback
