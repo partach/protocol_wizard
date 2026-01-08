@@ -109,7 +109,7 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
         errors = {}
 
         if user_input:
-            processed = self.schema_handler.process_input(user_input, errors)
+            processed = self.schema_handler.process_input(user_input, errors, existing=None)
             if processed and not errors:
                 self._entities.append(processed)
                 self._save_entities()
@@ -159,7 +159,7 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
         errors = {}
 
         if user_input:
-            processed = self.schema_handler.process_input(user_input, errors)
+            processed = self.schema_handler.process_input(user_input, errors, existing=entity)
             if processed and not errors:
                 self._entities[self._edit_index] = processed
                 self._save_entities()
@@ -456,19 +456,27 @@ class SNMPSchemaHandler:
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
+            vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
+            vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
             vol.Optional("format", default=defaults.get("format", "")): str,
         })
 
     
+
     @staticmethod
-    def process_input(user_input: dict, errors: dict) -> dict | None:
-        # Basic validation
+    def process_input(
+        user_input: dict,
+        errors: dict,
+        existing: dict | None = None,
+    ) -> dict | None:
         if not user_input.get("address"):
             errors["address"] = "required"
             return None
-
-        # SNMP OIDs stay strings
-        return user_input
+        clean = {k: v for k, v in user_input.items() if v not in ("", None)}
+        return {
+            **(existing or {}),  # preserve old fields
+            **clean,        # override edited fields
+        }
 
 
     def get_defaults(self, entity):
