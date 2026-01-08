@@ -304,10 +304,11 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         return coordinator
     
     async def handle_write_register(call: ServiceCall):
-        """Generic write service (protocol-agnostic)."""
+        """Generic write service (protocol-agnostic) with detailed logging."""
         coordinator = _get_coordinator(call)
     
-        # Build entity_config from service data
+        address = str(call.data["address"])
+        value = call.data["value"]
         entity_config = {
             "data_type": call.data.get("data_type", "uint16"),
             "word_order": call.data.get("word_order", "big"),
@@ -316,10 +317,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             "offset": call.data.get("offset", 0.0),
         }
     
-        address = str(call.data["address"])
-        value = call.data["value"]  # This is often a string from the card!
-    
-        _LOGGER.debug("Service write_register called: address=%s, value=%r (type %s), config=%s",
+        _LOGGER.debug("write_register service called: address=%s, value=%r (type=%s), config=%s", 
                       address, value, type(value).__name__, entity_config)
     
         try:
@@ -330,13 +328,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 size=call.data.get("size"),
             )
     
-            if not success:
-                _LOGGER.error("Write failed for address %s with value %r", address, value)
+            if success:
+                _LOGGER.debug("Write succeeded for address %s", address)
+            else:
+                _LOGGER.error("Write failed for address %s with value %r – no specific error from coordinator", address, value)
                 raise HomeAssistantError(f"Write failed for address {address}")
     
         except Exception as err:
-            _LOGGER.error("Exception in write_register service: %s", err, exc_info=True)
-            raise HomeAssistantError(f"Write failed: {str(err)}") from err
+            _LOGGER.error("Unexpected exception in write_register service for address %s: %s", address, err, exc_info=True)
+            raise HomeAssistantError(f"Write failed for address {address}: {str(err)}") from err
     
     async def handle_read_register(call: ServiceCall):
         """Generic read service (protocol-agnostic)."""
