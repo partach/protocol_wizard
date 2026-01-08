@@ -216,7 +216,6 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         
         self._attr_unique_id = unique_id
         self._attr_name = entity_config.get("name")
-        self._attr_native_unit_of_measurement = entity_config.get("unit")
         self._attr_device_info = device_info
         
         self._attr_native_min_value = entity_config.get("min")
@@ -225,10 +224,12 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         
         # Set display precision
         self.data_type = entity_config.get("data_type", "")
-        if "float" in self.data_type.lower():
-            self._attr_suggested_display_precision = entity_config.get("precision", 2)
-        elif any(t in self.data_type.lower() for t in ["int", "uint"]):
-            self._attr_suggested_display_precision = 0
+        if not entity_config.get("format"):
+            self._attr_native_unit_of_measurement = entity_config.get("unit")
+            if "float" in self.data_type.lower():
+                self._attr_suggested_display_precision = entity_config.get("precision", 2)
+            elif any(t in self.data_type.lower() for t in ["int", "uint"]):
+                self._attr_suggested_display_precision = 0
     
     @property
     def native_value(self):
