@@ -24,6 +24,19 @@ write_register:
       selector:
         text:
 
+    register_type:
+      name: Register Type
+      description: Type of register to write to.
+      required: false
+      default: holding
+      selector:
+        select:
+          options:
+            - label: Holding Register
+              value: holding
+            - label: Coil
+              value: coil
+
     data_type:
       name: Data Type
       description: How the value should be encoded.
@@ -54,6 +67,19 @@ write_register:
             - label: Big Endian (AB)
               value: big
             - label: Little Endian (BA)
+              value: little
+
+    word_order:
+      name: Word Order
+      description: Register order for multi-register values.
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - label: Big Endian (AB CD)
+              value: big
+            - label: Little Endian (CD AB)
               value: little
 
     word_order:
