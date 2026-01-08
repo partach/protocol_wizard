@@ -6,9 +6,11 @@
     "read_mode": "get"
   },
   {
-    "name": "System Uptime",
-    "address": "1.3.6.1.2.1.1.3.0",
-    "data_type": "integer",
+  "name": "Switch Uptime",
+  "address": "1.3.6.1.2.1.1.3.0",
+  "data_type": "integer",
+  "scale": 0.01,
+  "format": "{d}d {h}h {m}m"
     "read_mode": "get"
   },
   {
@@ -16,11 +18,6 @@
     "address": "1.3.6.1.2.1.1.5.0",
     "data_type": "string",
     "read_mode": "get"
-  },
-  {
-    "name": "Interface Table",
-    "address": "1.3.6.1.2.1.2.2",
-    "read_mode": "walk"
   },
   {
     "name": "Interface Descriptions",
