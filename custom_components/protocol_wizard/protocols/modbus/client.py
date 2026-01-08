@@ -54,7 +54,7 @@ class ModbusClient(BaseProtocolClient):
             register_type: "holding", "input", "coil", "discrete"
         """
         addr = int(address)
-        count = kwargs.get("count", 1)
+        count = int(kwargs.get("count", 1))
         reg_type = kwargs.get("register_type", "holding")
         
         method_map = {
@@ -71,7 +71,7 @@ class ModbusClient(BaseProtocolClient):
         result = await method(
             address=addr,
             count=count,
-            device_id=self.slave_id,
+            device_id=int(self.slave_id),
         )
         
         if result.isError():
