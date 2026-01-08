@@ -462,7 +462,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             # Special case for coils — expect single bool
             if reg_type in ("coil", "discrete"):
                 # Convert to 0/1 int for pymodbus
-                write_value = [1 if bool(value) else 0]
+                write_value = bool(value)
             else:
                 registers = self._encode_value(value, entity_config)
                 if registers is None:
