@@ -229,7 +229,18 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         register_type = entity_config.get("register_type", "holding")
 
         if register_type == "coil":
+            # Coil: accept bool/str "true"/"1"
+            if isinstance(value, str):
+                value = value.strip().lower() in ("true", "1", "on", "yes")
             return bool(value)
+
+        # Convert string input to numeric (from card/service)
+        if isinstance(value, str):
+            try:
+                value = float(value) if "float" in data_type else int(value)
+            except ValueError:
+                _LOGGER.error("Invalid value '%s' for data_type %s", value, data_type)
+                return None
 
         scale = entity_config.get("scale", 1.0)
         offset = entity_config.get("offset", 0.0)
