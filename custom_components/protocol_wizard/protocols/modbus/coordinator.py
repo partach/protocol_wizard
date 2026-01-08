@@ -341,20 +341,26 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                     
                     for name, method in methods:
                         try:
+                            read_count = max(size, 8) if name in ("coil", "discrete") else size
+                    
                             result = await method(
-                                address=int(addr),
-                                count=int(size),
+                                address=addr,
+                                count=read_count,
                                 device_id=int(self.client.slave_id),
                             )
-                            if not result.isError():
-                                if name in ("holding", "input") and hasattr(result, "registers"):
-                                    detected_type = name
-                                    values = result.registers[:size]
-                                    break
-                                elif name in ("coil", "discrete") and hasattr(result, "bits"):
-                                    detected_type = name
-                                    values = result.bits[:size]
-                                    break
+                    
+                            if result.isError():
+                                continue
+                    
+                            if name in ("holding", "input") and hasattr(result, "registers"):
+                                detected_type = name
+                                values = result.registers[:size]
+                                break
+                    
+                            if name in ("coil", "discrete") and hasattr(result, "bits"):
+                                detected_type = name
+                                values = result.bits[:size]
+                                break
                         except Exception as err:
                             _LOGGER.debug("Auto-detect failed for %s at %d: %s", name, addr, err)
                             continue
@@ -377,11 +383,11 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                     if method is None:
                         _LOGGER.error("Invalid register_type: %s", reg_type)
                         return None
-        
+                    read_count = max(size, 2) if reg_type in ("coil", "discrete") else size      
                     try:
                         result = await method(
                             address=int(addr),
-                            count=int(size),
+                            count=int(read_count),
                             device_id=int(self.client.slave_id),
                         )
                         
@@ -460,9 +466,16 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             reg_type = entity_config.get("register_type", "holding").lower()
 
             # Special case for coils — expect single bool
-            if reg_type in ("coil", "discrete"):
-                # Convert to 0/1 int for pymodbus
-                write_value = bool(value)
+            if reg_type in ("coil"):
+                 return await self.client.raw_client.write_coil(
+                    address=int(address),
+                    value=bool(value),
+                    device_id=int(self.client.slave_id),
+                )
+            elif reg_type in ("discrete"):
+                # this is readonly by design?
+                _LOGGER.error("Discrete inputs are read-only")
+                return False
             else:
                 registers = self._encode_value(value, entity_config)
                 if registers is None:
