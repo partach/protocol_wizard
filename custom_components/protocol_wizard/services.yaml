@@ -26,16 +26,17 @@ write_register:
 
     register_type:
       name: Register Type
-      description: Type of register to write to.
+      description: Type of register to read. Use "auto" to try all types (recommended).
       required: false
-      default: holding
+      default: auto
       selector:
         select:
           options:
-            - label: Holding Register
-              value: holding
-            - label: Coil
-              value: coil
+            - auto
+            - holding
+            - input
+            - coil
+            - discrete
 
     data_type:
       name: Data Type
