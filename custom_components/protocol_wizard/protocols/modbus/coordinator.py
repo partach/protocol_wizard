@@ -224,56 +224,67 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             return None
     
     def _encode_value(self, value: Any, entity_config: dict) -> list[int] | bool | None:
-        """Encode Python value to Modbus registers – handles string input from card/service."""
-        data_type = entity_config.get("data_type", "uint16").lower()
-        register_type = entity_config.get("register_type", "holding").lower()
-    
-        # Special coil handling – accept strings like "true"/"1"/"on"
-        if register_type == "coil":
+        """Encode value for write – full string support for Wizard card/service."""
+        try:
+            data_type = entity_config.get("data_type", "uint16").lower()
+            register_type = entity_config.get("register_type", "holding").lower()
+            word_order = entity_config.get("word_order", "big").lower()
+        
+            _LOGGER.debug("Encoding started: value=%r (type=%s), data_type=%s, register_type=%s",
+                          value, type(value).__name__, data_type, register_type)
+        
+            # Coil handling – accept strings
+            if register_type == "coil":
+                if isinstance(value, str):
+                    stripped = value.strip().lower()
+                    if stripped in ("true", "1", "on", "yes"):
+                        return True
+                    if stripped in ("false", "0", "off", "no"):
+                        return False
+                    _LOGGER.error("Invalid coil value '%s' – use true/false, 1/0, on/off", value)
+                    return None
+                return bool(value)
+        
+            # Numeric registers – handle string input including true/false
+            original_value = value
             if isinstance(value, str):
                 stripped = value.strip().lower()
                 if stripped in ("true", "1", "on", "yes"):
-                    return True
-                if stripped in ("false", "0", "off", "no"):
-                    return False
-                _LOGGER.error("Invalid coil value '%s' – expected true/false or 1/0", value)
-                return None
-            return bool(value)
-    
-        # Convert string to numeric for register types
-        original_value = value
-        if isinstance(value, str):
-            stripped = value.strip().lower()
-            if stripped in ("true", "1", "on", "yes"):
-                value = 1
-            elif stripped in ("false", "0", "off", "no"):
-                value = 0
-            else:
+                    value = 1.0
+                elif stripped in ("false", "0", "off", "no"):
+                    value = 0.0
+                else:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        _LOGGER.error("Cannot convert string '%s' to number for data_type %s", original_value, data_type)
+                        return None
+        
+            # Apply reverse scale/offset
+            scale = entity_config.get("scale", 1.0)
+            offset = entity_config.get("offset", 0.0)
+            if scale != 0:
                 try:
-                    # Prefer float to catch decimals, then cast to int if needed
-                    value = float(value)
-                    if "float" not in data_type and data_type not in ("string",):
-                        value = int(round(value))
-                except ValueError:
-                    _LOGGER.error("Cannot convert '%s' to number for data_type %s", original_value, data_type)
+                    value = (value - offset) / scale
+                except Exception as err:
+                    _LOGGER.error("Scale/offset failed for value %s: %s", original_value, err)
                     return None
-    
-        # Apply reverse scale/offset
-        scale = entity_config.get("scale", 1.0)
-        offset = entity_config.get("offset", 0.0)
-        if scale != 0 and isinstance(value, (int, float)):
-            value = (value - offset) / scale
-    
-        # Single-register integer types
-        if data_type in ("uint16", "int16"):
-            if isinstance(value, float):
-                value = int(round(value))
-            if data_type == "int16" and value < 0:
-                value += 65536
-            value = max(0, min(65535, value))
-            return [value]
-    
-        # Multi-register types (your existing pymodbus convert logic – unchanged)
+        
+            # Single register integer
+            if data_type in ("uint16", "int16"):
+                try:
+                    value = int(round(float(value)))
+                except Exception:
+                    _LOGGER.error("Failed to convert to int for %s: %s", data_type, original_value)
+                    return None
+                if data_type == "int16" and value < 0:
+                    value += 65536
+                value = max(0, min(65535, value))
+                return [value]
+        except Exception as err:
+            _LOGGER.error("Encoding error %s (%s): %s", value, data_type, err)
+            return None    
+        # Multi-register types
         dt_map = {
             "uint32": ModbusClientMixin.DATATYPE.UINT32,
             "int32": ModbusClientMixin.DATATYPE.INT32,
@@ -283,20 +294,19 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         }
         target_type = dt_map.get(data_type, ModbusClientMixin.DATATYPE.UINT16)
     
-        if target_type != ModbusClientMixin.DATATYPE.FLOAT32:
-            if isinstance(value, float):
-                value = int(round(value))
-        else:
+        if target_type == ModbusClientMixin.DATATYPE.FLOAT32:
             value = float(value)
+        else:
+            value = int(round(float(value)))
     
         try:
             return self.client.raw_client.convert_to_registers(
                 value=value,
                 data_type=target_type,
-                word_order=0 if entity_config.get("word_order", "big").lower() == "big" else 1,
+                word_order=0 if word_order == "big" else 1,
             )
         except Exception as err:
-            _LOGGER.error("Encoding failed for value %s (type %s): %s", original_value, data_type, err)
+            _LOGGER.error("pymodbus convert_to_registers failed for %s (%s): %s", original_value, data_type, err)
             return None
     # ----------------------------------------------------------------------------
     # the service read method (naming a bit close to later refactoring above...
