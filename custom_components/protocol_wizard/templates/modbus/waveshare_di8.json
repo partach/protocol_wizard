@@ -4,28 +4,28 @@
     "address": 0,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   },
   {
     "name": "Input 2",
     "address": 1,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   },
   {
     "name": "Input 3",
     "address": 2,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   },
   {
     "name": "Input 4",
     "address": 3,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
     "allow_bits": false,
   },
   {
@@ -33,28 +33,28 @@
     "address": 4,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   },
   {
     "name": "Input 6",
     "address": 5,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   },
   {
     "name": "Input 7",
     "address": 6,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   },
   {
     "name": "Input 8",
     "address": 7,
     "data_type": "uint16",
     "register_type": "coil",
-    "rw": "read",
+    "rw": "read"
   }
 
 ]
