@@ -312,7 +312,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         entity_config = {
             "data_type": call.data.get("data_type", "uint16"),
             "word_order": call.data.get("word_order", "big"),
-            "register_type": call.data.get("register_type", "holding"),
+            "register_type": call.data.get("register_type", "auto"), # needed for testing!
             "scale": call.data.get("scale", 1.0),
             "offset": call.data.get("offset", 0.0),
         }
