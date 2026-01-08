@@ -112,9 +112,23 @@ class ModbusClient(BaseProtocolClient):
                         device_id=self.slave_id,
                     )
             elif reg_type == "coil":
+                if isinstance(value, list):
+                    if len(value) == 1:
+                        coil_value = bool(value[0])
+                    else:
+                        # Multiple coils
+                        result = await self._client.write_coils(
+                            address=addr,
+                            values=[bool(v) for v in value],
+                            device_id=self.slave_id,
+                        )
+                        return not result.isError()
+                else:
+                    coil_value = bool(value)
+                
                 result = await self._client.write_coil(
                     address=addr,
-                    value=bool(value),
+                    value=coil_value,
                     device_id=self.slave_id,
                 )
             else:
