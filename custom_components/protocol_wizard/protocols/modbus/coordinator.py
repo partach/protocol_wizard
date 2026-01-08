@@ -464,7 +464,8 @@ class ModbusCoordinator(BaseProtocolCoordinator):
 
         try:
             reg_type = entity_config.get("register_type", "holding").lower()
-
+            # this could potentially override type. So if the user makes a mistake...
+            size = kwargs.get("size") or TYPE_SIZES.get(entity_config.get("data_type", "uint16").lower(), 1)
             # Special case for coils — expect single bool
             if reg_type in ("coil"):
                  return await self.client.raw_client.write_coil(
