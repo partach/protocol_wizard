@@ -83,59 +83,45 @@ class ModbusClient(BaseProtocolClient):
         return result.registers[:count]
     
     async def write(self, address: str, value: Any, **kwargs) -> bool:
-        """
-        Write Modbus register(s).
-        
-        Args:
-            address: Register address
-            value: Value(s) to write (int or list of ints)
-            
-        Kwargs:
-            register_type: "holding" or "coil" (only writeable types)
-        """
         addr = int(address)
-        reg_type = kwargs.get("register_type", "holding")
-        
+        reg_type = kwargs.get("register_type", "holding").lower()
+
         try:
-            if reg_type == "holding":
-                # value can be int (single register) or list (multiple)
+            if reg_type == "coil":
+                if isinstance(value, list):
+                    result = await self._client.write_coils(
+                        address=addr,
+                        values=[bool(v) for v in value],
+                        device_id=self.slave_id,
+                    )
+                else:
+                    result = await self._client.write_coil(
+                        address=addr,
+                        value=bool(value),
+                        device_id=self.slave_id,
+                    )
+            elif reg_type == "holding":
                 if isinstance(value, list):
                     result = await self._client.write_registers(
                         address=addr,
-                        values=value,
+                        values=[int(v) for v in value],
                         device_id=self.slave_id,
                     )
                 else:
                     result = await self._client.write_register(
                         address=addr,
-                        value=value,
+                        value=int(value),
                         device_id=self.slave_id,
                     )
-            elif reg_type == "coil":
-                if isinstance(value, list):
-                    if len(value) == 1:
-                        coil_value = bool(value[0])
-                    else:
-                        # Multiple coils
-                        result = await self._client.write_coils(
-                            address=addr,
-                            values=[bool(v) for v in value],
-                            device_id=self.slave_id,
-                        )
-                        return not result.isError()
-                else:
-                    coil_value = bool(value)
-                
-                result = await self._client.write_coil(
-                    address=addr,
-                    value=coil_value,
-                    device_id=self.slave_id,
-                )
+            elif reg_type in ("input", "discrete"):
+                _LOGGER.error("Cannot write to read-only %s registers", reg_type)
+                return False
             else:
-                raise ValueError(f"Cannot write to {reg_type} registers")
-            
+                _LOGGER.error("Unsupported register_type '%s'", reg_type)
+                return False
+
             return not result.isError()
-            
+
         except Exception as err:
             _LOGGER.error("Modbus write failed at %s: %s", address, err)
             return False
