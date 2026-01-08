@@ -312,7 +312,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             "data_type": call.data.get("data_type", "uint16"),
             "byte_order": call.data.get("byte_order", "big"),
             "word_order": call.data.get("word_order", "big"),
-            "register_type": call.data.get("register_type", "holding"),
+            "register_type": call.data.get("register_type", "holding").lower(),
             "scale": call.data.get("scale", 1.0),
             "offset": call.data.get("offset", 0.0),
         }
@@ -321,6 +321,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             address=str(call.data["address"]),
             value=call.data["value"],
             entity_config=entity_config,
+            size=call.data.get("size"),
         )
         
         if not success:
@@ -334,7 +335,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             "data_type": call.data.get("data_type", "uint16"),
             "byte_order": call.data.get("byte_order", "big"),
             "word_order": call.data.get("word_order", "big"),
-            "register_type": call.data.get("register_type", "holding"),
+            "register_type": call.data.get("register_type", "holding").lower(),
             "scale": call.data.get("scale", 1.0),
             "offset": call.data.get("offset", 0.0)
         }
