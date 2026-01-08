@@ -83,19 +83,6 @@ write_register:
             - label: Little Endian (CD AB)
               value: little
 
-    word_order:
-      name: Word Order
-      description: Register order for multi-register values.
-      required: false
-      default: big
-      selector:
-        select:
-          options:
-            - label: Big Endian (AB CD)
-              value: big
-            - label: Little Endian (CD AB)
-              value: little
-
 read_register:
   name: Read Modbus Register
   description: Read a Modbus register from a Modbus Wizard device and optionally decode it.
