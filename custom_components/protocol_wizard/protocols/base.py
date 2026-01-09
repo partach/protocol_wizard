@@ -17,6 +17,10 @@ from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
+# Reduce noise from pymodbus
+# Setting parent logger to CRITICAL to catch all sub-loggers
+logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
+logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
 
 class BaseProtocolClient(ABC):
     """Abstract base for protocol clients."""
