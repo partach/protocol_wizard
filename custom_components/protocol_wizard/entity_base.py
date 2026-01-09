@@ -421,6 +421,10 @@ class ProtocolWizardHubEntity(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_hub"
         self._attr_name = f"{coordinator.protocol_name.title()} Hub"
         self._attr_device_info = device_info
+        self._attr_extra_state_attributes = {
+            "protocol": self.coordinator.protocol_name,
+            "device_id": self.coordinator.config_entry.data.get("device_id"),
+        }
     
     @property
     def native_value(self):
