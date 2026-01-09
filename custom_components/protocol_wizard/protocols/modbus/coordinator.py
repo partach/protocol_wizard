@@ -230,8 +230,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             register_type = entity_config.get("register_type", "holding").lower()
             word_order = entity_config.get("word_order", "big").lower()
         
-            _LOGGER.debug("Encoding started: value=%r (type=%s), data_type=%s, register_type=%s",
-                          value, type(value).__name__, data_type, register_type)
+            # _LOGGER.debug("Encoding started: value=%r (type=%s), data_type=%s, register_type=%s", value, type(value).__name__, data_type, register_type)
         
             # Coil handling – accept strings
             if register_type == "coil":
@@ -366,8 +365,8 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             _LOGGER.error("Write failed – encoding returned None for value %r", value)
             return False
     
-        _LOGGER.debug("Calling client.write: address=%s, encoded=%r, register_type=%s", 
-                      address, encoded_value, entity_config.get("register_type", "holding"))
+    
+        # _LOGGER.debug("Calling client.write: address=%s, encoded=%r, register_type=%s", address, encoded_value, entity_config.get("register_type", "holding"))
     
         success = await self.client.write(
             address=address,
