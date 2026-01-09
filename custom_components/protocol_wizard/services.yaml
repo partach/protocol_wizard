@@ -192,8 +192,8 @@ write_snmp:
       selector:
         select:
           options:
-            - label: Integer32
-              value: Integer32
+            - label: Int
+              value: Int
             - label: Unsigned32
               value: Unsigned32
             - label: Counter32
@@ -202,8 +202,8 @@ write_snmp:
               value: Gauge32
             - label: TimeTicks
               value: TimeTicks
-            - label: OctetString
-              value: OctetString
+            - label: String
+              value: String
             - label: IpAddress
               value: IpAddress
             - label: ObjectIdentifier
@@ -230,12 +230,12 @@ read_snmp:
       selector:
         select:
           options:
-            - Integer32
+            - Int
             - Unsigned32
             - Counter32
             - Gauge32
             - TimeTicks
-            - OctetString
+            - String
             - IpAddress
             - ObjectIdentifier
     raw:
