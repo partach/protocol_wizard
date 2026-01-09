@@ -640,6 +640,22 @@ class ProtocolWizardCard extends LitElement {
         align-items: center;
         cursor: pointer;
       }
+      textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--divider-color);
+        border-radius: 4px;
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        font-family: monospace;
+        font-size: 0.95em;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        overflow-y: auto;
+        resize: vertical;
+        min-height: 100px;
+        max-height: 400px;
+      }
     `;
   }
 }
