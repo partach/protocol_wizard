@@ -368,7 +368,67 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         handle_read_register,
         supports_response=SupportsResponse.ONLY,
     )
-
+    hass.services.async_register(
+        DOMAIN,
+        "read_snmp",
+        handle_read_snmp,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(DOMAIN, "write_snmp", handle_write_snmp)
+    
+    async def handle_read_snmp(call: ServiceCall):
+        """SNMP read service."""
+        coordinator = _get_coordinator(call)
+        
+        oid = call.data.get("oid")
+        if not oid:
+            raise HomeAssistantError("oid is required")
+        
+        entity_config = {
+            "data_type": call.data.get("data_type", "string"),
+            "address": oid,  # SNMP uses OID as address
+        }
+        
+        value = await coordinator.async_read_entity(
+            address=oid,
+            entity_config=entity_config,
+        )
+        
+        if value is None:
+            raise HomeAssistantError(f"Failed to read OID {oid}")
+        
+        return {"value": value}
+    
+    async def handle_write_snmp(call: ServiceCall):
+        """SNMP write service."""
+        coordinator = _get_coordinator(call)
+        
+        oid = call.data.get("oid")
+        value = call.data.get("value")
+        
+        if not oid:
+            raise HomeAssistantError("oid is required")
+        if value is None:
+            raise HomeAssistantError("value is required")
+        
+        entity_config = {
+            "data_type": call.data.get("data_type", "string"),
+            "address": oid,
+        }
+        
+        _LOGGER.debug(
+            "write_snmp service: oid=%s, value=%r, data_type=%s",
+            oid, value, entity_config["data_type"]
+        )
+        
+        success = await coordinator.async_write_entity(
+            address=oid,
+            value=value,
+            entity_config=entity_config,
+        )
+        
+        if not success:
+            raise HomeAssistantError(f"Failed to write to OID {oid}")
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
