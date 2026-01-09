@@ -151,7 +151,8 @@ class SNMPClient(BaseProtocolClient):
             if not error_indication and not error_status and var_binds:
                 _, value = var_binds[0]
                 pretty_value = value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
-                results.append(pretty_value)  # Just the value, no OID
+                if "No Such Instance currently exists at this OID" not in pretty_value:
+                  results.append(pretty_value)  # Just the value, no OID
     
             # Step 2: Normal walk for subtree (always include OID + value)
             iterator = walk_cmd(
