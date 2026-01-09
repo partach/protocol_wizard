@@ -85,8 +85,7 @@ class ModbusClient(BaseProtocolClient):
     async def write(self, address: str, value: Any, **kwargs) -> bool:
         addr = int(address)
         reg_type = kwargs.get("register_type", "holding").lower()
-        _LOGGER.debug("write called: addr=%s, value=%r (type=%s), reg_type=%s",
-                          addr, value, type(value).__name__, reg_type)
+     #   _LOGGER.debug("write called: addr=%s, value=%r (type=%s), reg_type=%s", addr, value, type(value).__name__, reg_type)
         try:
             if reg_type == "coil":
                 if isinstance(value, list):
