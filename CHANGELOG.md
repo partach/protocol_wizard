@@ -1,5 +1,10 @@
 ## Changelog
 
+### [0.4.0] - Stable release
+- SNMP and Modbus now fully support also in card and templates
+- several bugs fixed
+- More hardening of non happy flows.
+
 ### [0.3.0] - Public Release
 - Tried and tested
 
