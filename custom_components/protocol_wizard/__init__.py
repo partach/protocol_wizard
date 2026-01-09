@@ -318,8 +318,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             "offset": call.data.get("offset", 0.0)
         }
     
-        _LOGGER.debug("write_register service called: address=%s, value=%r (type=%s), config=%s", 
-                      address, value, type(value).__name__, entity_config)
+   #     _LOGGER.debug("write_register service called: address=%s, value=%r (type=%s), config=%s", address, value, type(value).__name__, entity_config)
     
         try:
             success = await coordinator.async_write_entity(
@@ -329,9 +328,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 size=call.data.get("size"),
             )
     
-            if success:
-                _LOGGER.debug("Write succeeded for address %s", address)
-            else:
+            if not success:
                 _LOGGER.error("Write failed for address %s with value %r – no specific error from coordinator", address, value)
                 raise HomeAssistantError(f"Write failed for address {address}")
     
