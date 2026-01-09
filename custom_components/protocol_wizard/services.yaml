@@ -164,7 +164,7 @@ read_register:
       selector:
         boolean:
         
-write_oid:
+write_snmp:
   name: Write SNMP OID
   description: Write a value to an SNMP OID.
   target:
@@ -209,7 +209,7 @@ write_oid:
             - label: ObjectIdentifier
               value: ObjectIdentifier
 
-read_oid:
+read_snmp:
   name: Read SNMP OID
   description: Read an SNMP OID from a Protocol Wizard device.
   target:
