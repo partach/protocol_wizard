@@ -90,14 +90,14 @@
           "rw": "Read-only, write-only, or both",
           "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
           "format": "Optional format string after decoding (example: {d}d {h}h {m}m for uptime in seconds)",
-          "options": "Optional JSON mapping for select entity (example: {0: Off, 1: On})"
+          "options": "Optional JSON mapping for select entity (example: {{0: Off, 1: On}})"
         }
       },
       "edit_entity_form": {
         "title": "Edit Entity",
         "data_description": {
           "format": "Optional format string after decoding (example: {d}d {h}h {m}m for uptime in seconds)",
-          "options": "Optional JSON mapping for select entity (example: {0: Off, 1: On})"
+          "options": "Optional JSON mapping for select entity (example: {{0: Off, 1: On}})"
         }
       },
       "load_template": {
