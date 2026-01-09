@@ -260,21 +260,23 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up protocol-agnostic services."""
     
     def _get_coordinator(call: ServiceCall):
-        device_id = call.data.get("device_id")  # ← From card/service
-    
+        # Priority 1: device_id from service data (sent by card)
+        device_id = call.data.get("device_id")
         if device_id:
-            # Find config entry by device_id
             from homeassistant.helpers import device_registry as dr
             dev_reg = dr.async_get(hass)
             device = dev_reg.async_get(device_id)
-            if device and device.config_entries:
-                entry_id = next(iter(device.config_entries))  # First entry (usually only one)
-                coordinator = hass.data[DOMAIN]["coordinators"].get(entry_id)
-                if coordinator:
-                    _LOGGER.debug("Coordinator selected by device_id %s: %s", device_id, coordinator.protocol_name)
-                    return coordinator
+            if device:
+                # Find the config entry for this device that has a coordinator
+                for entry_id in device.config_entries:
+                    coordinator = hass.data[DOMAIN]["coordinators"].get(entry_id)
+                    if coordinator:
+                        _LOGGER.debug("Coordinator selected by device_id %s: protocol=%s, entry=%s",
+                                      device_id, coordinator.protocol_name, entry_id)
+                        return coordinator
+                raise HomeAssistantError(f"No active coordinator found for device {device_id}")
     
-        # Fallback: entity_id method (as before)
+        # Priority 2: Fallback to entity_id (for legacy/UI calls without device_id)
         entity_id = None
         if "entity_id" in call.data:
             entity_ids = call.data["entity_id"]
@@ -291,8 +293,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 entry_id = entity_entry.config_entry_id
                 coordinator = hass.data[DOMAIN]["coordinators"].get(entry_id)
                 if coordinator:
+                    _LOGGER.debug("Coordinator selected by entity_id %s: protocol=%s", entity_id, coordinator.protocol_name)
                     return coordinator
-    
+
         raise HomeAssistantError("No coordinator found – provide device_id or valid entity_id")
     
     async def handle_write_register(call: ServiceCall):
@@ -335,7 +338,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         entity_config = {
             "data_type": call.data.get("data_type", "uint16"),
-            "device_id": : call.data.get("device_id", None),
+            "device_id": call.data.get("device_id", None),
             "byte_order": call.data.get("byte_order", "big"),
             "word_order": call.data.get("word_order", "big"),
             "register_type": call.data.get("register_type", "holding"),
@@ -365,7 +368,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         entity_config = {
             "data_type": call.data.get("data_type", "string"),
-            "device_id": : call.data.get("device_id", None),
+            "device_id": call.data.get("device_id", None),
             "address": oid,  # SNMP uses OID as address
         }
         
@@ -393,7 +396,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         entity_config = {
             "data_type": call.data.get("data_type", "string"),
-            "device_id": : call.data.get("device_id", None),
+            "device_id": call.data.get("device_id", None),
             "address": oid,
         }
         
