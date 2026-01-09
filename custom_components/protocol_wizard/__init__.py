@@ -311,10 +311,11 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         value = call.data["value"]
         entity_config = {
             "data_type": call.data.get("data_type", "uint16"),
+            "byte_order": call.data.get("byte_order", "big"),
             "word_order": call.data.get("word_order", "big"),
-            "register_type": call.data.get("register_type", "auto"), # needed for testing!
+            "register_type": call.data.get("register_type", "holding"),
             "scale": call.data.get("scale", 1.0),
-            "offset": call.data.get("offset", 0.0),
+            "offset": call.data.get("offset", 0.0)
         }
     
         _LOGGER.debug("write_register service called: address=%s, value=%r (type=%s), config=%s", 
