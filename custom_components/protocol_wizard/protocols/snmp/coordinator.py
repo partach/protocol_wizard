@@ -164,7 +164,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
         async with self._lock:
             try:
-                raw_value = await self.client.read(address)
+                raw_value = await self.client.walk(address)
 
                 if raw_value is None:
                     return None
