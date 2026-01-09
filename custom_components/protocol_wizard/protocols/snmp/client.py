@@ -124,15 +124,33 @@ class SNMPClient(BaseProtocolClient):
             return None
             
     async def walk(self, base_oid: str) -> list[tuple[str, Any]]:
-        """Perform SNMP walk on subtree, return list of (oid, value)."""
+        """Perform SNMP walk on subtree, return list of (oid, value).
+        If leaf node, returns single-item list with the base OID itself."""
         await self._ensure_engine()
-
         if not base_oid or not base_oid.strip():
             _LOGGER.debug("SNMP walk no oid %s", base_oid)
             return []
-
+    
         results = []
+    
         try:
+            # First: try to GET the base OID itself (handles leaf nodes)
+            error_indication, error_status, error_index, var_binds = await get_cmd(
+                self._engine,
+                self._community_data,
+                self._transport,
+                self._context,
+                ObjectType(ObjectIdentity(base_oid)),
+            )
+    
+            if not error_indication and not error_status:
+                oid, value = var_binds[0]
+                results.append((
+                    oid.prettyPrint(),
+                    value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
+                ))
+    
+            # Then: normal walk for subtree (if any)
             iterator = walk_cmd(
                 self._engine,
                 self._community_data,
@@ -142,26 +160,23 @@ class SNMPClient(BaseProtocolClient):
                 lexicographicMode=False,
                 ignoreNonIncreasingOid=True,
             )
-
+    
             async for error_indication, error_status, error_index, var_binds in iterator:
                 if error_indication:
                     _LOGGER.error("SNMP walk error indication: %s", error_indication)
                     break
                 if error_status:
-                    # Normal end of MIB
-                    break
-
+                    break  # Normal end of MIB
                 for var_bind in var_binds:
                     oid, value = var_bind
                     results.append((
                         oid.prettyPrint(),
                         value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
                     ))
-
+    
         except Exception as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
-
-  #      _LOGGER.info("SNMP walk result for %s: %s", base_oid, results)
+    
         return results
         
     async def write(self, address: str, value: Any, **kwargs) -> bool:
