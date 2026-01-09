@@ -1,7 +1,5 @@
 {
   "title": "Protocol Wizard",
-  "description": "Universal protocol integration with UI-based device and entity configuration.",
-
   "config": {
     "step": {
       "user": {
@@ -65,7 +63,6 @@
       "no_templates": "No device templates found in the templates folder."
     }
   },
-
   "options": {
     "step": {
       "init": {
@@ -92,20 +89,20 @@
           "data_type": "How to interpret the raw value",
           "rw": "Read-only, write-only, or both",
           "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
-          "format": "Optional format string (e.g. '{d}d {h}h {m}m' for uptime seconds)",
-          "options": "Optional JSON mapping for dropdown (e.g. {\"0\": \"Off\", \"1\": \"On\"})"
+          "format": "Optional format string after decoding (example: {d}d {h}h {m}m for uptime in seconds)",
+          "options": "Optional JSON mapping for select entity (example: {\"0\": \"Off\", \"1\": \"On\"})"
         }
       },
       "edit_entity_form": {
         "title": "Edit Entity",
         "data_description": {
-          "format": "Optional format string (e.g. '{d}d {h}h {m}m' for uptime seconds)",
-          "options": "Optional JSON mapping for dropdown (e.g. {\"0\": \"Off\", \"1\": \"On\"})"
+          "format": "Optional format string after decoding (example: {d}d {h}h {m}m for uptime in seconds)",
+          "options": "Optional JSON mapping for select entity (example: {\"0\": \"Off\", \"1\": \"On\"})"
         }
       },
       "load_template": {
         "title": "Load Device Template",
-        "description": "Select a device template to load.",
+        "description": "Select a device template to load. Available templates are shown in the dropdown below.",
         "data": {
           "template": "Template"
         }
@@ -117,7 +114,6 @@
       "template_not_found": "Template file not found."
     }
   },
-
   "entity": {
     "sensor": {
       "hub": {
@@ -130,7 +126,6 @@
       }
     }
   },
-
   "services": {
     "read_register": {
       "name": "Read Register",
