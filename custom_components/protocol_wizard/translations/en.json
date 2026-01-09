@@ -83,6 +83,15 @@
       },
       "add_entity": {
         "title": "Add New Entity",
+        "data": {
+          "name": "Entity Name",
+          "address": "Address",
+          "data_type": "Data Type",
+          "rw": "Read/Write Mode",
+          "read_mode": "Read Mode",
+          "format": "Format String",
+          "options": "Options"
+        },
         "data_description": {
           "name": "Unique name for this entity",
           "address": "Register address (Modbus) or OID (SNMP)",
@@ -95,7 +104,19 @@
       },
       "edit_entity_form": {
         "title": "Edit Entity",
+        "data": {
+          "name": "Entity Name",
+          "address": "Address",
+          "data_type": "Data Type",
+          "rw": "Read/Write Mode",
+          "format": "Format String",
+          "options": "Options"
+        },
         "data_description": {
+          "name": "Unique name for this entity",
+          "address": "Register address (Modbus) or OID (SNMP)",
+          "data_type": "How to interpret the raw value",
+          "rw": "Read-only, write-only, or both",
           "format": "Optional format string after decoding (example: use {{d}} for days, {{h}} for hours, {{m}} for minutes)",
           "options": "Optional JSON mapping for select entity (example: use {{\"0\": \"Off\", \"1\": \"On\"}})"
         }
