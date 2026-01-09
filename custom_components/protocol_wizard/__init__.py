@@ -360,6 +360,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError(f"Failed to read address {call.data['address']}")
         
         return {"value": value}
+    
     async def handle_read_snmp(call: ServiceCall):
         """SNMP read service."""
         coordinator = _get_coordinator(call)
