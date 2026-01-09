@@ -1,5 +1,8 @@
 ## Changelog
-
+### [0.4.1] - Update
+- Error in en.json
+- wrong card version
+  
 ### [0.4.0] - Stable release
 - SNMP and Modbus now fully support also in card and templates
 - several bugs fixed
