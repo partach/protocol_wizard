@@ -303,6 +303,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         value = call.data["value"]
         entity_config = {
             "data_type": call.data.get("data_type", "uint16"),
+            "device_id": : call.data.get("device_id", None),
             "byte_order": call.data.get("byte_order", "big"),
             "word_order": call.data.get("word_order", "big"),
             "register_type": call.data.get("register_type", "holding"),
@@ -334,6 +335,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         entity_config = {
             "data_type": call.data.get("data_type", "uint16"),
+            "device_id": : call.data.get("device_id", None),
             "byte_order": call.data.get("byte_order", "big"),
             "word_order": call.data.get("word_order", "big"),
             "register_type": call.data.get("register_type", "holding"),
@@ -363,6 +365,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         entity_config = {
             "data_type": call.data.get("data_type", "string"),
+            "device_id": : call.data.get("device_id", None),
             "address": oid,  # SNMP uses OID as address
         }
         
@@ -390,6 +393,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         entity_config = {
             "data_type": call.data.get("data_type", "string"),
+            "device_id": : call.data.get("device_id", None),
             "address": oid,
         }
         
