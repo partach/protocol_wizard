@@ -89,15 +89,15 @@
           "data_type": "How to interpret the raw value",
           "rw": "Read-only, write-only, or both",
           "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
-          "format": "Optional format string after decoding (example: {d}d {h}h {m}m for uptime in seconds)",
-          "options": "Optional JSON mapping for select entity (example: {{0: Off, 1: On}})"
+          "format": "Optional format string after decoding. Example: (d)d (h)h (m)m  -use curly braces instead of parentheses()-",
+          "options": "Optional JSON mapping for select entity. Example: (0: Off, 1: On) -use curly braces instead of parentheses()-"
         }
       },
       "edit_entity_form": {
         "title": "Edit Entity",
         "data_description": {
-          "format": "Optional format string after decoding (example: {d}d {h}h {m}m for uptime in seconds)",
-          "options": "Optional JSON mapping for select entity (example: {{0: Off, 1: On}})"
+          "format": "Optional format string after decoding. Example: (d)d (h)h (m)m  -use curly braces instead of parentheses()-",
+          "options": "Optional JSON mapping for select entity. Example: (0: Off, 1: On) -use curly braces instead of parentheses()-"
         }
       },
       "load_template": {
