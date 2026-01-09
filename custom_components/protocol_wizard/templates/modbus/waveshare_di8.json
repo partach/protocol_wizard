@@ -26,7 +26,6 @@
     "data_type": "uint16",
     "register_type": "coil",
     "rw": "read"
-    "allow_bits": false,
   },
   {
     "name": "Input 5",
