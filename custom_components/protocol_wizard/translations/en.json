@@ -83,26 +83,27 @@
       },
       "add_entity": {
         "title": "Add New Entity",
-        "data_description": {
-          "name": "Unique name for this entity",
-          "address": "Register address (Modbus) or OID (SNMP)",
-          "data_type": "How to interpret the raw value",
-          "rw": "Read-only, write-only, or both",
-          "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
-          "format": "Optional format string after decoding. Example: (d)d (h)h (m)m  -use curly braces instead of parentheses()-",
-          "options": "Optional JSON mapping for select entity. Example: (0: Off, 1: On) -use curly braces instead of parentheses()-"
+        "description": "Define the properties for the new entity. Use address for Modbus or OID for SNMP. Options JSON Example: {\"0\": \"Off\", \"1\": \"On\"}",
+        "data": {
+          "name": "Name",
+          "address": "Address/OID",
+          "data_type": "Data Type",
+          "rw": "Read/Write Mode",
+          "read_mode": "Read Mode",
+          "format": "Format String",
+          "options": "Options (JSON)"
         }
       },
       "edit_entity_form": {
         "title": "Edit Entity",
-        "data_description": {
-          "format": "Optional format string after decoding. Example: (d)d (h)h (m)m  -use curly braces instead of parentheses()-",
-          "options": "Optional JSON mapping for select entity. Example: (0: Off, 1: On) -use curly braces instead of parentheses()-"
+        "data": {
+          "format": "Format String",
+          "options": "Options (JSON)"
         }
       },
       "load_template": {
         "title": "Load Device Template",
-        "description": "Select a device template to load. Available templates are shown in the dropdown below.",
+        "description": "Select a device template to load.",
         "data": {
           "template": "Template"
         }
@@ -114,76 +115,32 @@
       "template_not_found": "Template file not found."
     }
   },
-  "entity": {
-    "sensor": {
-      "hub": {
-        "name": "{protocol} Hub",
-        "state": {
-          "connected": "Connected",
-          "disconnected": "Disconnected",
-          "unknown": "Unknown"
-        }
-      }
-    }
-  },
   "services": {
     "read_register": {
       "name": "Read Register",
       "description": "Read a Modbus register and optionally decode it.",
-      "fields": {
-        "address": {
-          "name": "Address",
-          "description": "Register address (0-based)"
-        },
-        "register_type": {
-          "name": "Register Type",
-          "description": "Use 'auto' to try all types (recommended)"
-        },
-        "data_type": {
-          "name": "Data Type",
-          "description": "How to interpret the value(s)"
-        },
-        "size": {
-          "name": "Size",
-          "description": "Number of registers/bits to read"
-        },
-        "byte_order": {
-          "name": "Byte Order",
-          "description": "Byte order for multi-byte values"
-        },
-        "word_order": {
-          "name": "Word Order",
-          "description": "Word order for multi-register values"
-        },
-        "raw": {
-          "name": "Raw Mode",
-          "description": "Return raw register values instead of decoded"
+      "sections": {
+        "fields": {
+          "address": { "name": "Address", "description": "Register address (0-based)" },
+          "register_type": { "name": "Register Type", "description": "Use 'auto' to try all types" },
+          "data_type": { "name": "Data Type", "description": "How to interpret the value(s)" },
+          "size": { "name": "Size", "description": "Number of registers/bits to read" },
+          "byte_order": { "name": "Byte Order", "description": "Byte order for multi-byte values" },
+          "word_order": { "name": "Word Order", "description": "Word order for multi-register values" },
+          "raw": { "name": "Raw Mode", "description": "Return raw values instead of decoded" }
         }
       }
     },
     "write_register": {
       "name": "Write Register",
       "description": "Write a value to a Modbus register with proper encoding.",
-      "fields": {
-        "address": {
-          "name": "Register Address",
-          "description": "Modbus register address"
-        },
-        "value": {
-          "name": "Value",
-          "description": "Value to write (packed according to data type)"
-        },
-        "data_type": {
-          "name": "Data Type",
-          "description": "How the value should be encoded"
-        },
-        "byte_order": {
-          "name": "Byte Order",
-          "description": "Byte order inside a register"
-        },
-        "word_order": {
-          "name": "Word Order",
-          "description": "Register order for multi-register values"
+      "sections": {
+        "fields": {
+          "address": { "name": "Register Address", "description": "Modbus register address" },
+          "value": { "name": "Value", "description": "Value to write" },
+          "data_type": { "name": "Data Type", "description": "Encoding format" },
+          "byte_order": { "name": "Byte Order", "description": "Byte order inside register" },
+          "word_order": { "name": "Word Order", "description": "Register order" }
         }
       }
     }
