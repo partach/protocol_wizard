@@ -105,7 +105,7 @@
       },
       "load_template": {
         "title": "Load Device Template",
-        "description": "Select a device template to load. {count} templates available.",
+        "description": "Select a device template to load.",
         "data": {
           "template": "Template"
         }
