@@ -163,3 +163,84 @@ read_register:
       required: false
       selector:
         boolean:
+        
+write_oid:
+  name: Write SNMP OID
+  description: Write a value to an SNMP OID.
+  target:
+    entity:
+      integration: protocol_wizard
+  fields:
+    oid:
+      name: OID
+      description: SNMP OID to write to.
+      required: true
+      example: .1.3.6.1.2.1.1.5.0
+      selector:
+        text:
+    value:
+      name: Value
+      description: Value to write (will be converted according to data type).
+      required: true
+      selector:
+        text:
+    data_type:
+      name: Data Type
+      description: SNMP data type for the value.
+      required: false
+      default: Integer32
+      selector:
+        select:
+          options:
+            - label: Integer32
+              value: Integer32
+            - label: Unsigned32
+              value: Unsigned32
+            - label: Counter32
+              value: Counter32
+            - label: Gauge32
+              value: Gauge32
+            - label: TimeTicks
+              value: TimeTicks
+            - label: OctetString
+              value: OctetString
+            - label: IpAddress
+              value: IpAddress
+            - label: ObjectIdentifier
+              value: ObjectIdentifier
+
+read_oid:
+  name: Read SNMP OID
+  description: Read an SNMP OID from a Protocol Wizard device.
+  target:
+    entity:
+      integration: protocol_wizard
+  fields:
+    oid:
+      name: OID
+      description: SNMP OID to read.
+      required: true
+      selector:
+        text:
+    data_type:
+      name: Data Type
+      description: Expected SNMP data type for decoding.
+      required: false
+      default: Integer32
+      selector:
+        select:
+          options:
+            - Integer32
+            - Unsigned32
+            - Counter32
+            - Gauge32
+            - TimeTicks
+            - OctetString
+            - IpAddress
+            - ObjectIdentifier
+    raw:
+      name: Raw Mode
+      description: If enabled, returns raw SNMP value without decoding.
+      required: false
+      selector:
+        boolean:
