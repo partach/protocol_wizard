@@ -260,48 +260,40 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up protocol-agnostic services."""
     
     def _get_coordinator(call: ServiceCall):
+        device_id = call.data.get("device_id")  # ← From card/service
+    
+        if device_id:
+            # Find config entry by device_id
+            from homeassistant.helpers import device_registry as dr
+            dev_reg = dr.async_get(hass)
+            device = dev_reg.async_get(device_id)
+            if device and device.config_entries:
+                entry_id = next(iter(device.config_entries))  # First entry (usually only one)
+                coordinator = hass.data[DOMAIN]["coordinators"].get(entry_id)
+                if coordinator:
+                    _LOGGER.debug("Coordinator selected by device_id %s: %s", device_id, coordinator.protocol_name)
+                    return coordinator
+    
+        # Fallback: entity_id method (as before)
         entity_id = None
-        
-        # Try to get entity_id from multiple sources (for compatibility)
-        entity_id = None
-        
-        # 1. From service_data (when called via WS with entity_id in data)
         if "entity_id" in call.data:
             entity_ids = call.data["entity_id"]
-            if isinstance(entity_ids, list):
-                entity_id = entity_ids[0] if entity_ids else None
-            else:
-                entity_id = entity_ids
-        
-        # 2. From target (when called via UI with target selector)
+            entity_id = entity_ids[0] if isinstance(entity_ids, list) else entity_ids
         elif call.target and call.target.get("entity_id"):
             entity_ids = call.target.get("entity_id")
             entity_id = entity_ids[0] if isinstance(entity_ids, list) else entity_ids
-        
-        if not entity_id:
-            raise HomeAssistantError("entity_id is required")
-        
-        from homeassistant.helpers import entity_registry as er
-        ent_reg = er.async_get(hass)
-        entity_entry = ent_reg.async_get(entity_id)
-        
-        entry_id = None
-        if entity_entry and entity_entry.config_entry_id:
-            entry_id = entity_entry.config_entry_id
-        else:
-            coordinators = hass.data.get(DOMAIN, {}).get("coordinators", {})
-            if len(coordinators) == 1:
-                entry_id = list(coordinators.keys())[0]
-            elif len(coordinators) > 1:
-                raise HomeAssistantError("Multiple coordinators found, cannot determine which to use")
-            else:
-                raise HomeAssistantError("No coordinators found")
-        
-        coordinator = hass.data[DOMAIN]["coordinators"].get(entry_id)
-        if not coordinator:
-            raise HomeAssistantError(f"Coordinator not found for entry {entry_id}")
-        
-        return coordinator
+    
+        if entity_id:
+            from homeassistant.helpers import entity_registry as er
+            ent_reg = er.async_get(hass)
+            entity_entry = ent_reg.async_get(entity_id)
+            if entity_entry and entity_entry.config_entry_id:
+                entry_id = entity_entry.config_entry_id
+                coordinator = hass.data[DOMAIN]["coordinators"].get(entry_id)
+                if coordinator:
+                    return coordinator
+    
+        raise HomeAssistantError("No coordinator found – provide device_id or valid entity_id")
     
     async def handle_write_register(call: ServiceCall):
         """Generic write service (protocol-agnostic) with detailed logging."""
