@@ -69,7 +69,7 @@ Too many resistors degrade the signal; none can cause reflections and errors.
 </p>
 
 ### Step 1: Select your protocol
-1. Click **+ Add Integration** → Choose **Protoco Wizard**
+1. Click **+ Add Integration** → Choose **Protocol Wizard**
 2. Select Modbus / SNMP / etc.
 
 <p align="center">
@@ -77,7 +77,7 @@ Too many resistors degrade the signal; none can cause reflections and errors.
   <br><em>Choose Protocol - no restarts required</em>
 </p>
 
-### Step 2: Add Your Device (Modbus Example)
+### Step 2: Add Your Device (Modbus Example shown)
 1. Select connection type: **Serial** or **IP (TCP/UDP)**
 2. Enter:
    - Slave ID (usually 1)
@@ -94,10 +94,11 @@ Too many resistors degrade the signal; none can cause reflections and errors.
   <br><em>Simple device setup</em>
 </p>
 
-### Step 3: (Modbus only atm) Explore with the Card (Recommended for Discovery)
+### Step 3: Explore with the Card (Recommended for Discovery)
 Add the **Protocol Wizard Card** to a dashboard:
 - Edit dashboard → Add card → Search for **"Protocol Wizard Card"**
-- Select your device
+- Select your device (depending on type of device the UI of the card adapts)
+! You need to have a card per device (To ensure you are communicating with the right device)
 
 Now you can:
 - Read any register instantly
