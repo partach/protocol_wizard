@@ -360,22 +360,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError(f"Failed to read address {call.data['address']}")
         
         return {"value": value}
-    
-    hass.services.async_register(DOMAIN, "write_register", handle_write_register)
-    hass.services.async_register(
-        DOMAIN,
-        "read_register",
-        handle_read_register,
-        supports_response=SupportsResponse.ONLY,
-    )
-    hass.services.async_register(
-        DOMAIN,
-        "read_snmp",
-        handle_read_snmp,
-        supports_response=SupportsResponse.ONLY,
-    )
-    hass.services.async_register(DOMAIN, "write_snmp", handle_write_snmp)
-    
     async def handle_read_snmp(call: ServiceCall):
         """SNMP read service."""
         coordinator = _get_coordinator(call)
@@ -429,6 +413,22 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         if not success:
             raise HomeAssistantError(f"Failed to write to OID {oid}")
+    
+    hass.services.async_register(DOMAIN, "write_register", handle_write_register)
+    hass.services.async_register(
+        DOMAIN,
+        "read_register",
+        handle_read_register,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "read_snmp",
+        handle_read_snmp,
+        supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(DOMAIN, "write_snmp", handle_write_snmp)
+    
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
