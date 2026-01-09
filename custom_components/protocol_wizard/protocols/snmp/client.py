@@ -124,8 +124,12 @@ class SNMPClient(BaseProtocolClient):
             return None
             
     async def walk(self, base_oid: str) -> list[Any]:
-        """Perform SNMP walk on subtree, return list of values.
-        If leaf node, returns single-item list with the base OID value."""
+        """Perform SNMP walk on subtree.
+        
+        - Returns list of values if leaf node (single item)
+        - Returns list of (oid, value) tuples for subtree items
+        - Ignores 'No Such Instance' on base OID get
+        """
         await self._ensure_engine()
         if not base_oid or not base_oid.strip():
             _LOGGER.debug("SNMP walk no oid %s", base_oid)
@@ -134,7 +138,7 @@ class SNMPClient(BaseProtocolClient):
         results = []
     
         try:
-            # First: GET the base OID itself (handles leaf nodes)
+            # Step 1: Try GET on the base OID itself (for leaf nodes)
             error_indication, error_status, error_index, var_binds = await get_cmd(
                 self._engine,
                 self._community_data,
@@ -143,13 +147,13 @@ class SNMPClient(BaseProtocolClient):
                 ObjectType(ObjectIdentity(base_oid)),
             )
     
-            if not error_indication and not error_status:
-                _, value = var_binds[0]  # Ignore oid, take value only
-                results.append(
-                    value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
-                )
+            # Only add the base value if GET succeeded (skip on 'No Such Instance')
+            if not error_indication and not error_status and var_binds:
+                _, value = var_binds[0]
+                pretty_value = value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
+                results.append(pretty_value)  # Just the value, no OID
     
-            # Then: walk the subtree (if any)
+            # Step 2: Normal walk for subtree (always include OID + value)
             iterator = walk_cmd(
                 self._engine,
                 self._community_data,
@@ -167,10 +171,10 @@ class SNMPClient(BaseProtocolClient):
                 if error_status:
                     break  # Normal end of MIB
                 for var_bind in var_binds:
-                    _, value = var_bind  # Ignore oid, take value only
-                    results.append(
-                        value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
-                    )
+                    oid, value = var_bind
+                    pretty_oid = oid.prettyPrint()
+                    pretty_value = value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
+                    results.append((pretty_oid, pretty_value))
     
         except Exception as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
