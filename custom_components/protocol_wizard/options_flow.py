@@ -467,7 +467,7 @@ class ModbusSchemaHandler:
             vol.Optional("format", default=defaults.get("format", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
-            vol.Optional("options", default=defaults.get("options", "")): str,
+            vol.Optional("options", default=defaults.get("options", "")): str,   # options: JSON string mapping raw values to labels
             vol.Optional(
                 CONF_BYTE_ORDER,
                 default=defaults.get(CONF_BYTE_ORDER, "big")
@@ -502,7 +502,13 @@ class ModbusSchemaHandler:
         
         # Start with existing data (for edits) or empty dict
         processed = dict(existing) if existing else {}
-        
+        if "options" in processed and isinstance(processed["options"], str):
+        try:
+            processed["options"] = json.loads(processed["options"])
+            if not isinstance(processed["options"], dict):
+                processed["options"]="" # if it is rubish, we dont use it
+        except Exception:
+            errors["options"] = ""
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
             if value == "":
@@ -557,7 +563,11 @@ class ModbusSchemaHandler:
         defaults.setdefault("icon", "")
         defaults.setdefault("unit", "")
         defaults.setdefault("format", "")
-        defaults.setdefault("options", "")
+        opts = defaults.get("options")
+        if isinstance(opts, dict):
+            defaults["options"] = json.dumps(opts)
+        else:
+            defaults.setdefault("options", "")
         
         # Ensure numeric fields have values
         defaults.setdefault("scale", 1.0)
