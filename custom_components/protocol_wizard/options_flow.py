@@ -64,12 +64,14 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
             "settings": "Settings",
             "add_entity": "Add entity",
             "load_template": "Load template",
+            "export_template": "Export template",
         }
         if self._entities:
             menu_options["list_entities"] = f"Entities ({len(self._entities)})"
             menu_options["edit_entity"] = "Edit entity"
 
         return self.async_show_menu(step_id="init", menu_options=menu_options)
+
 
     # ------------------------------------------------------------------
     # SETTINGS
@@ -283,6 +285,47 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
             description_placeholders={"templates": ", ".join(templates)},
         )
     # ------------------------------------------------------------------
+    # Export template
+    # ------------------------------------------------------------------
+    async def async_step_export_template(self, user_input=None):
+        if user_input:
+            name = user_input["name"].strip()
+    
+            if not name:
+                return self.async_show_form(
+                    step_id="export_template",
+                    data_schema=self._export_schema(),
+                    errors={"name": "required"},
+                )
+    
+            protocol_subdir = "modbus" if self.protocol == CONF_PROTOCOL_MODBUS else "snmp"
+            template_dir = self.hass.config.path(
+                "custom_components", DOMAIN, "templates", protocol_subdir
+            )
+    
+            os.makedirs(template_dir, exist_ok=True)
+    
+            path = os.path.join(template_dir, f"{name}.json")
+    
+            try:
+                await self.hass.async_add_executor_job(
+                    self._write_template, path, self._entities
+                )
+                return self.async_abort(reason="template_exported")
+    
+            except Exception as err:
+                _LOGGER.error("Template export failed: %s", err)
+                return self.async_show_form(
+                    step_id="export_template",
+                    data_schema=self._export_schema(),
+                    errors={"base": "export_failed"},
+                )
+    
+        return self.async_show_form(
+            step_id="export_template",
+            data_schema=self._export_schema(),
+        )
+    # ------------------------------------------------------------------
     # INTERNAL
     # ------------------------------------------------------------------
     def _get_template_schema(self, templates=None):
@@ -329,7 +372,18 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 
 class ModbusSchemaHandler:
     """Handles Modbus-specific schema and input processing."""
-
+    
+    @staticmethod
+    def _export_schema():
+        return vol.Schema({
+            vol.Required("name"): str
+        })
+        
+    @staticmethod
+    def _write_template(path: str, entities: list[dict]):
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(entities, f, indent=2)
+            
     @staticmethod
     def get_schema(defaults: dict | None = None) -> vol.Schema:
         defaults = defaults or {}
@@ -434,7 +488,17 @@ class ModbusSchemaHandler:
 
 class SNMPSchemaHandler:
     config_key = CONF_ENTITIES
-
+    @staticmethod
+    def _export_schema():
+        return vol.Schema({
+            vol.Required("name"): str
+        })
+        
+    @staticmethod
+    def _write_template(path: str, entities: list[dict]):
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(entities, f, indent=2)
+            
     def get_schema(self, defaults=None):
         defaults = defaults or {}
         return vol.Schema({
