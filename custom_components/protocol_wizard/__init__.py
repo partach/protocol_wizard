@@ -14,6 +14,8 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.service import SupportsResponse
 from datetime import timedelta
 from .protocols.snmp import SNMPClient
+import json
+import os
 
 from .const import (
     CONF_BAUDRATE,
