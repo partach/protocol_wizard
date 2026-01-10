@@ -467,7 +467,7 @@ class ModbusSchemaHandler:
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Optional("icon"): str,  # e.g. mdi:thermometer
+            vol.Optional("icon", default=defaults.get("icon", "")): str,  # e.g. mdi:thermometer
             vol.Optional("unit", default=defaults.get("unit", "")): str,
             vol.Optional("format", default=defaults.get("format", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
@@ -657,7 +657,7 @@ class SNMPSchemaHandler:
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Optional("icon"): str,  # e.g. mdi:thermometer
+            vol.Optional("icon", default=defaults.get("icon", "")): str,  # e.g. mdi:thermometer
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
             vol.Optional("format", default=defaults.get("format", "")): str,
