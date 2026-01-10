@@ -1,6 +1,6 @@
 ## Changelog
 
-### [0.4.2] - About templates...
+### [0.4.3] - About templates...
 - Installation via template possible
 - Added several base templates
 
