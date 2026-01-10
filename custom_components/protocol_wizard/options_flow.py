@@ -190,11 +190,15 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_list_entities(self, user_input=None):
         if user_input:
-            delete = set(user_input.get("delete", []))
-            self._entities = [
-                e for i, e in enumerate(self._entities)
-                if str(i) not in delete
-            ]
+            if user_input.get("delete_all"):
+                self._entities = []
+            else:
+                delete = set(user_input.get("delete", []))
+                self._entities = [
+                    e for i, e in enumerate(self._entities)
+                    if str(i) not in delete
+                ]
+        
             self._save_entities()
             return await self.async_step_init()
 
@@ -209,6 +213,7 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="list_entities",
             data_schema=vol.Schema({
+                vol.Optional("delete_all", default=False): bool,
                 vol.Optional("delete"): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=options,
