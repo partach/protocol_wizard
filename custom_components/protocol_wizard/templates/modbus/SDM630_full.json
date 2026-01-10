@@ -155,7 +155,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt-outline"
   },
@@ -171,7 +171,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt-outline"
   },
@@ -187,7 +187,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt-outline"
   },
@@ -203,7 +203,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt"
   },
@@ -219,7 +219,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt"
   },
@@ -235,7 +235,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt"
   },
@@ -411,7 +411,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt-outline"
   },
@@ -427,7 +427,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt"
   },
@@ -523,7 +523,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
     "icon": "mdi:transmission-tower-import"
   },
@@ -539,7 +539,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
     "icon": "mdi:transmission-tower-export"
   },
@@ -555,7 +555,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
     "icon": "mdi:lightning-bolt"
   },
@@ -571,9 +571,9 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
-    "icon": "mdi:lightning-bolt"
+    "icon": "mdi:transmission-tower-import"
   },
   {
     "name": "Total VAh",
@@ -587,7 +587,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
     "icon": "mdi:lightning-bolt"
   },
@@ -891,7 +891,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
     "icon": "mdi:transmission-tower-import"
   },
@@ -907,7 +907,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "energy",
+    "device_class": "",
     "state_class": "total_increasing",
     "icon": "mdi:lightning-bolt"
   }
