@@ -54,7 +54,17 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
     @property
     def config_entry(self) -> config_entries.ConfigEntry:
         return self._config_entry
-
+        
+    @staticmethod
+    def _export_schema():
+        return vol.Schema({
+            vol.Required("name"): str
+        })
+        
+    @staticmethod
+    def _write_template(path: str, entities: list[dict]):
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(entities, f, indent=2)
     # ------------------------------------------------------------------
     # INIT
     # ------------------------------------------------------------------
@@ -372,17 +382,7 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
 
 class ModbusSchemaHandler:
     """Handles Modbus-specific schema and input processing."""
-    
-    @staticmethod
-    def _export_schema():
-        return vol.Schema({
-            vol.Required("name"): str
-        })
-        
-    @staticmethod
-    def _write_template(path: str, entities: list[dict]):
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(entities, f, indent=2)
+
             
     @staticmethod
     def get_schema(defaults: dict | None = None) -> vol.Schema:
@@ -488,16 +488,6 @@ class ModbusSchemaHandler:
 
 class SNMPSchemaHandler:
     config_key = CONF_ENTITIES
-    @staticmethod
-    def _export_schema():
-        return vol.Schema({
-            vol.Required("name"): str
-        })
-        
-    @staticmethod
-    def _write_template(path: str, entities: list[dict]):
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(entities, f, indent=2)
             
     def get_schema(self, defaults=None):
         defaults = defaults or {}
