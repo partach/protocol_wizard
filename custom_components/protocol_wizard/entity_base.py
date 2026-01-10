@@ -163,7 +163,10 @@ class ProtocolWizardSensorBase(CoordinatorEntity, SensorEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_class = entity_config.get("device_class")
         self._attr_device_info = device_info
-        
+        self._attr_device_class = entity_config.get("device_class")
+        self._attr_state_class = entity_config.get("state_class")
+        self._attr_entity_category = entity_config.get("entity_category")
+        self._attr_icon = entity_config.get("icon")    
         # Set display precision based on data type
         data_type = entity_config.get("data_type", "")
         if not entity_config.get("format"):
@@ -221,6 +224,10 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         self._attr_native_min_value = entity_config.get("min")
         self._attr_native_max_value = entity_config.get("max")
         self._attr_native_step = entity_config.get("step", 1)
+        self._attr_device_class = entity_config.get("device_class")
+        self._attr_state_class = entity_config.get("state_class")
+        self._attr_entity_category = entity_config.get("entity_category")
+        self._attr_icon = entity_config.get("icon")    
         
         # Set display precision
         self.data_type = entity_config.get("data_type", "")
@@ -306,6 +313,10 @@ class ProtocolWizardSwitchBase(CoordinatorEntity, SwitchEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
         self._attr_icon = "mdi:toggle-switch"
+        self._attr_device_class = entity_config.get("device_class")
+        self._attr_state_class = entity_config.get("state_class")
+        self._attr_entity_category = entity_config.get("entity_category")
+        self._attr_icon = entity_config.get("icon")    
 
     @property
     def is_on(self) -> bool:
@@ -354,6 +365,10 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
         self.data_type = entity_config.get("data_type", "")
+        self._attr_device_class = entity_config.get("device_class")
+        self._attr_state_class = entity_config.get("state_class")
+        self._attr_entity_category = entity_config.get("entity_category")
+        self._attr_icon = entity_config.get("icon")    
         
         # Build value mapping from options dict
         options_dict = entity_config.get("options", {})
