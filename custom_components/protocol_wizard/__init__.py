@@ -41,6 +41,7 @@ from .const import (
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
     CONF_TEMPLATE,
+    CONF_TEMPLATE_APPLIED,
 #    CONF_ENTITIES,
 )
 
@@ -151,11 +152,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(seconds=update_interval),
     )
     
-    # Load template if specified in options (only on first setup)
     template_name = entry.options.get(CONF_TEMPLATE)
-    if template_name and not entry.options.get("registers") and not entry.options.get("entities"):
+    
+    if (template_name and not entry.options.get(CONF_TEMPLATE_APPLIED)):
         _LOGGER.info("Loading template '%s' for new device", template_name)
         await _load_template_into_options(hass, entry, protocol_name, template_name)
+    
+        # mark as applied
+        options = dict(entry.options)
+        options[CONF_TEMPLATE_APPLIED] = True
+        hass.config_entries.async_update_entry(entry, options=options)
+    
     
     await coordinator.async_config_entry_first_refresh()
     
