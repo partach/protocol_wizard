@@ -6,7 +6,8 @@ import logging
 from typing import Any
 import serial.tools.list_ports
 import voluptuous as vol
-
+import json
+import os
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 from homeassistant.data_entry_flow import FlowResult
