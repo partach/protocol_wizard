@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 from abc import ABC, abstractmethod
-
+import json
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -371,9 +371,39 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         self._attr_icon = entity_config.get("icon")    
         
         # Build value mapping from options dict
-        options_dict = entity_config.get("options", {})
+        options_raw = entity_config.get("options")
+        
+        # Normalize options:
+        # - dict → OK
+        # - JSON string → parse
+        # - anything else → empty
+        if isinstance(options_raw, str):
+            try:
+                options_dict = json.loads(options_raw)
+            except Exception:
+                _LOGGER.error(
+                    "Invalid options JSON for %s: %r",
+                    entity_config.get("name"),
+                    options_raw,
+                )
+                options_dict = {}
+        elif isinstance(options_raw, dict):
+            options_dict = options_raw
+        else:
+            options_dict = {}
+        
+        # Final safety check
+        if not isinstance(options_dict, dict):
+            _LOGGER.error(
+                "Options must be dict for %s, got %s",
+                entity_config.get("name"),
+                type(options_dict),
+            )
+            options_dict = {}
+        
         self._value_map = {str(k): v for k, v in options_dict.items()}
         self._reverse_map = {v: k for k, v in self._value_map.items()}
+        self._attr_options = list(self._reverse_map.keys())
         
         self._attr_options = list(self._reverse_map.keys())
     
