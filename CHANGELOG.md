@@ -1,5 +1,8 @@
 ## Changelog
 
+### [0.4.5] - Template export added
+- Template export function
+
 ### [0.4.4] - Small fix
 - Fix for first issue for new installs
   
