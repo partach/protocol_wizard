@@ -1,4 +1,9 @@
 ## Changelog
+
+### [0.4.2] - About templates...
+- Installation via template possible
+- Added several base templates
+
 ### [0.4.1] - Update
 - Error in en.json
 - wrong card version
