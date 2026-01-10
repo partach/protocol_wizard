@@ -10,7 +10,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Phase 2 Voltage",
@@ -23,7 +26,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Phase 3 Voltage",
@@ -36,7 +42,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Phase 1 Current",
@@ -49,7 +58,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 2 Current",
@@ -62,7 +74,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 3 Current",
@@ -75,7 +90,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 1 Active Power",
@@ -88,7 +106,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 2 Active Power",
@@ -101,7 +122,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 3 Active Power",
@@ -114,7 +138,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 1 Reactive Power",
@@ -127,7 +154,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt-outline"
   },
   {
     "name": "Phase 2 Reactive Power",
@@ -140,7 +170,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt-outline"
   },
   {
     "name": "Phase 3 Reactive Power",
@@ -153,7 +186,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt-outline"
   },
   {
     "name": "Phase 1 Apparent Power",
@@ -166,7 +202,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 2 Apparent Power",
@@ -179,7 +218,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 3 Apparent Power",
@@ -192,7 +234,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 1 Power Factor",
@@ -205,7 +250,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 2 Power Factor",
@@ -218,7 +266,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 3 Power Factor",
@@ -231,7 +282,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 1 Phase Angle",
@@ -244,7 +298,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:angle"
   },
   {
     "name": "Phase 2 Phase Angle",
@@ -257,7 +314,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:angle"
   },
   {
     "name": "Phase 3 Phase Angle",
@@ -270,7 +330,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:angle"
   },
   {
     "name": "Average Line to Neutral Volts",
@@ -283,7 +346,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Average Line Current",
@@ -296,7 +362,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Sum of Line Currents",
@@ -309,7 +378,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Total System Active Power",
@@ -322,7 +394,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Total System Reactive Power",
@@ -335,7 +410,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt-outline"
   },
   {
     "name": "Total System Apparent Power",
@@ -348,7 +426,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Total System Power Factor",
@@ -361,7 +442,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Total System Phase Angle",
@@ -374,7 +458,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:angle"
   },
   {
     "name": "Frequency",
@@ -387,7 +474,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "frequency",
+    "state_class": "measurement",
+    "icon": "mdi:sine-wave"
   },
   {
     "name": "Import Wh Since Last Reset",
@@ -400,7 +490,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   },
   {
     "name": "Export Wh Since Last Reset",
@@ -413,7 +506,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-export"
   },
   {
     "name": "Import VArh Since Last Reset",
@@ -426,7 +522,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   },
   {
     "name": "Export VArh Since Last Reset",
@@ -439,7 +538,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-export"
   },
   {
     "name": "VAh Since Last Reset",
@@ -452,7 +554,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Total VArh",
@@ -465,7 +570,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Total VAh",
@@ -478,7 +586,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 1 L/N Average Current Demand",
@@ -491,7 +602,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 2 L/N Average Current Demand",
@@ -504,7 +618,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 3 L/N Average Current Demand",
@@ -517,7 +634,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Line 1-2 Voltage THD",
@@ -530,7 +650,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Line 2-3 Voltage THD",
@@ -543,7 +666,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Line 3-1 Voltage THD",
@@ -556,7 +682,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 1 Current THD",
@@ -569,7 +698,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 2 Current THD",
@@ -582,7 +714,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 3 Current THD",
@@ -595,7 +730,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 1 L/N Volts THD",
@@ -608,7 +746,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 2 L/N Volts THD",
@@ -621,7 +762,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Phase 3 L/N Volts THD",
@@ -634,7 +778,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Current Demand",
@@ -647,7 +794,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Maximum Current Demand",
@@ -660,10 +810,13 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
-    "name": "Line 1-2 Volts THD",
+    "name": "Line 1-2 Voltage THD",
     "address": 136,
     "data_type": "float32",
     "register_type": "input",
@@ -673,10 +826,13 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
-    "name": "Line 2-3 Volts THD",
+    "name": "Line 2-3 Voltage THD",
     "address": 138,
     "data_type": "float32",
     "register_type": "input",
@@ -686,10 +842,13 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
-    "name": "Line 3-1 Volts THD",
+    "name": "Line 3-1 Voltage THD",
     "address": 140,
     "data_type": "float32",
     "register_type": "input",
@@ -699,7 +858,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Total System Active Energy",
@@ -712,7 +874,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   },
   {
     "name": "Total System Reactive Energy",
@@ -725,7 +890,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   },
   {
     "name": "Total System Apparent Energy",
@@ -738,6 +906,9 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:lightning-bolt"
   }
 ]
