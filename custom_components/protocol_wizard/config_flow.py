@@ -45,6 +45,7 @@ from .const import (
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
     CONF_IP,
+    CONF_TEMPLATE,
 )
 from .options_flow import ProtocolWizardOptionsFlow
 from .protocols import ProtocolRegistry
@@ -67,7 +68,60 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry: ConfigEntry):
         """Get the options flow for this handler."""
         return ProtocolWizardOptionsFlow(config_entry)
+        
+    async def async_step_select_template(self, user_input=None) -> FlowResult:
+        protocol_subdir = CONF_PROTOCOL_MODBUS if self._protocol == CONF_PROTOCOL_MODBUS else CONF_PROTOCOL_SNMP
+        template_dir = self.hass.config.path(
+            "custom_components", DOMAIN, "templates", protocol_subdir
+        )
+    
+        templates = []
+        if os.path.exists(template_dir):
+            templates = [
+                f[:-5] for f in os.listdir(template_dir) if f.endswith(".json")
+            ]
+    
+        if user_input is not None:
+            template = user_input.get(CONF_TEMPLATE)
+            if template:
+                self._data[CONF_TEMPLATE] = template
+            return await (
+                self.async_step_modbus_common()
+                if self._protocol == CONF_PROTOCOL_MODBUS
+                else self.async_step_snmp_common()
+            )
+    
+        options = [{"value": "", "label": "No template"}] + [
+            {"value": t, "label": t} for t in sorted(templates)
+        ]
+    
+        return self.async_show_form(
+            step_id="select_template",
+            data_schema=vol.Schema({
+                vol.Optional(CONF_TEMPLATE, default=""): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=options,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }),
+        )
 
+    def _get_test_params_from_template(self, template_name: str) -> tuple[int, int]:
+        protocol_subdir = CONF_PROTOCOL_MODBUS if self._protocol == CONF_PROTOCOL_MODBUS else CONF_PROTOCOL_SNMP
+        path = self.hass.config.path(
+            "custom_components", DOMAIN, "templates", protocol_subdir, f"{template_name}.json"
+        )
+    
+        with open(path, "r", encoding="utf-8") as f:
+            template = json.load(f)
+    
+        first = template[0]
+        address = int(first.get("address", 0))
+        size = int(first.get("size", 1))
+    
+        return address, size
+        
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """First step: protocol selection."""
         available_protocols = ProtocolRegistry.available_protocols()
@@ -75,6 +129,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # If user selected a protocol
         if user_input is not None:
             self._protocol = user_input.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
+            return await self.async_step_select_template()
             
             if self._protocol == CONF_PROTOCOL_MODBUS:
                 return await self.async_step_modbus_common()
@@ -109,7 +164,10 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._data.update(user_input)
             self._data[CONF_PROTOCOL] = CONF_PROTOCOL_MODBUS  # Ensure protocol is set
-            
+            if CONF_TEMPLATE in self._data:
+                addr, size = self._get_test_params_from_template(self._data[CONF_TEMPLATE])
+                self._data[CONF_FIRST_REG] = addr
+                self._data[CONF_FIRST_REG_SIZE] = size
             if user_input[CONF_CONNECTION_TYPE] == CONNECTION_TYPE_SERIAL:
                 return await self.async_step_modbus_serial()
             return await self.async_step_modbus_ip()
@@ -186,10 +244,18 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 await self._async_test_modbus_connection(final_data)
 
-                return self.async_create_entry(
+                entry = self.async_create_entry(
                     title=final_data[CONF_NAME],
-                    data=final_data
+                    data=final_data,
                 )
+                
+                if CONF_TEMPLATE in self._data:
+                    self.hass.config_entries.async_update_entry(
+                        entry,
+                        options={CONF_TEMPLATE: self._data[CONF_TEMPLATE]},
+                    )
+
+                return entry
 
             except Exception as err:
                 _LOGGER.exception("Serial connection test failed: %s", err)
