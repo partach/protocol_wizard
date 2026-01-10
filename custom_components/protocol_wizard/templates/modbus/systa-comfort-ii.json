@@ -11,7 +11,11 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "options": "{\"0\": \"Standby\", \"1\": \"Heating\", \"2\": \"Error\"}"
+    "options": {
+       "0": "Standby", 
+       "1": "Heating", 
+       "2": "Error"
+    }
   },
   {
     "name": "Current Boiler Temperature",
@@ -51,7 +55,10 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "options": "{\"0\": \"Off\", \"1\": \"On\"}"
+    "options": {
+       "0": "Off",
+       "1": "On"
+    }
   },
   {
     "name": "Outdoor Temperature",
