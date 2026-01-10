@@ -6,7 +6,8 @@
 [![License](https://img.shields.io/github/license/partach/protocol_wizard?color=ffca28&style=flat-square)](https://github.com/partach/protocol_wizard/blob/main/LICENSE)
 [![HACS validated](https://img.shields.io/badge/HACS-validated-41BDF5?style=flat-square)](https://github.com/hacs/integration)
 
-The Protocol Wizard helps you build your home assistant devices without need for any yaml!
+The Protocol Wizard helps you build your home assistant devices without need for any yaml!<br>
+See [DOCUMENTATION](https://github.com/partach/protocol_wizard/wiki) for details
 
 **Configure and control devices entirely from the UI — no YAML, no restarts!**<br>
 
