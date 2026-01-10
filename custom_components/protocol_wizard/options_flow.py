@@ -491,19 +491,38 @@ class ModbusSchemaHandler:
 
     @staticmethod
     def process_input(user_input: dict, errors: dict, existing: dict | None = None) -> dict | None:
-        # Start with a clean copy
-        processed = user_input.copy()
-    
-        # Merge with existing if provided (edit mode)
-        if existing:
-            processed = {**existing, **processed}
-    
-        # Required fields validation
-        if "address" not in processed or not processed["address"]:
+        """
+        Process user input for Modbus entity.
+        Handles both new entities and edits, preserving old fields.
+        """
+        # Required validation first
+        if not user_input.get("address"):
             errors["address"] = "required"
             return None
-    
-        # Type/size logic
+        
+        # Start with existing data (for edits) or empty dict
+        processed = dict(existing) if existing else {}
+        
+        # Update with new values, handling empty strings properly
+        for key, value in user_input.items():
+            # For these fields, empty string means "clear the value"
+            if key in ["device_class", "state_class", "entity_category", "icon", "unit", "format", "options"]:
+                if value == "":
+                    # Remove the field entirely if empty (don't store empty strings)
+                    processed.pop(key, None)
+                else:
+                    processed[key] = value
+            # For numeric fields, always update (including 0)
+            elif key in ["scale", "offset", "address", "size"]:
+                processed[key] = value
+            # For required fields, always update
+            elif key in ["name", "data_type", "register_type", "rw", "byte_order", "word_order"]:
+                processed[key] = value
+            # For any other field, only update if not empty
+            elif value not in ("", None):
+                processed[key] = value
+        
+        # Calculate size based on data_type
         type_sizes = {
             "uint16": 1, "int16": 1,
             "uint32": 2, "int32": 2,
@@ -513,19 +532,51 @@ class ModbusSchemaHandler:
         dtype = processed.get("data_type")
         if dtype in type_sizes:
             processed["size"] = type_sizes[dtype]
-    
-        # Convert address & size safely
+        
+        # Convert types
         try:
             processed["address"] = int(processed["address"])
             processed["size"] = int(processed.get("size", 1))
-        except (ValueError, TypeError):
+            processed["scale"] = float(processed.get("scale", 1.0))
+            processed["offset"] = float(processed.get("offset", 0.0))
+        except (ValueError, TypeError) as err:
+            _LOGGER.error("Type conversion error: %s", err)
             errors["address"] = "invalid_number"
             return None
-    
+        
+        # Ensure required fields exist with defaults
+        processed.setdefault("register_type", "input")
+        processed.setdefault("data_type", "uint16")
+        processed.setdefault("rw", "read")
+        processed.setdefault("byte_order", "big")
+        processed.setdefault("word_order", "big")
+        processed.setdefault("scale", 1.0)
+        processed.setdefault("offset", 0.0)
+        
         return processed
 
     def get_defaults(self, entity):
-        return dict(entity)
+        """
+        Get defaults for editing an entity.
+        Returns the entity dict with all fields, using empty string for missing optional fields.
+        """
+        defaults = dict(entity)
+        
+        # Set empty string for optional fields that don't exist
+        # (so form shows them as empty rather than None)
+        defaults.setdefault("device_class", "")
+        defaults.setdefault("state_class", "")
+        defaults.setdefault("entity_category", "")
+        defaults.setdefault("icon", "")
+        defaults.setdefault("unit", "")
+        defaults.setdefault("format", "")
+        defaults.setdefault("options", "")
+        
+        # Ensure numeric fields have values
+        defaults.setdefault("scale", 1.0)
+        defaults.setdefault("offset", 0.0)
+        
+        return defaults
 
     def format_label(self, entity):
         return f"{entity.get('name')} @ {entity.get('address')}"
@@ -539,6 +590,7 @@ class ModbusSchemaHandler:
                 entities.append(e)
                 added += 1
         return added
+
 
 
 class SNMPSchemaHandler:
@@ -619,32 +671,74 @@ class SNMPSchemaHandler:
     ) -> dict | None:
         """
         Process user input for SNMP entity.
-        - Validates required fields
-        - Merges with existing data (for edits)
-        - Handles new attributes (device_class, state_class, etc.)
+        Handles both new entities and edits, preserving old fields.
         """
+        # Required validation
         if not user_input.get("address"):
             errors["address"] = "required"
             return None
-    
-        # Clean out empty values (but keep 0/false as valid)
-        clean = {}
-        for k, v in user_input.items():
-            if v not in ("", None) or k in ["scale", "offset", "rw", "data_type"]:  # allow 0/false
-                clean[k] = v
-    
-        # Merge with existing (for edit) or start fresh
-        processed = {**(existing or {}), **clean}
-    
-        # Optional: Add defaults or validation for new fields (if needed later)
-        # e.g. if "device_class" in processed and processed["device_class"] not in ALLOWED_CLASSES:
-        #     errors["device_class"] = "invalid"
-    
+        
+        # Start with existing data (for edits) or empty dict
+        processed = dict(existing) if existing else {}
+        
+        # Update with new values, handling empty strings properly
+        for key, value in user_input.items():
+            # For these fields, empty string means "clear the value"
+            if key in ["device_class", "state_class", "entity_category", "icon", "format"]:
+                if value == "":
+                    processed.pop(key, None)
+                else:
+                    processed[key] = value
+            # For numeric fields, always update (including 0)
+            elif key in ["scale", "offset"]:
+                processed[key] = value
+            # For required fields, always update
+            elif key in ["name", "address", "data_type", "read_mode"]:
+                processed[key] = value
+            # For any other field, only update if not empty
+            elif value not in ("", None):
+                processed[key] = value
+        
+        # Convert types
+        try:
+            processed["scale"] = float(processed.get("scale", 1.0))
+            processed["offset"] = float(processed.get("offset", 0.0))
+        except (ValueError, TypeError) as err:
+            _LOGGER.error("Type conversion error: %s", err)
+            errors["scale"] = "invalid_number"
+            return None
+        
+        # Ensure required fields exist with defaults
+        processed.setdefault("data_type", "string")
+        processed.setdefault("read_mode", "get")
+        processed.setdefault("scale", 1.0)
+        processed.setdefault("offset", 0.0)
+        
         return processed
 
-
     def get_defaults(self, entity):
-        return dict(entity)
+        """
+        Get defaults for editing an entity.
+        Returns the entity dict with all fields, using empty string for missing optional fields.
+        """
+        defaults = dict(entity)
+        
+        # Set empty string for optional fields that don't exist
+        defaults.setdefault("device_class", "")
+        defaults.setdefault("state_class", "")
+        defaults.setdefault("entity_category", "")
+        defaults.setdefault("icon", "")
+        defaults.setdefault("format", "")
+        
+        # Ensure numeric fields have values
+        defaults.setdefault("scale", 1.0)
+        defaults.setdefault("offset", 0.0)
+        
+        # Ensure required fields
+        defaults.setdefault("read_mode", "get")
+        defaults.setdefault("data_type", "string")
+        
+        return defaults
 
     def format_label(self, entity):
         return f"{entity.get('name')} @ {entity.get('address')}"
