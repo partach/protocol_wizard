@@ -10,7 +10,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Phase 2 Voltage",
@@ -23,7 +26,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Phase 3 Voltage",
@@ -36,7 +42,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Phase 1 Current",
@@ -49,7 +58,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 2 Current",
@@ -62,7 +74,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 3 Current",
@@ -75,7 +90,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Phase 1 Active Power",
@@ -88,7 +106,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 2 Active Power",
@@ -101,7 +122,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Phase 3 Active Power",
@@ -114,7 +138,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Total System Active Power",
@@ -127,10 +154,13 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
-    "name": "Import Active Energy",
+    "name": "Import Wh Since Last Reset",
     "address": 72,
     "data_type": "float32",
     "register_type": "input",
@@ -140,10 +170,13 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   },
   {
-    "name": "Export Active Energy",
+    "name": "Export Wh Since Last Reset",
     "address": 74,
     "data_type": "float32",
     "register_type": "input",
@@ -153,10 +186,13 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-export"
   },
   {
-    "name": "Total Active Energy",
+    "name": "Total System Active Energy",
     "address": 342,
     "data_type": "float32",
     "register_type": "input",
@@ -166,6 +202,9 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   }
 ]
