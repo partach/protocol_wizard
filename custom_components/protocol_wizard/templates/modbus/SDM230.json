@@ -10,7 +10,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "voltage",
+    "state_class": "measurement",
+    "icon": "mdi:flash"
   },
   {
     "name": "Current",
@@ -23,7 +26,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Active Power",
@@ -36,7 +42,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Reactive Power",
@@ -49,7 +58,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt-outline"
   },
   {
     "name": "Apparent Power",
@@ -62,7 +74,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "power",
+    "state_class": "measurement",
+    "icon": "mdi:lightning-bolt"
   },
   {
     "name": "Power Factor",
@@ -75,7 +90,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "",
+    "state_class": "measurement",
+    "icon": "mdi:percent"
   },
   {
     "name": "Frequency",
@@ -88,7 +106,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "frequency",
+    "state_class": "measurement",
+    "icon": "mdi:sine-wave"
   },
   {
     "name": "Import Active Energy",
@@ -101,7 +122,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   },
   {
     "name": "Export Active Energy",
@@ -114,7 +138,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-export"
   },
   {
     "name": "Current Demand",
@@ -127,7 +154,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Maximum Current Demand",
@@ -140,7 +170,10 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "current",
+    "state_class": "measurement",
+    "icon": "mdi:current-ac"
   },
   {
     "name": "Total Active Energy",
@@ -153,6 +186,9 @@
     "offset": 0.0,
     "byte_order": "big",
     "word_order": "big",
-    "allow_bits": false
+    "allow_bits": false,
+    "device_class": "energy",
+    "state_class": "total_increasing",
+    "icon": "mdi:transmission-tower-import"
   }
 ]
