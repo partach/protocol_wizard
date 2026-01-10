@@ -26,6 +26,7 @@ CONF_BYTE_ORDER = "byte_order"
 CONF_WORD_ORDER = "word_order"
 CONF_ALLOW_BITS = "allow_bits"
 CONF_REGISTER_TYPE = "register_type"
+CONF_TEMPLATE = "template"
 
 # Serial settings (Modbus)
 CONF_SERIAL_PORT = "serial_port"
