@@ -505,39 +505,10 @@ class ModbusSchemaHandler:
         
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
-            # Special handling for options - parse JSON string to dict
-            if key == "options":
-                if value == "" or value is None:
-                    processed.pop(key, None)
-                else:
-                    try:
-                        # Try to parse as JSON
-                        parsed = json.loads(value) if isinstance(value, str) else value
-                        if parsed:  # Only store if not empty
-                            processed[key] = parsed
-                        else:
-                            processed.pop(key, None)
-                    except (json.JSONDecodeError, TypeError):
-                        # If not valid JSON, store as-is (will be validated later)
-                        _LOGGER.warning("Invalid JSON in options field: %s", value)
-                        processed.pop(key, None)
-            # For these fields, empty string means "clear the value"
-            elif key in ["device_class", "state_class", "entity_category", "icon", "unit", "format"]:
-                if value == "":
-                    # Remove the field entirely if empty (don't store empty strings)
-                    processed.pop(key, None)
-                else:
-                    processed[key] = value
-            # For numeric fields, always update (including 0)
-            elif key in ["scale", "offset", "address", "size"]:
-                processed[key] = value
-            # For required fields, always update
-            elif key in ["name", "data_type", "register_type", "rw", "byte_order", "word_order"]:
-                processed[key] = value
-            # For any other field, only update if not empty
-            elif value not in ("", None):
-                processed[key] = value
-        
+            if value == "":
+                processed.pop(key, None)  # Clear if empty
+            elif value is not None:
+                processed[key] = value        
         # Calculate size based on data_type
         type_sizes = {
             "uint16": 1, "int16": 1,
@@ -699,21 +670,10 @@ class SNMPSchemaHandler:
         
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
-            # For these fields, empty string means "clear the value"
-            if key in ["device_class", "state_class", "entity_category", "icon", "format"]:
-                if value == "":
-                    processed.pop(key, None)
-                else:
-                    processed[key] = value
-            # For numeric fields, always update (including 0)
-            elif key in ["scale", "offset"]:
-                processed[key] = value
-            # For required fields, always update
-            elif key in ["name", "address", "data_type", "read_mode"]:
-                processed[key] = value
-            # For any other field, only update if not empty
-            elif value not in ("", None):
-                processed[key] = value
+            if value == "":
+                processed.pop(key, None)  # Clear if empty
+            elif value is not None:
+                processed[key] = value        
         
         # Convert types
         try:
