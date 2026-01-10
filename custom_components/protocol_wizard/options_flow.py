@@ -495,8 +495,8 @@ class ModbusSchemaHandler:
         Process user input for Modbus entity.
         Handles both new entities and edits, preserving old fields.
         """
-        # Required validation first
-        if not user_input.get("address"):
+        # Required validation first - check for None/missing, not falsy (0 is valid!)
+        if "address" not in user_input or user_input.get("address") is None or user_input.get("address") == "":
             errors["address"] = "required"
             return None
         
@@ -505,8 +505,24 @@ class ModbusSchemaHandler:
         
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
+            # Special handling for options - parse JSON string to dict
+            if key == "options":
+                if value == "" or value is None:
+                    processed.pop(key, None)
+                else:
+                    try:
+                        # Try to parse as JSON
+                        parsed = json.loads(value) if isinstance(value, str) else value
+                        if parsed:  # Only store if not empty
+                            processed[key] = parsed
+                        else:
+                            processed.pop(key, None)
+                    except (json.JSONDecodeError, TypeError):
+                        # If not valid JSON, store as-is (will be validated later)
+                        _LOGGER.warning("Invalid JSON in options field: %s", value)
+                        processed.pop(key, None)
             # For these fields, empty string means "clear the value"
-            if key in ["device_class", "state_class", "entity_category", "icon", "unit", "format", "options"]:
+            elif key in ["device_class", "state_class", "entity_category", "icon", "unit", "format"]:
                 if value == "":
                     # Remove the field entirely if empty (don't store empty strings)
                     processed.pop(key, None)
@@ -673,8 +689,8 @@ class SNMPSchemaHandler:
         Process user input for SNMP entity.
         Handles both new entities and edits, preserving old fields.
         """
-        # Required validation
-        if not user_input.get("address"):
+        # Required validation - check for None/missing, not falsy (empty string is invalid for OID)
+        if "address" not in user_input or not user_input.get("address"):
             errors["address"] = "required"
             return None
         
