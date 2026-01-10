@@ -1,5 +1,10 @@
 ## Changelog
 
+### [0.4.6] - Device_class, state_class and icon
+- Added support in integration and template for device_class, state_class and icon
+- Update some templates with device_class, state_class and icons
+- Added 'detele all' option to delete all entities
+
 ### [0.4.5] - Template export added
 - Template export function
 
