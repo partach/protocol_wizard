@@ -113,19 +113,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     config = entry.data
     
-# ----------------------------------------------------------------
-    # Determine protocol correctly
-    # ----------------------------------------------------------------
-    # Explicit protocol wins (for future SNMP, BACnet, etc.)
+    # Determine protocol
     protocol_name = config.get(CONF_PROTOCOL)
-
-    # Backward compatibility + Modbus detection
     if protocol_name is None:
         connection_type = config.get(CONF_CONNECTION_TYPE)
         if connection_type in (CONNECTION_TYPE_SERIAL, CONNECTION_TYPE_IP):
             protocol_name = CONF_PROTOCOL_MODBUS
         else:
-            protocol_name = CONF_PROTOCOL_MODBUS  # safe fallback
+            protocol_name = CONF_PROTOCOL_MODBUS
     
     # Get protocol-specific coordinator class
     CoordinatorClass = ProtocolRegistry.get_coordinator_class(protocol_name)
@@ -133,9 +128,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.error("Unknown protocol: %s", protocol_name)
         return False
     
-    # ----------------------------------------------------------------
     # Create protocol-specific client
-    # ----------------------------------------------------------------
     try:
         if protocol_name == CONF_PROTOCOL_MODBUS:
             client = await _create_modbus_client(hass, config, entry)
@@ -147,33 +140,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as err:
         _LOGGER.error("Failed to create client for %s: %s", protocol_name, err)
         return False
-    #---------------------------------------------
-    # NEW: Auto-load template if present in data
-    #------------------------------------
-    if entry.data.get(CONF_TEMPLATE):
-        template_name = entry.data[CONF_TEMPLATE]
-        protocol_subdir = "modbus" if entry.data.get(CONF_PROTOCOL) == CONF_PROTOCOL_MODBUS else "snmp"
-        path = hass.config.path("custom_components", DOMAIN, "templates", protocol_subdir, f"{template_name}.json")
-        try:
-            with open(path, "r") as f:
-                template = json.load(f)
-            entities = template if isinstance(template, list) else template.get("entities", [])
-            if entities:
-                # Merge into options (avoid duplicates)
-                current = entry.options.get(CONF_ENTITIES, [])
-                existing = {(e["name"], e.get("address", e.get("oid"))) for e in current}
-                new_entities = current + [e for e in entities if (e["name"], e.get("address", e.get("oid"))) not in existing]
-                new_options = dict(entry.options)
-                new_options[CONF_ENTITIES] = new_entities
-                hass.config_entries.async_update_entry(entry, options=new_options)
-                _LOGGER.info("Auto-loaded template '%s' for entry %s", template_name, entry.entry_id)
-        except Exception as err:
-            _LOGGER.warning("Failed to auto-load template '%s': %s", template_name, err)
-
     
-    # ----------------------------------------------------------------
     # Create coordinator
-    # ----------------------------------------------------------------
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, 10)
     
     coordinator = CoordinatorClass(
@@ -182,6 +150,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config_entry=entry,
         update_interval=timedelta(seconds=update_interval),
     )
+    
+    # Load template if specified in options (only on first setup)
+    template_name = entry.options.get(CONF_TEMPLATE)
+    if template_name and not entry.options.get("registers") and not entry.options.get("entities"):
+        _LOGGER.info("Loading template '%s' for new device", template_name)
+        await _load_template_into_options(hass, entry, protocol_name, template_name)
     
     await coordinator.async_config_entry_first_refresh()
     
@@ -198,25 +172,60 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         configuration_url=f"homeassistant://config/integrations/integration/{entry.entry_id}",
     )
     
-    # ----------------------------------------------------------------
     # Platforms
-    # ----------------------------------------------------------------
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
-    # ----------------------------------------------------------------
     # Services (register once)
-    # ----------------------------------------------------------------
     if not hass.data[DOMAIN].get("services_registered"):
         await async_setup_services(hass)
         hass.data[DOMAIN]["services_registered"] = True
     
-    # ----------------------------------------------------------------
     # Frontend
-    # ----------------------------------------------------------------
     await async_install_frontend_resource(hass)
     await async_register_card(hass, entry)
     
     return True
+
+
+async def _load_template_into_options(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    protocol: str,
+    template_name: str,
+) -> None:
+    """Load template entities into entry options."""
+    protocol_subdir = "modbus" if protocol == CONF_PROTOCOL_MODBUS else "snmp"
+    template_path = hass.config.path(
+        "custom_components", DOMAIN, "templates", protocol_subdir, f"{template_name}.json"
+    )
+    
+    try:
+        def load_file():
+            with open(template_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        
+        template_data = await hass.async_add_executor_job(load_file)
+        
+        if not template_data:
+            _LOGGER.warning("Template %s is empty", template_name)
+            return
+        
+        # Determine config key
+        config_key = "registers" if protocol == CONF_PROTOCOL_MODBUS else "entities"
+        
+        # Update options with template entities
+        new_options = dict(entry.options)
+        new_options[config_key] = template_data
+        
+        hass.config_entries.async_update_entry(entry, options=new_options)
+        _LOGGER.info("Loaded %d entities from template '%s'", len(template_data), template_name)
+        
+    except FileNotFoundError:
+        _LOGGER.error("Template file not found: %s", template_path)
+    except json.JSONDecodeError as err:
+        _LOGGER.error("Failed to parse template %s: %s", template_name, err)
+    except Exception as err:
+        _LOGGER.error("Failed to load template %s: %s", template_name, err)
 
 
 async def _create_modbus_client(hass: HomeAssistant, config: dict, entry: ConfigEntry) -> ModbusClient:
