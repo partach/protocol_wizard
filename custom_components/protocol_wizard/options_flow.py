@@ -398,7 +398,7 @@ class ModbusSchemaHandler:
         return vol.Schema(schema)
 
     @staticmethod
-    def process_input(user_input: dict, errors: dict) -> dict | None:
+    def process_input(user_input: dict, errors: dict, existing: dict | None = None) -> dict | None:
         type_sizes = {
             "uint16": 1, "int16": 1,
             "uint32": 2, "int32": 2,
