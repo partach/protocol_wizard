@@ -11,7 +11,13 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "options": "{\"0\": \"Off\", \"1\": \"Ignition\", \"2\": \"Burning\", \"3\": \"Standby\", \"4\": \"Error\"}"
+    "options": {
+       "0": "Off",
+       "1": "Ignition", 
+       "2": "Burning", 
+       "3": "Standby", 
+       "4": "Error"
+    }
   },
   {
     "name": "Boiler Temperature",
@@ -51,7 +57,10 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "options": "{\"0\": \"Off\", \"1\": \"On\"}"
+    "options": {
+       "0": "Off", 
+       "1": "On"
+    }
   },
   {
     "name": "Buffer Tank Top Temperature",
@@ -117,6 +126,10 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "options": "{\"0\": \"Auto\", \"1\": \"Manual\", \"2\": \"Off\"}"
+    "options": {
+      "0": "Auto", 
+      "1": "Manual", 
+      "2": "Off"
+    }
   }
 ]
