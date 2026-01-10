@@ -41,7 +41,7 @@ from .const import (
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
     CONF_TEMPLATE,
-    CONF_ENTITIES,
+#    CONF_ENTITIES,
 )
 
 # Import protocol registry and plugins
