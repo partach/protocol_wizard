@@ -2,7 +2,6 @@
 #-- base init.py protocol wizard
 #------------------------------------------
 """The Protocol Wizard integration."""
-import os
 import shutil
 import logging
 from homeassistant.helpers import device_registry as dr
@@ -42,6 +41,7 @@ from .const import (
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
     CONF_TEMPLATE,
+    CONF_ENTITIES,
 )
 
 # Import protocol registry and plugins
