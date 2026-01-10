@@ -1,5 +1,8 @@
 ## Changelog
 
+### [0.4.4] - Small fix
+- Fix for first issue for new installs
+  
 ### [0.4.3] - About templates...
 - Installation via template possible
 - Added several base templates
