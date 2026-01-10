@@ -26,6 +26,7 @@ class ProtocolWizardCard extends LitElement {
       
       // Shared
       _writeValue: { type: String },
+      _showWriteWarning: { type: Boolean },
     };
   }
 
@@ -50,6 +51,7 @@ class ProtocolWizardCard extends LitElement {
     this._snmpDataType = "string";
     
     this._writeValue = "";
+    this._showWriteWarning = false;
   }
 
   static getConfigElement() {
@@ -303,6 +305,13 @@ class ProtocolWizardCard extends LitElement {
       return;
     }
 
+    if (this._protocol === "modbus" && this._modbusRegisterType === "auto") {
+        this._writeStatus = "Can't write with Auto, select Holding or Coil";
+        this._showWriteWarning = true;
+        this.requestUpdate();
+        return;
+    }
+
     if (this._writeValue === undefined) {
       this._writeStatus = "Missing value";
       this.requestUpdate();
@@ -513,8 +522,7 @@ class ProtocolWizardCard extends LitElement {
             <!-- Device Info with detected protocol -->
             <div class="info">
                 Device: ${this.hass.devices?.[this.config.device_id]?.name || "Unknown"}
-                <br>
-                Protocol: ${protocol.toUpperCase()}
+                &nbsp |  Protocol: ${protocol.toUpperCase()}
                 <br>
                 Hub entity: ${this._getTargetEntity() || "Not found"}
             </div>
