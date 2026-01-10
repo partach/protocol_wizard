@@ -242,22 +242,25 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_STOPBITS: user_input[CONF_STOPBITS],
                     CONF_BYTESIZE: user_input[CONF_BYTESIZE],
                 }
-
                 await self._async_test_modbus_connection(final_data)
-
-                entry = self.async_create_entry(
+        
+                # Create the entry
+                result = self.async_create_entry(
                     title=final_data[CONF_NAME],
                     data=final_data,
                 )
-                
+        
+                # Get the real ConfigEntry object using entry_id from result
+                entry_id = result["entry_id"]
+                entry = self.hass.config_entries.async_get_entry(entry_id)
+        
+                # Now safely update options with template
                 if CONF_TEMPLATE in self._data:
-                    self.hass.config_entries.async_update_entry(
-                        entry,
-                        options={CONF_TEMPLATE: self._data[CONF_TEMPLATE]},
-                    )
+                    new_options = dict(entry.options or {})
+                    new_options[CONF_TEMPLATE] = self._data[CONF_TEMPLATE]
+                    self.hass.config_entries.async_update_entry(entry, options=new_options)
 
-                return entry
-
+                return result  # Return the flow result dict
             except Exception as err:
                 _LOGGER.exception("Serial connection test failed: %s", err)
                 errors["base"] = "cannot_connect"
