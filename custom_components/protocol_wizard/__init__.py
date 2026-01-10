@@ -39,6 +39,7 @@ from .const import (
     CONF_PROTOCOL_MODBUS,
     CONF_PROTOCOL_SNMP,
     CONF_PROTOCOL,
+    CONF_TEMPLATE,
 )
 
 # Import protocol registry and plugins
@@ -144,6 +145,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as err:
         _LOGGER.error("Failed to create client for %s: %s", protocol_name, err)
         return False
+    #---------------------------------------------
+    # NEW: Auto-load template if present in data
+    #------------------------------------
+    if entry.data.get(CONF_TEMPLATE):
+        template_name = entry.data[CONF_TEMPLATE]
+        protocol_subdir = "modbus" if entry.data.get(CONF_PROTOCOL) == CONF_PROTOCOL_MODBUS else "snmp"
+        path = hass.config.path("custom_components", DOMAIN, "templates", protocol_subdir, f"{template_name}.json")
+        try:
+            with open(path, "r") as f:
+                template = json.load(f)
+            entities = template if isinstance(template, list) else template.get("entities", [])
+            if entities:
+                # Merge into options (avoid duplicates)
+                current = entry.options.get(CONF_ENTITIES, [])
+                existing = {(e["name"], e.get("address", e.get("oid"))) for e in current}
+                new_entities = current + [e for e in entities if (e["name"], e.get("address", e.get("oid"))) not in existing]
+                new_options = dict(entry.options)
+                new_options[CONF_ENTITIES] = new_entities
+                hass.config_entries.async_update_entry(entry, options=new_options)
+                _LOGGER.info("Auto-loaded template '%s' for entry %s", template_name, entry.entry_id)
+        except Exception as err:
+            _LOGGER.warning("Failed to auto-load template '%s': %s", template_name, err)
+
     
     # ----------------------------------------------------------------
     # Create coordinator
