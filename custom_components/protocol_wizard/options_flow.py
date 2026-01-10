@@ -424,7 +424,45 @@ class ModbusSchemaHandler:
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
-
+            vol.Optional("device_class"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "", "label": "None (auto)"},
+                        {"value": "temperature", "label": "Temperature"},
+                        {"value": "power", "label": "Power"},
+                        {"value": "energy", "label": "Energy"},
+                        {"value": "voltage", "label": "Voltage"},
+                        {"value": "current", "label": "Current"},
+                        {"value": "frequency", "label": "Frequency"},
+                        {"value": "duration", "label": "Duration"},
+                        # Add more as needed
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("state_class"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "", "label": "None"},
+                        {"value": "measurement", "label": "Measurement"},
+                        {"value": "total", "label": "Total"},
+                        {"value": "total_increasing", "label": "Total Increasing"},
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("entity_category"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "", "label": "Standard"},
+                        {"value": "diagnostic", "label": "Diagnostic"},
+                        {"value": "config", "label": "Configuration"},
+                        {"value": "system", "label": "System"},
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("icon"): str,  # e.g. mdi:thermometer
             vol.Optional("unit", default=defaults.get("unit", "")): str,
             vol.Optional("format", default=defaults.get("format", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
@@ -453,21 +491,38 @@ class ModbusSchemaHandler:
 
     @staticmethod
     def process_input(user_input: dict, errors: dict, existing: dict | None = None) -> dict | None:
+        # Start with a clean copy
+        processed = user_input.copy()
+    
+        # Merge with existing if provided (edit mode)
+        if existing:
+            processed = {**existing, **processed}
+    
+        # Required fields validation
+        if "address" not in processed or not processed["address"]:
+            errors["address"] = "required"
+            return None
+    
+        # Type/size logic
         type_sizes = {
             "uint16": 1, "int16": 1,
             "uint32": 2, "int32": 2,
             "float32": 2,
             "uint64": 4, "int64": 4,
         }
-
-        dtype = user_input.get("data_type")
+        dtype = processed.get("data_type")
         if dtype in type_sizes:
-            user_input["size"] = type_sizes[dtype]
+            processed["size"] = type_sizes[dtype]
     
-        user_input["address"] = int(user_input["address"])
-        user_input["size"] = int(user_input.get("size", 1))
+        # Convert address & size safely
+        try:
+            processed["address"] = int(processed["address"])
+            processed["size"] = int(processed.get("size", 1))
+        except (ValueError, TypeError):
+            errors["address"] = "invalid_number"
+            return None
     
-        return user_input
+        return processed
 
     def get_defaults(self, entity):
         return dict(entity)
@@ -510,6 +565,45 @@ class SNMPSchemaHandler:
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
+            vol.Optional("device_class"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "", "label": "None (auto)"},
+                        {"value": "temperature", "label": "Temperature"},
+                        {"value": "power", "label": "Power"},
+                        {"value": "energy", "label": "Energy"},
+                        {"value": "voltage", "label": "Voltage"},
+                        {"value": "current", "label": "Current"},
+                        {"value": "frequency", "label": "Frequency"},
+                        {"value": "duration", "label": "Duration"},
+                        # Add more as needed
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("state_class"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "", "label": "None"},
+                        {"value": "measurement", "label": "Measurement"},
+                        {"value": "total", "label": "Total"},
+                        {"value": "total_increasing", "label": "Total Increasing"},
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("entity_category"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        {"value": "", "label": "Standard"},
+                        {"value": "diagnostic", "label": "Diagnostic"},
+                        {"value": "config", "label": "Configuration"},
+                        {"value": "system", "label": "System"},
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("icon"): str,  # e.g. mdi:thermometer
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
             vol.Optional("format", default=defaults.get("format", "")): str,
@@ -523,14 +617,30 @@ class SNMPSchemaHandler:
         errors: dict,
         existing: dict | None = None,
     ) -> dict | None:
+        """
+        Process user input for SNMP entity.
+        - Validates required fields
+        - Merges with existing data (for edits)
+        - Handles new attributes (device_class, state_class, etc.)
+        """
         if not user_input.get("address"):
             errors["address"] = "required"
             return None
-        clean = {k: v for k, v in user_input.items() if v not in ("", None)}
-        return {
-            **(existing or {}),  # preserve old fields
-            **clean,        # override edited fields
-        }
+    
+        # Clean out empty values (but keep 0/false as valid)
+        clean = {}
+        for k, v in user_input.items():
+            if v not in ("", None) or k in ["scale", "offset", "rw", "data_type"]:  # allow 0/false
+                clean[k] = v
+    
+        # Merge with existing (for edit) or start fresh
+        processed = {**(existing or {}), **clean}
+    
+        # Optional: Add defaults or validation for new fields (if needed later)
+        # e.g. if "device_class" in processed and processed["device_class"] not in ALLOWED_CLASSES:
+        #     errors["device_class"] = "invalid"
+    
+        return processed
 
 
     def get_defaults(self, entity):
