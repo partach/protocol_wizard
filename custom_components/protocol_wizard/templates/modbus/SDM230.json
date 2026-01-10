@@ -59,7 +59,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt-outline"
   },
@@ -75,7 +75,7 @@
     "byte_order": "big",
     "word_order": "big",
     "allow_bits": false,
-    "device_class": "power",
+    "device_class": "",
     "state_class": "measurement",
     "icon": "mdi:lightning-bolt"
   },
