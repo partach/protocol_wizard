@@ -503,12 +503,12 @@ class ModbusSchemaHandler:
         # Start with existing data (for edits) or empty dict
         processed = dict(existing) if existing else {}
         if "options" in processed and isinstance(processed["options"], str):
-        try:
-            processed["options"] = json.loads(processed["options"])
-            if not isinstance(processed["options"], dict):
-                processed["options"]="" # if it is rubish, we dont use it
-        except Exception:
-            errors["options"] = ""
+            try:
+                processed["options"] = json.loads(processed["options"])
+                if not isinstance(processed["options"], dict):
+                    processed["options"]="" # if it is rubish, we dont use it
+            except Exception:
+                errors["options"] = ""
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
             if value == "":
