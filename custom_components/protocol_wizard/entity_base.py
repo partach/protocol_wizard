@@ -9,6 +9,7 @@ import logging
 from typing import Any
 from abc import ABC, abstractmethod
 import json
+from types import MappingProxyType
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -95,7 +96,33 @@ def get_safe_number_defaults(data_type: str) -> dict[str, float]:
 
     # Fallback for unknown types
     return {"min": 0.0, "max": 100.0, "step": 1.0}
-    
+
+def set_readonly_protocol_settings(entity: Entity, entity_config: dict[str, Any]) -> None:
+    """
+    Attach all relevant protocol settings as a read-only dict in extra_state_attributes.
+    Called once per entity in __init__.
+    The dict is frozen/immutable to prevent accidental changes.
+    """
+    # Build the settings dict (only include meaningful fields)
+    settings = {
+        k: entity_config[k]
+        for k in [
+            "address", "register_type", "data_type", "rw", "scale", "offset",
+            "byte_order", "word_order", "size", "min", "max", "step",
+            "device_class", "state_class", "entity_category", "icon"
+        ]
+        if k in entity_config
+    }
+
+    # Optional: Clean up None values (makes attributes cleaner)
+    settings = {k: v for k, v in settings.items() if v is not None}
+
+    entity._attr_extra_state_attributes = {
+        **(entity._attr_extra_state_attributes or {}),
+        "protocol_settings": MappingProxyType(settings)  # truly read-only view
+    }
+
+
 class BaseEntityManager(ABC):
     """
     Base class for managing dynamic entity lifecycle.
