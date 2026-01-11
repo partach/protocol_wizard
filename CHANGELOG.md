@@ -1,5 +1,8 @@
 ## Changelog
 
+### [0.6.0] - Entity creation from card
+- Adding MQTT protocol support 
+  
 ### [0.5.0] - Entity creation from card
 - Adds ability to create entity right from the card after successfull read
 - Adds protocol settings attribute to sensors (great for debugging)
