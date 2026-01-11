@@ -706,3 +706,148 @@ class SNMPSchemaHandler:
                 entities.append(e)
                 added += 1
         return added
+
+class MQTTSchemaHandler:
+    """Schema handler for MQTT entities."""
+    
+    config_key = "entities"  # MQTT uses 'entities' key
+    
+    def get_schema(self, defaults=None):
+        """Return the schema for MQTT entity configuration."""
+        defaults = defaults or {}
+        return vol.Schema({
+            vol.Required("name", default=defaults.get("name")): str,
+            vol.Required("address", default=defaults.get("address")): str,  # MQTT topic
+            vol.Required("data_type", default=defaults.get("data_type", "string")):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "string", "label": "String"},
+                            {"value": "integer", "label": "Integer"},
+                            {"value": "float", "label": "Float"},
+                            {"value": "boolean", "label": "Boolean (on/off)"},
+                            {"value": "json", "label": "JSON (structured data)"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            vol.Optional("rw", default=defaults.get("rw", "read")):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "read", "label": "Read (Subscribe)"},
+                            {"value": "write", "label": "Write (Publish)"},
+                            {"value": "rw", "label": "Read/Write"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            vol.Optional("qos", default=defaults.get("qos", 0)):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            {"value": "0", "label": "QoS 0 (At most once)"},
+                            {"value": "1", "label": "QoS 1 (At least once)"},
+                            {"value": "2", "label": "QoS 2 (Exactly once)"},
+                        ],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            vol.Optional("retain", default=defaults.get("retain", False)): bool,
+            vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
+            vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
+            vol.Optional("format", default=defaults.get("format", "")): str,
+            vol.Optional("options", default=defaults.get("options", "")): str,
+            vol.Optional("device_class", default=defaults.get("device_class", "")): str,
+            vol.Optional("state_class", default=defaults.get("state_class", "")): str,
+            vol.Optional("entity_category", default=defaults.get("entity_category", "")): str,
+            vol.Optional("icon", default=defaults.get("icon", "")): str,
+            vol.Optional("unit", default=defaults.get("unit", "")): str,
+        })
+    
+    def process_input(self, user_input, errors, existing=None):
+        """Process and validate user input."""
+        processed = dict(user_input)
+        
+        # Validate topic format
+        topic = processed.get("address", "")
+        if not topic:
+            errors["address"] = "Topic cannot be empty"
+            return None
+        
+        # MQTT topics can't have wildcards in entity config (only for subscribe)
+        # But we'll allow them for flexibility
+        
+        # Validate QoS
+        try:
+            qos = int(processed.get("qos", 0))
+            if qos not in (0, 1, 2):
+                errors["qos"] = "QoS must be 0, 1, or 2"
+                return None
+            processed["qos"] = qos
+        except (ValueError, TypeError):
+            errors["qos"] = "Invalid QoS value"
+            return None
+        
+        # Parse options JSON if provided
+        opts_str = processed.get("options", "").strip()
+        if opts_str:
+            try:
+                import json
+                opts = json.loads(opts_str)
+                processed["options"] = opts
+            except json.JSONDecodeError:
+                errors["options"] = "Invalid JSON format"
+                return None
+        else:
+            processed.pop("options", None)
+        
+        # Clean empty strings
+        for field in ["format", "device_class", "state_class", "entity_category", "icon", "unit"]:
+            if not processed.get(field):
+                processed.pop(field, None)
+        
+        return processed
+    
+    def get_defaults(self, entity):
+        """Return entity dict with defaults for form display."""
+        defaults = dict(entity)
+        
+        # Set empty string for optional fields
+        defaults.setdefault("device_class", "")
+        defaults.setdefault("state_class", "")
+        defaults.setdefault("entity_category", "")
+        defaults.setdefault("icon", "")
+        defaults.setdefault("unit", "")
+        defaults.setdefault("format", "")
+        
+        # Ensure numeric fields
+        defaults.setdefault("scale", 1.0)
+        defaults.setdefault("offset", 0.0)
+        defaults.setdefault("qos", 0)
+        defaults.setdefault("retain", False)
+        
+        # Handle options
+        opts = defaults.get("options")
+        if isinstance(opts, dict):
+            import json
+            defaults["options"] = json.dumps(opts)
+        else:
+            defaults.setdefault("options", "")
+        
+        return defaults
+    
+    def format_label(self, entity):
+        """Format entity label for display."""
+        return f"{entity.get('name')} @ {entity.get('address')}"
+    
+    def merge_template(self, entities, template):
+        """Merge template entities into existing list."""
+        added = 0
+        existing = {(e.get("name"), e.get("address")) for e in entities}
+        for e in template:
+            key = (e.get("name"), e.get("address"))
+            if key not in existing:
+                entities.append(e)
+                added += 1
+        return added
