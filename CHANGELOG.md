@@ -1,6 +1,6 @@
 ## Changelog
 
-### [0.6.0] - Entity creation from card
+### [0.6.0] - MQTT added
 - Adding MQTT protocol support 
   
 ### [0.5.0] - Entity creation from card
