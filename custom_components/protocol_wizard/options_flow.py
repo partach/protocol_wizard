@@ -431,19 +431,19 @@ class ModbusSchemaHandler:
                 ),
             vol.Optional("device_class", default=defaults.get("device_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[None, "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
+                    options=[{"value": None, "label": "Default"}, "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("state_class", default=defaults.get("state_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[None, "measurement", "total", "total_increasing"],
+                    options=[{"value": None, "label": "Default"}, "measurement", "total", "total_increasing"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("entity_category", default=defaults.get("entity_category", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[None, "diagnostic", "config", "system"],
+                    options=[{"value": None, "label": "Default"}, "diagnostic", "config", "system"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
@@ -601,19 +601,19 @@ class SNMPSchemaHandler:
                 ),
             vol.Optional("device_class", default=defaults.get("device_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[None, "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
+                    options=[{"value": None, "label": "Default"}, "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("state_class", default=defaults.get("state_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[None, "measurement", "total", "total_increasing"],
+                    options=[{"value": None, "label": "Default"}, "measurement", "total", "total_increasing"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("entity_category", default=defaults.get("entity_category", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[None, "diagnostic", "config", "system"],
+                    options=[{"value": None, "label": "Default"}, "diagnostic", "config", "system"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
