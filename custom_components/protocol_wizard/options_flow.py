@@ -431,19 +431,19 @@ class ModbusSchemaHandler:
                 ),
             vol.Optional("device_class", default=defaults.get("device_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[{"value": None, "label": "Default"}, "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
+                    options=[" ", "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("state_class", default=defaults.get("state_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[{"value": None, "label": "Default"}, "measurement", "total", "total_increasing"],
+                    options=[" ", "measurement", "total", "total_increasing"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("entity_category", default=defaults.get("entity_category", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[{"value": None, "label": "Default"}, "diagnostic", "config", "system"],
+                    options=[" ", "diagnostic", "config", "system"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
@@ -496,7 +496,7 @@ class ModbusSchemaHandler:
                 errors["options"] = ""
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
-            if value in ("", None):
+            if value in (" ","", None):
                 processed.pop(key, None)  # Clear if empty
             elif value is not None:
                 processed[key] = value        
@@ -601,19 +601,19 @@ class SNMPSchemaHandler:
                 ),
             vol.Optional("device_class", default=defaults.get("device_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[{"value": None, "label": "Default"}, "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
+                    options=[" ", "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("state_class", default=defaults.get("state_class", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[{"value": None, "label": "Default"}, "measurement", "total", "total_increasing"],
+                    options=[" ", "measurement", "total", "total_increasing"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("entity_category", default=defaults.get("entity_category", "")): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[{"value": None, "label": "Default"}, "diagnostic", "config", "system"],
+                    options=[" ", "diagnostic", "config", "system"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
@@ -645,7 +645,7 @@ class SNMPSchemaHandler:
         
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
-            if value == "":
+            if value in (" ","", None):
                 processed.pop(key, None)  # Clear if empty
             elif value is not None:
                 processed[key] = value        
