@@ -438,3 +438,70 @@ add_entity:
           max: 1000
           step: 0.001
           mode: box
+read_mqtt:
+  name: Read MQTT Topic
+  description: Subscribe to an MQTT topic and read the latest message.
+  target:
+    entity:
+      integration: protocol_wizard
+  fields:
+    topic:
+      name: Topic
+      description: MQTT topic to subscribe to.
+      required: true
+      example: "home/sensor/temperature"
+      selector:
+        text:
+    wait_time:
+      name: Wait Time
+      description: How long to wait for a message (seconds).
+      required: false
+      default: 5.0
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 0.5
+          mode: slider
+write_mqtt:
+  name: Publish MQTT Message
+  description: Publish a message to an MQTT topic.
+  target:
+    entity:
+      integration: protocol_wizard
+  fields:
+    topic:
+      name: Topic
+      description: MQTT topic to publish to.
+      required: true
+      example: "home/command/switch"
+      selector:
+        text:
+    payload:
+      name: Payload
+      description: Message payload (will be JSON-encoded if dict/list).
+      required: true
+      example: "ON"
+      selector:
+        text:
+    qos:
+      name: Quality of Service
+      description: MQTT QoS level.
+      required: false
+      default: 0
+      selector:
+        select:
+          options:
+            - label: "QoS 0 (At most once)"
+              value: "0"
+            - label: "QoS 1 (At least once)"
+              value: "1"
+            - label: "QoS 2 (Exactly once)"
+              value: "2"
+    retain:
+      name: Retain Message
+      description: Whether to retain this message on the broker.
+      required: false
+      default: false
+      selector:
+        boolean:
