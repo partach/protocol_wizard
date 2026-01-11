@@ -27,6 +27,13 @@ class ProtocolWizardCard extends LitElement {
       // Shared
       _writeValue: { type: String },
       _showWriteWarning: { type: Boolean },
+      
+      // Entity creation
+      _lastReadSuccess: { type: Boolean },
+      _lastReadData: { type: Object },
+      _showEntityForm: { type: Boolean },
+      _newEntityName: { type: String },
+      _createEntityStatus: { type: String },
     };
   }
 
@@ -52,6 +59,13 @@ class ProtocolWizardCard extends LitElement {
     
     this._writeValue = "";
     this._showWriteWarning = false;
+    
+    // Entity creation defaults
+    this._lastReadSuccess = false;
+    this._lastReadData = null;
+    this._showEntityForm = false;
+    this._newEntityName = "";
+    this._createEntityStatus = "";
   }
 
   static getConfigElement() {
@@ -90,275 +104,30 @@ class ProtocolWizardCard extends LitElement {
     const protocol = this._getProtocol();
 
     if (deviceId && entityRegistry) {
-        // Step 1: Get all entities from this device
         const deviceEntities = Object.values(entityRegistry)
         .filter(e => e.device_id === deviceId)
         .map(e => e.entity_id)
         .sort();
 
         if (deviceEntities.length > 0) {
-        // Step 2: Prefer the protocol-specific hub (e.g., snmp_hub or modbus_hub)
         const hubSuffix = `${protocol}_hub`;
         const protocolHub = deviceEntities.find(eid => eid.endsWith(hubSuffix));
         if (protocolHub) {
             this._allEntities = deviceEntities;
-            this._selectedEntity = protocolHub;  // Auto-select the correct hub
+            this._selectedEntity = protocolHub;
             return;
         }
 
-        // Step 3: If no exact hub, use all device entities (user can pick)
         this._allEntities = deviceEntities;
-
-        // Auto-select first if none selected
-        if (!this._selectedEntity || !this._allEntities.includes(this._selectedEntity)) {
-            this._selectedEntity = this._allEntities[0];
-        }
-        return;
-        }
-    }
-
-    // Fallback: Protocol-specific hubs from all protocol_wizard entities
-    if (entityRegistry) {
-        this._allEntities = Object.values(entityRegistry)
-        .filter(e => e.platform === "protocol_wizard")
-        .filter(e => e.entity_id.endsWith(`${this._protocol}_hub`))
-        .map(e => e.entity_id)
-        .sort();
-
-        if (this._allEntities.length > 0) {
-        this._selectedEntity = this._allEntities[0];
-        return;
-        }
-    }
-
-    // Final fallback: any protocol_wizard entity with suffix
-    if (this._allEntities.length === 0) {
-        this._allEntities = Object.keys(this.hass.states)
-        .filter(eid => {
-            const state = this.hass.states[eid];
-            return state?.attributes?.platform === "protocol_wizard" &&
-                eid.endsWith(`${this._protocol}_hub`);
-        })
-        .sort();
-
-        if (this._allEntities.length > 0) {
-        this._selectedEntity = this._allEntities[0];
+        this._selectedEntity = deviceEntities[0];
         }
     }
   }
 
   _getTargetEntity() {
-    const protocol = this._protocol;
-    const hubSuffix = `${protocol}_hub`;
-
-    const hub = this._allEntities.find(eid => eid.endsWith(hubSuffix));
-    if (hub) return hub;
-
-    return this._allEntities[0] ?? null;
-  }
-
-  _handleModbusDataTypeChange(e) {
-    this._modbusDataType = e.target.value;
-    const sizes = {
-      "uint16": 1, "int16": 1,
-      "uint32": 2, "int32": 2,
-      "float32": 2,
-      "uint64": 4, "int64": 4,
-      "string": 1,
-    };
-    this._modbusSize = sizes[this._modbusDataType] || 1;
-    this.requestUpdate();
-  }
-
-  _parseWriteValue() {
-    if (!this._writeValue) return 0;
-    
-    const val = this._writeValue.trim().toLowerCase();
-    if (val === "true" || val === "1" || val === "on") return true;
-    if (val === "false" || val === "0" || val === "off") return false;
-    
-    const num = Number(this._writeValue);
-    if (!isNaN(num)) return num;
-    
-    return this._writeValue;
-  }
-
-  async _sendRead() {
-    const targetEntity = this._getTargetEntity();
-    if (!targetEntity) {
-      this._selectedStatus = "No hub available";
-      this.requestUpdate();
-      return;
-    }
-
-    this._selectedStatus = "Reading...";
-    this.requestUpdate();
-
-    try {
-      if (this._protocol === "modbus") {
-        await this._sendModbusRead(targetEntity);
-      } else if (this._protocol === "snmp") {
-        await this._sendSnmpRead(targetEntity);
-      }
-    } catch (err) {
-      console.error("Read error:", err);
-      this._selectedStatus = `Read failed: ${err.message || err}`;
-      this.requestUpdate();
-    }
-  }
-
-  async _sendModbusRead(targetEntity) {
-    if (this._modbusAddress === undefined) {
-      this._selectedStatus = "Missing address";
-      this.requestUpdate();
-      return;
-    }
-
-    const result = await this.hass.callWS({
-      type: "call_service",
-      domain: "protocol_wizard",
-      service: "read_register",
-      service_data: {
-        entity_id: targetEntity,
-        device_id: this.config.device_id,
-        address: Number(this._modbusAddress),
-        register_type: this._modbusRegisterType || "auto",
-        data_type: this._modbusDataType || "uint16",
-        size: Number(this._modbusSize),
-        byte_order: this._modbusByteOrder || "big",
-        word_order: this._modbusWordOrder || "big",
-        raw: this._modbusRawMode,
-      },
-      return_response: true,
-    });
-
-    let displayValue = "";
-    let rawData = null;
-    
-    if (result?.value !== undefined && typeof result.value === "object") {
-      rawData = result.value;
-    } else if (result?.response?.value !== undefined && typeof result.response.value === "object") {
-      rawData = result.response.value;
-    }
-
-    if (this._modbusRawMode && rawData) {
-      const registers = rawData.registers || [];
-      const bits = rawData.bits || [];
-      const hex = registers.map(r => `0x${r.toString(16).toUpperCase().padStart(4, '0')}`).join(' ');
-      
-      let ascii = '';
-      try {
-        const bytes = new Uint8Array(registers.flatMap(r => [r >> 8, r & 0xFF]));
-        ascii = new TextDecoder('ascii', { fatal: false }).decode(bytes).replace(/\0/g, '').trim();
-        if (ascii === '') ascii = '(no printable ASCII)';
-      } catch {
-        ascii = '(invalid ASCII)';
-      }
-
-      const binary = registers.map(r => r.toString(2).padStart(16, '0')).join(' ');
-      const bitsView = bits.length > 0 ? `Bits: [${bits.map(b => b ? 1 : 0).join(', ')}]` : '';
-
-      displayValue = `HEX: ${hex}\nASCII: ${ascii}\nBinary: ${binary}`;
-      if (bitsView) displayValue += `\n${bitsView}`;
-      if (rawData.detected_type) displayValue += `\nType: ${rawData.detected_type}`;
-    } else {
-      const value = result?.value ?? result?.response?.value ?? null;
-      displayValue = value !== null ? String(value) : "No value";
-    }
-
-    this._writeValue = displayValue;
-    this._selectedStatus = "Read OK";
-    this.requestUpdate();
-  }
-
-  async _sendSnmpRead(targetEntity) {
-    if (!this._snmpOid) {
-      this._selectedStatus = "Missing OID";
-      this.requestUpdate();
-      return;
-    }
-
-    const result = await this.hass.callWS({
-      type: "call_service",
-      domain: "protocol_wizard",
-      service: "read_snmp",
-      service_data: {
-        entity_id: targetEntity,
-        device_id: this.config.device_id,
-        oid: this._snmpOid,
-        data_type: this._snmpDataType,
-      },
-      return_response: true,
-    });
-
-    const value = result?.value ?? result?.response?.value ?? null;
-    this._writeValue = value !== null ? String(value) : "No value";
-    this._selectedStatus = "Read OK";
-    this.requestUpdate();
-  }
-
-  async _sendWrite() {
-    const targetEntity = this._getTargetEntity();
-    if (!targetEntity) {
-      this._writeStatus = "No hub available";
-      this.requestUpdate();
-      return;
-    }
-
-    if (this._protocol === "modbus" && this._modbusRegisterType === "auto") {
-        this._writeStatus = "Can't write with Auto, select Holding or Coil";
-        this._showWriteWarning = true;
-        this.requestUpdate();
-        return;
-    }
-
-    if (this._writeValue === undefined) {
-      this._writeStatus = "Missing value";
-      this.requestUpdate();
-      return;
-    }
-
-    this._writeStatus = "Writing...";
-    this.requestUpdate();
-
-    try {
-      if (this._protocol === "modbus") {
-        await this._sendModbusWrite(targetEntity);
-      } else if (this._protocol === "snmp") {
-        await this._sendSnmpWrite(targetEntity);
-      }
-    } catch (err) {
-      console.error("Write error:", err);
-      this._writeStatus = `Write failed: ${err.message || err}`;
-      this.requestUpdate();
-    }
-  }
-
-  async _sendModbusWrite(targetEntity) {
-    if (this._modbusAddress === undefined) {
-      this._writeStatus = "Missing address";
-      this.requestUpdate();
-      return;
-    }
-
-    await this.hass.callWS({
-      type: "call_service",
-      domain: "protocol_wizard",
-      service: "write_register",
-      service_data: {
-        entity_id: targetEntity,
-        device_id: this.config.device_id,
-        address: Number(this._modbusAddress),
-        register_type: this._modbusRegisterType || "auto",
-        data_type: this._modbusDataType || "uint16",
-        byte_order: this._modbusByteOrder || "big",
-        word_order: this._modbusWordOrder || "big",
-        value: this._parseWriteValue(),
-      },
-    });
-
-    this._writeStatus = "Write OK";
-    this.requestUpdate();
+    if (this._selectedEntity) return this._selectedEntity;
+    if (this._allEntities.length > 0) return this._allEntities[0];
+    return null;
   }
 
   _getProtocol() {
@@ -375,30 +144,31 @@ class ProtocolWizardCard extends LitElement {
     return "unknown";
   }
 
-  async _sendSnmpWrite(targetEntity) {
-    if (!this._snmpOid) {
-      this._writeStatus = "Missing OID";
-      this.requestUpdate();
-      return;
-    }
-
-    await this.hass.callWS({
-      type: "call_service",
-      domain: "protocol_wizard",
-      service: "write_snmp",
-      service_data: {
-        entity_id: targetEntity,
-        device_id: this.config.device_id,
-        oid: this._snmpOid,
-        value: this._parseWriteValue(),
-        data_type: this._snmpDataType,
-      },
-    });
-
-    this._writeStatus = "Write OK";
+  _handleModbusDataTypeChange(e) {
+    this._modbusDataType = e.target.value;
+    
+    const sizeMap = {
+      uint16: 1,
+      int16: 1,
+      uint32: 2,
+      int32: 2,
+      float32: 2,
+      uint64: 4,
+      int64: 4,
+      string: 4,
+    };
+    
+    this._modbusSize = sizeMap[this._modbusDataType] || 1;
     this.requestUpdate();
   }
-  
+
+  _parseWriteValue() {
+    const val = this._writeValue?.trim();
+    if (!val) return null;
+    if (!isNaN(val)) return Number(val);
+    return val;
+  }
+
   _renderModbusFields() {
     return html`
       <div class="field-row">
@@ -504,6 +274,385 @@ class ProtocolWizardCard extends LitElement {
     `;
   }
 
+  async _sendRead() {
+    const targetEntity = this._getTargetEntity();
+    if (!targetEntity) {
+      this._selectedStatus = "No hub available";
+      this._lastReadSuccess = false;
+      this.requestUpdate();
+      return;
+    }
+
+    this._selectedStatus = "Reading...";
+    this._lastReadSuccess = false;
+    this._showEntityForm = false;
+    this.requestUpdate();
+
+    try {
+      if (this._protocol === "modbus") {
+        await this._sendModbusRead(targetEntity);
+      } else if (this._protocol === "snmp") {
+        await this._sendSnmpRead(targetEntity);
+      }
+      this._lastReadSuccess = true;
+    } catch (err) {
+      console.error("Read error:", err);
+      this._selectedStatus = `Read failed: ${err.message || err}`;
+      this._lastReadSuccess = false;
+      this.requestUpdate();
+    }
+  }
+
+  async _sendModbusRead(targetEntity) {
+    if (this._modbusAddress === undefined) {
+      this._selectedStatus = "Missing address";
+      this.requestUpdate();
+      return;
+    }
+
+    const result = await this.hass.callWS({
+      type: "call_service",
+      domain: "protocol_wizard",
+      service: "read_register",
+      service_data: {
+        entity_id: targetEntity,
+        device_id: this.config.device_id,
+        address: Number(this._modbusAddress),
+        register_type: this._modbusRegisterType || "auto",
+        data_type: this._modbusDataType || "uint16",
+        size: Number(this._modbusSize),
+        byte_order: this._modbusByteOrder || "big",
+        word_order: this._modbusWordOrder || "big",
+        raw: this._modbusRawMode,
+      },
+      return_response: true,
+    });
+
+    // Store read data for entity creation
+    this._lastReadData = {
+      address: this._modbusAddress,
+      register_type: this._modbusRegisterType === "auto" 
+        ? (result?.detected_type || "holding") 
+        : this._modbusRegisterType,
+      data_type: this._modbusDataType,
+      size: this._modbusSize,
+      byte_order: this._modbusByteOrder,
+      word_order: this._modbusWordOrder,
+      value: result?.value ?? result?.response?.value ?? null,
+    };
+
+    let displayValue = "";
+    let rawData = null;
+    
+    if (result?.value !== undefined && typeof result.value === "object") {
+      rawData = result.value;
+    } else if (result?.response?.value !== undefined && typeof result.response.value === "object") {
+      rawData = result.response.value;
+    }
+
+    if (this._modbusRawMode && rawData) {
+      const registers = rawData.registers || [];
+      const bits = rawData.bits || [];
+      const hex = registers.map(r => `0x${r.toString(16).toUpperCase().padStart(4, '0')}`).join(' ');
+      
+      let ascii = '';
+      try {
+        const bytes = new Uint8Array(registers.flatMap(r => [r >> 8, r & 0xFF]));
+        ascii = new TextDecoder('ascii', { fatal: false }).decode(bytes).replace(/\0/g, '').trim();
+        if (ascii === '') ascii = '(no printable ASCII)';
+      } catch {
+        ascii = '(invalid ASCII)';
+      }
+
+      const binary = registers.map(r => r.toString(2).padStart(16, '0')).join(' ');
+      const bitsView = bits.length > 0 ? `Bits: [${bits.map(b => b ? 1 : 0).join(', ')}]` : '';
+
+      displayValue = `HEX: ${hex}\nASCII: ${ascii}\nBinary: ${binary}`;
+      if (bitsView) displayValue += `\n${bitsView}`;
+      if (rawData.detected_type) displayValue += `\nType: ${rawData.detected_type}`;
+    } else {
+      const value = result?.value ?? result?.response?.value ?? null;
+      displayValue = value !== null ? String(value) : "No value";
+    }
+
+    this._writeValue = displayValue;
+    this._selectedStatus = "Read OK";
+    this.requestUpdate();
+  }
+
+  async _sendSnmpRead(targetEntity) {
+    if (!this._snmpOid) {
+      this._selectedStatus = "Missing OID";
+      this.requestUpdate();
+      return;
+    }
+
+    const result = await this.hass.callWS({
+      type: "call_service",
+      domain: "protocol_wizard",
+      service: "read_snmp",
+      service_data: {
+        entity_id: targetEntity,
+        device_id: this.config.device_id,
+        oid: this._snmpOid,
+        data_type: this._snmpDataType,
+      },
+      return_response: true,
+    });
+
+    const value = result?.value ?? result?.response?.value ?? null;
+    
+    // Store read data for entity creation
+    this._lastReadData = {
+      address: this._snmpOid,
+      data_type: this._snmpDataType,
+      value: value,
+    };
+    
+    this._writeValue = value !== null ? String(value) : "No value";
+    this._selectedStatus = "Read OK";
+    this.requestUpdate();
+  }
+
+  async _sendWrite() {
+    const targetEntity = this._getTargetEntity();
+    if (!targetEntity) {
+      this._writeStatus = "No hub available";
+      this.requestUpdate();
+      return;
+    }
+
+    if (this._protocol === "modbus" && this._modbusRegisterType === "auto") {
+        this._writeStatus = "Can't write with Auto, select Holding or Coil";
+        this._showWriteWarning = true;
+        this.requestUpdate();
+        return;
+    }
+
+    if (this._writeValue === undefined) {
+      this._writeStatus = "Missing value";
+      this.requestUpdate();
+      return;
+    }
+
+    this._writeStatus = "Writing...";
+    this.requestUpdate();
+
+    try {
+      if (this._protocol === "modbus") {
+        await this._sendModbusWrite(targetEntity);
+      } else if (this._protocol === "snmp") {
+        await this._sendSnmpWrite(targetEntity);
+      }
+    } catch (err) {
+      console.error("Write error:", err);
+      this._writeStatus = `Write failed: ${err.message || err}`;
+      this.requestUpdate();
+    }
+  }
+
+  async _sendModbusWrite(targetEntity) {
+    if (this._modbusAddress === undefined) {
+      this._writeStatus = "Missing address";
+      this.requestUpdate();
+      return;
+    }
+
+    await this.hass.callWS({
+      type: "call_service",
+      domain: "protocol_wizard",
+      service: "write_register",
+      service_data: {
+        entity_id: targetEntity,
+        device_id: this.config.device_id,
+        address: Number(this._modbusAddress),
+        register_type: this._modbusRegisterType || "auto",
+        data_type: this._modbusDataType || "uint16",
+        byte_order: this._modbusByteOrder || "big",
+        word_order: this._modbusWordOrder || "big",
+        value: this._parseWriteValue(),
+      },
+    });
+
+    this._writeStatus = "Write OK";
+    this.requestUpdate();
+  }
+
+  async _sendSnmpWrite(targetEntity) {
+    if (!this._snmpOid) {
+      this._writeStatus = "Missing OID";
+      this.requestUpdate();
+      return;
+    }
+
+    await this.hass.callWS({
+      type: "call_service",
+      domain: "protocol_wizard",
+      service: "write_snmp",
+      service_data: {
+        entity_id: targetEntity,
+        device_id: this.config.device_id,
+        oid: this._snmpOid,
+        value: this._parseWriteValue(),
+        data_type: this._snmpDataType,
+      },
+    });
+
+    this._writeStatus = "Write OK";
+    this.requestUpdate();
+  }
+
+  _showCreateEntityForm() {
+    this._showEntityForm = true;
+    this._createEntityStatus = "";
+    
+    // Pre-fill entity name based on protocol
+    if (this._protocol === "modbus") {
+      const regType = this._lastReadData?.register_type || "register";
+      this._newEntityName = `${regType}_${this._lastReadData?.address || 0}`;
+    } else if (this._protocol === "snmp") {
+      const oidParts = (this._lastReadData?.address || "").split(".");
+      const lastPart = oidParts[oidParts.length - 1] || "unknown";
+      this._newEntityName = `snmp_oid_${lastPart}`;
+    }
+    
+    this.requestUpdate();
+  }
+
+  _cancelCreateEntity() {
+    this._showEntityForm = false;
+    this._newEntityName = "";
+    this._createEntityStatus = "";
+    this.requestUpdate();
+  }
+
+  async _createEntity() {
+    if (!this._newEntityName || !this._lastReadData) {
+      this._createEntityStatus = "Missing entity name or read data";
+      this.requestUpdate();
+      return;
+    }
+
+    this._createEntityStatus = "Creating entity...";
+    this.requestUpdate();
+
+    try {
+      const targetEntity = this._getTargetEntity();
+      if (!targetEntity) {
+        throw new Error("No hub entity found");
+      }
+
+      // Build service data based on protocol
+      let serviceData = {
+        entity_id: targetEntity,  // This becomes the target
+        name: this._newEntityName,
+        address: String(this._lastReadData.address),
+        rw: "read", // Default to read-only for safety
+        scale: 1.0,
+        offset: 0.0,
+      };
+      
+      if (this._protocol === "modbus") {
+        serviceData = {
+          ...serviceData,
+          register_type: this._lastReadData.register_type,
+          data_type: this._lastReadData.data_type,
+          size: this._lastReadData.size,
+          byte_order: this._lastReadData.byte_order,
+          word_order: this._lastReadData.word_order,
+        };
+      } else if (this._protocol === "snmp") {
+        serviceData = {
+          ...serviceData,
+          data_type: this._lastReadData.data_type,
+          read_mode: "get",
+        };
+      }
+
+      // Call the add_entity service
+      const result = await this.hass.callService(
+        "protocol_wizard",
+        "add_entity",
+        serviceData
+      );
+
+      this._createEntityStatus = "✓ Entity created successfully!";
+      this._showEntityForm = false;
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        this._createEntityStatus = "";
+        this._lastReadSuccess = false;
+        this.requestUpdate();
+      }, 3000);
+
+      this.requestUpdate();
+    } catch (err) {
+      console.error("Create entity error:", err);
+      this._createEntityStatus = `Failed: ${err.message || err}`;
+      this.requestUpdate();
+    }
+  }
+
+  _renderCreateEntityButton() {
+    if (!this._lastReadSuccess || this._showEntityForm) {
+      return html``;
+    }
+
+    return html`
+      <div class="create-entity-section">
+        <button class="create-entity-btn" @click=${this._showCreateEntityForm}>
+          ➕ Create Entity from this Read
+        </button>
+      </div>
+    `;
+  }
+
+  _renderCreateEntityForm() {
+    if (!this._showEntityForm) {
+      return html``;
+    }
+
+    return html`
+      <div class="entity-form">
+        <div class="form-title">Create New Entity</div>
+        
+        <div class="field-row">
+          <span class="label">Entity Name:</span>
+          <input
+            type="text"
+            placeholder="Enter entity name"
+            .value=${this._newEntityName}
+            @input=${e => this._newEntityName = e.target.value}
+          />
+        </div>
+
+        <div class="read-summary">
+          <strong>Configuration from last read:</strong><br>
+          ${this._protocol === "modbus" ? html`
+            Address: ${this._lastReadData?.address}<br>
+            Type: ${this._lastReadData?.register_type}<br>
+            Data Type: ${this._lastReadData?.data_type}<br>
+            Size: ${this._lastReadData?.size}<br>
+          ` : html`
+            OID: ${this._lastReadData?.address}<br>
+            Data Type: ${this._lastReadData?.data_type}<br>
+          `}
+          Value: ${this._lastReadData?.value}
+        </div>
+
+        <div class="button-row">
+          <button @click=${this._createEntity}>Create Entity</button>
+          <button class="cancel-btn" @click=${this._cancelCreateEntity}>Cancel</button>
+        </div>
+
+        ${this._createEntityStatus ? html`
+          <div class="status ${this._createEntityStatus.includes('✓') ? 'success' : ''}">${this._createEntityStatus}</div>
+        ` : ""}
+      </div>
+    `;
+  }
+
   render() {
     if (!this.hass || !this.config) return html``;
 
@@ -522,7 +671,7 @@ class ProtocolWizardCard extends LitElement {
             <!-- Device Info with detected protocol -->
             <div class="info">
                 Device: ${this.hass.devices?.[this.config.device_id]?.name || "Unknown"}
-                &nbsp |  Protocol: ${protocol.toUpperCase()}
+                &nbsp; | &nbsp; Protocol: ${protocol.toUpperCase()}
                 <br>
                 Hub entity: ${this._getTargetEntity() || "Not found"}
             </div>
@@ -552,6 +701,12 @@ class ProtocolWizardCard extends LitElement {
             ${this._writeStatus ? html`
               <div class="status">${this._writeStatus}</div>
             ` : ""}
+
+            <!-- Create Entity Button (shown after successful read) -->
+            ${this._renderCreateEntityButton()}
+
+            <!-- Create Entity Form -->
+            ${this._renderCreateEntityForm()}
           </div>
         </div>
       </ha-card>
@@ -616,6 +771,9 @@ class ProtocolWizardCard extends LitElement {
       button:hover {
         opacity: 0.9;
       }
+      button.cancel-btn {
+        background: var(--secondary-text-color);
+      }
       .status {
         text-align: center;
         font-weight: bold;
@@ -623,6 +781,9 @@ class ProtocolWizardCard extends LitElement {
         padding: 8px;
         background: var(--secondary-background-color);
         border-radius: 4px;
+      }
+      .status.success {
+        color: var(--success-color, #4caf50);
       }
       .field-row {
         display: flex;
@@ -647,6 +808,39 @@ class ProtocolWizardCard extends LitElement {
         display: flex;
         align-items: center;
         cursor: pointer;
+      }
+      
+      /* Create Entity Styles */
+      .create-entity-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--divider-color);
+      }
+      .create-entity-btn {
+        width: 100%;
+        background: var(--success-color, #4caf50);
+        color: white;
+      }
+      .entity-form {
+        margin-top: 12px;
+        padding: 16px;
+        background: var(--secondary-background-color);
+        border-radius: 8px;
+        border: 2px solid var(--primary-color);
+      }
+      .form-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 12px;
+        color: var(--primary-text-color);
+      }
+      .read-summary {
+        padding: 12px;
+        background: var(--card-background-color);
+        border-radius: 4px;
+        margin: 12px 0;
+        font-size: 0.9em;
+        line-height: 1.6;
       }
     `;
   }
