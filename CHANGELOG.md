@@ -1,5 +1,8 @@
 ## Changelog
 
+### [0.4.7] - Bug in selecting Device_class, state_class, entity_class
+- Also bug in translation file (json doet allow braces character)
+  
 ### [0.4.6] - Device_class, state_class and icon
 - Added support in integration and template for device_class, state_class and icon
 - Update some templates with device_class, state_class and icons
