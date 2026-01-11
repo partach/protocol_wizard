@@ -340,7 +340,7 @@ class ProtocolWizardCard extends LitElement {
       return_response: true,
     });
 
-    // Store read data for entity creation
+    // Store read data for entity creation and table display
     this._lastReadData = {
       address: this._modbusAddress,
       register_type: this._modbusRegisterType === "auto" 
@@ -351,6 +351,7 @@ class ProtocolWizardCard extends LitElement {
       byte_order: this._modbusByteOrder,
       word_order: this._modbusWordOrder,
       value: result?.value ?? result?.response?.value ?? null,
+      raw: result?.value ?? result?.response?.value ?? null,  // Store for table
     };
 
     let displayValue = "";
@@ -382,9 +383,23 @@ class ProtocolWizardCard extends LitElement {
       displayValue = `HEX: ${hex}\nASCII: ${ascii}\nBinary: ${binary}`;
       if (bitsView) displayValue += `\n${bitsView}`;
       if (rawData.detected_type) displayValue += `\nType: ${rawData.detected_type}`;
+      
+      // Store parsed data for table
+      this._lastReadData.table = {
+        hex: hex,
+        ascii: ascii,
+        binary: binary,
+        bits: bitsView,
+        detected_type: rawData.detected_type,
+      };
     } else {
       const value = result?.value ?? result?.response?.value ?? null;
       displayValue = value !== null ? String(value) : "No value";
+      
+      // Store for table
+      this._lastReadData.table = {
+        value: displayValue,
+      };
     }
 
     this._writeValue = displayValue;
@@ -414,11 +429,14 @@ class ProtocolWizardCard extends LitElement {
 
     const value = result?.value ?? result?.response?.value ?? null;
     
-    // Store read data for entity creation
+    // Store read data for entity creation and table display
     this._lastReadData = {
       address: this._snmpOid,
       data_type: this._snmpDataType,
       value: value,
+      table: {
+        value: value !== null ? String(value) : "No value",
+      },
     };
     
     this._writeValue = value !== null ? String(value) : "No value";
@@ -605,7 +623,7 @@ class ProtocolWizardCard extends LitElement {
         serviceData
       );
 
-      this._createEntityStatus = "✓ Entity created successfully!";
+      this._createEntityStatus = "Entity created successfully!";
       this._showEntityForm = false;
       
       // Reset form after 3 seconds
@@ -623,6 +641,139 @@ class ProtocolWizardCard extends LitElement {
     }
   }
 
+  _copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      // Show brief confirmation
+      const originalStatus = this._selectedStatus;
+      this._selectedStatus = "Copied to clipboard!";
+      this.requestUpdate();
+      setTimeout(() => {
+        this._selectedStatus = originalStatus;
+        this.requestUpdate();
+      }, 1500);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      this._selectedStatus = "Copy failed";
+      this.requestUpdate();
+    });
+  }
+
+  _renderResultsTable() {
+    if (!this._lastReadSuccess || !this._lastReadData?.table) {
+      return html``;
+    }
+
+    const table = this._lastReadData.table;
+    
+    if (this._modbusRawMode && this._protocol === "modbus") {
+      // Raw mode table
+      return html`
+        <div class="results-table">
+          <div class="table-title">Read Results</div>
+          <table>
+            <tbody>
+              ${table.hex ? html`
+                <tr>
+                  <td class="label-cell">HEX</td>
+                  <td class="value-cell">${table.hex}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" @click=${() => this._copyToClipboard(table.hex)} title="Copy HEX">
+                      Copy
+                    </button>
+                  </td>
+                </tr>
+              ` : ''}
+              ${table.ascii ? html`
+                <tr>
+                  <td class="label-cell">ASCII</td>
+                  <td class="value-cell">${table.ascii}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" @click=${() => this._copyToClipboard(table.ascii)} title="Copy ASCII">
+                      Copy
+                    </button>
+                  </td>
+                </tr>
+              ` : ''}
+              ${table.binary ? html`
+                <tr>
+                  <td class="label-cell">Binary</td>
+                  <td class="value-cell">${table.binary}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" @click=${() => this._copyToClipboard(table.binary)} title="Copy Binary">
+                      Copy
+                    </button>
+                  </td>
+                </tr>
+              ` : ''}
+              ${table.bits ? html`
+                <tr>
+                  <td class="label-cell">Bits</td>
+                  <td class="value-cell">${table.bits}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" @click=${() => this._copyToClipboard(table.bits)} title="Copy Bits">
+                      Copy
+                    </button>
+                  </td>
+                </tr>
+              ` : ''}
+              ${table.detected_type ? html`
+                <tr>
+                  <td class="label-cell">Detected Type</td>
+                  <td class="value-cell">${table.detected_type}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" @click=${() => this._copyToClipboard(table.detected_type)} title="Copy Type">
+                      Copy
+                    </button>
+                  </td>
+                </tr>
+              ` : ''}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      // Simple value table
+      return html`
+        <div class="results-table">
+          <div class="table-title">Read Results</div>
+          <table>
+            <tbody>
+              <tr>
+                <td class="label-cell">Value</td>
+                <td class="value-cell">${table.value}</td>
+                <td class="copy-cell">
+                  <button class="copy-btn" @click=${() => this._copyToClipboard(table.value)} title="Copy Value">
+                    Copy
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="label-cell">Address</td>
+                <td class="value-cell">${this._lastReadData.address}</td>
+                <td class="copy-cell">
+                  <button class="copy-btn" @click=${() => this._copyToClipboard(String(this._lastReadData.address))} title="Copy Address">
+                    Copy
+                  </button>
+                </td>
+              </tr>
+              ${this._protocol === "modbus" ? html`
+                <tr>
+                  <td class="label-cell">Type</td>
+                  <td class="value-cell">${this._lastReadData.register_type}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" @click=${() => this._copyToClipboard(this._lastReadData.register_type)} title="Copy Type">
+                      Copy
+                    </button>
+                  </td>
+                </tr>
+              ` : ''}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  }
+
   _renderCreateEntityButton() {
     if (!this._lastReadSuccess || this._showEntityForm) {
       return html``;
@@ -631,7 +782,7 @@ class ProtocolWizardCard extends LitElement {
     return html`
       <div class="create-entity-section">
         <button class="create-entity-btn" @click=${this._showCreateEntityForm}>
-          Create Entity from this Read
+          + Create Entity from this Read
         </button>
       </div>
     `;
@@ -746,7 +897,7 @@ class ProtocolWizardCard extends LitElement {
         </div>
 
         ${this._createEntityStatus ? html`
-          <div class="status ${this._createEntityStatus.includes('✓') ? 'success' : ''}">${this._createEntityStatus}</div>
+          <div class="status ${this._createEntityStatus.includes('successfully') ? 'success' : ''}">${this._createEntityStatus}</div>
         ` : ""}
       </div>
     `;
@@ -800,6 +951,9 @@ class ProtocolWizardCard extends LitElement {
             ${this._writeStatus ? html`
               <div class="status">${this._writeStatus}</div>
             ` : ""}
+
+            <!-- Results Table (shown after successful read) -->
+            ${this._renderResultsTable()}
 
             <!-- Create Entity Button (shown after successful read) -->
             ${this._renderCreateEntityButton()}
@@ -907,6 +1061,62 @@ class ProtocolWizardCard extends LitElement {
         display: flex;
         align-items: center;
         cursor: pointer;
+      }
+      
+      /* Results Table Styles */
+      .results-table {
+        margin-top: 16px;
+        padding: 12px;
+        background: var(--card-background-color);
+        border-radius: 4px;
+        border: 1px solid var(--divider-color);
+      }
+      .table-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: var(--primary-text-color);
+      }
+      .results-table table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .results-table tr {
+        border-bottom: 1px solid var(--divider-color);
+      }
+      .results-table tr:last-child {
+        border-bottom: none;
+      }
+      .results-table td {
+        padding: 8px 4px;
+      }
+      .label-cell {
+        font-weight: bold;
+        width: 120px;
+        color: var(--secondary-text-color);
+      }
+      .value-cell {
+        font-family: monospace;
+        word-break: break-all;
+        color: var(--primary-text-color);
+      }
+      .copy-cell {
+        width: 60px;
+        text-align: right;
+      }
+      .copy-btn {
+        background: var(--secondary-background-color);
+        color: var(--primary-text-color);
+        border: 1px solid var(--divider-color);
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        min-width: auto;
+        flex: none;
+      }
+      .copy-btn:hover {
+        background: var(--primary-color);
+        color: var(--text-primary-color);
       }
       
       /* Create Entity Styles */
