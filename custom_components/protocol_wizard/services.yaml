@@ -244,3 +244,209 @@ read_snmp:
       required: false
       selector:
         boolean:
+add_entity:
+  name: Add Entity
+  description: Add a new entity to the Protocol Wizard integration from the frontend.
+  fields:
+    device_id:
+      name: Device ID
+      description: Device ID to add entity to (use either device_id or entity_id).
+      required: false
+      example: "abc123"
+      selector:
+        text:
+    entity_id:
+      name: Entity ID
+      description: Any entity ID from the device (use either device_id or entity_id).
+      required: false
+      example: "sensor.modbus_hub"
+      selector:
+        entity:
+          integration: protocol_wizard
+    name:
+      name: Entity Name
+      description: Unique name for the new entity.
+      required: true
+      example: "Temperature Sensor"
+      selector:
+        text:
+    address:
+      name: Address
+      description: Register address (Modbus) or OID (SNMP).
+      required: true
+      example: "100"
+      selector:
+        text:
+    data_type:
+      name: Data Type
+      description: How to interpret the value.
+      required: false
+      default: uint16
+      example: "uint16"
+      selector:
+        select:
+          options:
+            - uint16
+            - int16
+            - uint32
+            - int32
+            - float32
+            - uint64
+            - int64
+            - string
+    rw:
+      name: Read/Write Mode
+      description: Access mode for the entity.
+      required: false
+      default: read
+      selector:
+        select:
+          options:
+            - read
+            - write
+            - rw
+    scale:
+      name: Scale
+      description: Scaling factor to apply to value.
+      required: false
+      default: 1.0
+      selector:
+        number:
+          min: -1000000
+          max: 1000000
+          step: 0.0001
+          mode: box
+    offset:
+      name: Offset
+      description: Offset to apply to value.
+      required: false
+      default: 0.0
+      selector:
+        number:
+          min: -1000000
+          max: 1000000
+          step: 0.01
+          mode: box
+    register_type:
+      name: Register Type (Modbus)
+      description: Modbus register type.
+      required: false
+      example: "holding"
+      selector:
+        select:
+          options:
+            - holding
+            - input
+            - coil
+            - discrete
+    byte_order:
+      name: Byte Order (Modbus)
+      description: Byte order for multi-byte values.
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - big
+            - little
+    word_order:
+      name: Word Order (Modbus)
+      description: Word order for multi-register values.
+      required: false
+      default: big
+      selector:
+        select:
+          options:
+            - big
+            - little
+    size:
+      name: Size (Modbus)
+      description: Number of registers to read.
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 20
+          step: 1
+          mode: box
+    read_mode:
+      name: Read Mode (SNMP)
+      description: SNMP read mode.
+      required: false
+      default: get
+      selector:
+        select:
+          options:
+            - get
+            - walk
+    format:
+      name: Format String
+      description: Optional format string for value display.
+      required: false
+      example: "{d} days {h} hours"
+      selector:
+        text:
+    options:
+      name: Options (Select Entity)
+      description: JSON mapping for select entities.
+      required: false
+      example: '{"0": "Off", "1": "On"}'
+      selector:
+        text:
+    device_class:
+      name: Device Class
+      description: Device class for the entity.
+      required: false
+      selector:
+        text:
+    state_class:
+      name: State Class
+      description: State class for sensors.
+      required: false
+      selector:
+        select:
+          options:
+            - measurement
+            - total
+            - total_increasing
+    entity_category:
+      name: Entity Category
+      description: Category for the entity.
+      required: false
+      selector:
+        select:
+          options:
+            - config
+            - diagnostic
+    icon:
+      name: Icon
+      description: MDI icon for the entity.
+      required: false
+      example: "mdi:thermometer"
+      selector:
+        icon:
+    min:
+      name: Minimum Value
+      description: Minimum value for number entities.
+      required: false
+      selector:
+        number:
+          mode: box
+    max:
+      name: Maximum Value
+      description: Maximum value for number entities.
+      required: false
+      selector:
+        number:
+          mode: box
+    step:
+      name: Step
+      description: Step size for number entities.
+      required: false
+      selector:
+        number:
+          min: 0.001
+          max: 1000
+          step: 0.001
+          mode: box
