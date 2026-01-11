@@ -344,26 +344,28 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def handle_add_entity(call: ServiceCall):
         """Service to add a new entity to the integration configuration."""
         try:
-            # Get the config entry
+            # Get the config entry from target entity
             entry_id = None
-            device_id = call.data.get("device_id")
+            
+            # Get entity_id from target or from data (for frontend card compatibility)
             entity_id = call.data.get("entity_id")
             
-            # Find config entry from device_id or entity_id
-            if device_id:
-                device_registry = dr.async_get(hass)
-                device = device_registry.async_get(device_id)
-                if device and device.config_entries:
-                    entry_id = list(device.config_entries)[0]
-            elif entity_id:
-                # Get from entity registry
-                entity_registry = er.async_get(hass)
-                entity_entry = entity_registry.async_get(entity_id)
-                if entity_entry:
-                    entry_id = entity_entry.config_entry_id
+            if not entity_id and call.target:
+                entity_ids = call.target.get("entity_id")
+                if entity_ids:
+                    entity_id = entity_ids[0] if isinstance(entity_ids, list) else entity_ids
+            
+            if not entity_id:
+                raise HomeAssistantError("No target entity provided")
+            
+            # Get config entry from entity
+            entity_registry = er.async_get(hass)
+            entity_entry = entity_registry.async_get(entity_id)
+            if entity_entry and entity_entry.config_entry_id:
+                entry_id = entity_entry.config_entry_id
             
             if not entry_id:
-                raise HomeAssistantError("Could not find config entry for device")
+                raise HomeAssistantError("Could not find config entry for target entity")
             
             entry = hass.config_entries.async_get_entry(entry_id)
             if not entry or entry.domain != DOMAIN:
