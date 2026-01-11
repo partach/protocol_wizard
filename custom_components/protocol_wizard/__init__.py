@@ -339,6 +339,102 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                     return coordinator
 
         raise HomeAssistantError("No coordinator found – provide device_id or valid entity_id")
+
+    async def handle_add_entity(call: ServiceCall):
+        """Service to add a new entity to the integration configuration."""
+        try:
+            # Get the config entry
+            entry_id = None
+            device_id = call.data.get("device_id")
+            entity_id = call.data.get("entity_id")
+            
+            # Find config entry from device_id or entity_id
+            if device_id:
+                device_registry = dr.async_get(hass)
+                device = device_registry.async_get(device_id)
+                if device and device.config_entries:
+                    entry_id = list(device.config_entries)[0]
+            elif entity_id:
+                # Get from entity registry
+                entity_registry = er.async_get(hass)
+                entity_entry = entity_registry.async_get(entity_id)
+                if entity_entry:
+                    entry_id = entity_entry.config_entry_id
+            
+            if not entry_id:
+                raise HomeAssistantError("Could not find config entry for device")
+            
+            entry = hass.config_entries.async_get_entry(entry_id)
+            if not entry or entry.domain != DOMAIN:
+                raise HomeAssistantError("Invalid config entry")
+            
+            # Determine protocol and config key
+            protocol = entry.data.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
+            if protocol == CONF_PROTOCOL_MODBUS:
+                config_key = CONF_REGISTERS
+            else:
+                config_key = CONF_ENTITIES
+            
+            # Get current entities
+            current_options = dict(entry.options)
+            entities = list(current_options.get(config_key, []))
+            
+            # Build new entity config
+            new_entity = {
+                "name": call.data["name"],
+                "address": str(call.data["address"]),
+                "data_type": call.data.get("data_type", "uint16"),
+                "rw": call.data.get("rw", "read"),
+                "scale": float(call.data.get("scale", 1.0)),
+                "offset": float(call.data.get("offset", 0.0)),
+            }
+            
+            # Add protocol-specific fields
+            if protocol == CONF_PROTOCOL_MODBUS:
+                new_entity.update({
+                    "register_type": call.data.get("register_type", "holding"),
+                    "byte_order": call.data.get("byte_order", "big"),
+                    "word_order": call.data.get("word_order", "big"),
+                    "size": int(call.data.get("size", 1)),
+                })
+            elif protocol == CONF_PROTOCOL_SNMP:
+                new_entity.update({
+                    "read_mode": call.data.get("read_mode", "get"),
+                })
+            
+            # Add optional fields if provided
+            for field in ["format", "options", "device_class", "state_class", "entity_category", "icon", "min", "max", "step"]:
+                if field in call.data and call.data[field]:
+                    new_entity[field] = call.data[field]
+            
+            # Check for duplicates
+            existing_addresses = {(e.get("name"), e.get("address")) for e in entities}
+            if (new_entity["name"], new_entity["address"]) in existing_addresses:
+                raise HomeAssistantError(f"Entity with name '{new_entity['name']}' and address '{new_entity['address']}' already exists")
+            
+            # Add the new entity
+            entities.append(new_entity)
+            current_options[config_key] = entities
+            
+            # Update the config entry
+            hass.config_entries.async_update_entry(entry, options=current_options)
+            
+            _LOGGER.info(
+                "Added new entity '%s' at address '%s' to %s",
+                new_entity["name"],
+                new_entity["address"],
+                entry.title
+            )
+            
+            return {
+                "success": True,
+                "entity_name": new_entity["name"],
+                "entity_count": len(entities)
+            }
+            
+        except Exception as err:
+            _LOGGER.error("Failed to add entity: %s", err, exc_info=True)
+            raise HomeAssistantError(f"Failed to add entity: {str(err)}") from err    
     
     async def handle_write_register(call: ServiceCall):
         """Generic write service (protocol-agnostic) with detailed logging."""
@@ -470,7 +566,39 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         supports_response=SupportsResponse.ONLY,
     )
     hass.services.async_register(DOMAIN, "write_snmp", handle_write_snmp)
-    
+    hass.services.async_register(
+        DOMAIN,
+        "add_entity",
+        handle_add_entity,
+        schema=vol.Schema({
+            vol.Optional("device_id"): cv.string,
+            vol.Optional("entity_id"): cv.entity_id,
+            vol.Required("name"): cv.string,
+            vol.Required("address"): cv.string,
+            vol.Optional("data_type", default="uint16"): cv.string,
+            vol.Optional("rw", default="read"): vol.In(["read", "write", "rw"]),
+            vol.Optional("scale", default=1.0): vol.Coerce(float),
+            vol.Optional("offset", default=0.0): vol.Coerce(float),
+            # Modbus-specific
+            vol.Optional("register_type"): cv.string,
+            vol.Optional("byte_order"): cv.string,
+            vol.Optional("word_order"): cv.string,
+            vol.Optional("size"): vol.Coerce(int),
+            # SNMP-specific
+            vol.Optional("read_mode"): cv.string,
+            # Optional fields
+            vol.Optional("format"): cv.string,
+            vol.Optional("options"): cv.string,
+            vol.Optional("device_class"): cv.string,
+            vol.Optional("state_class"): cv.string,
+            vol.Optional("entity_category"): cv.string,
+            vol.Optional("icon"): cv.string,
+            vol.Optional("min"): vol.Coerce(float),
+            vol.Optional("max"): vol.Coerce(float),
+            vol.Optional("step"): vol.Coerce(float),
+        }),
+        supports_response=SupportsResponse.OPTIONAL,
+    )    
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
