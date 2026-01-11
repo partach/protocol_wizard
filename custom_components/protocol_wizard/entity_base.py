@@ -9,7 +9,6 @@ import logging
 from typing import Any
 from abc import ABC, abstractmethod
 import json
-from types import MappingProxyType
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -122,7 +121,7 @@ def set_readonly_protocol_settings(entity: Entity, entity_config: dict[str, Any]
     
     entity._attr_extra_state_attributes = {
         **existing_attrs,
-        "protocol_settings": MappingProxyType(settings)  # truly read-only view
+        "protocol_settings": settings  # Just use a regular dict - HA will handle immutability
     }
 
 
