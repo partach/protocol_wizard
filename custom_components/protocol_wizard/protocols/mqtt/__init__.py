@@ -10,6 +10,7 @@ from .const import (
     CONF_PASSWORD,
     DEFAULT_PORT,
     DATA_TYPES,
+    topic_key,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "CONF_PASSWORD",
     "DEFAULT_PORT",
     "DATA_TYPES",
+    topic_key
 ]
