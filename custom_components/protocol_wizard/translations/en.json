@@ -98,8 +98,8 @@
           "data_type": "How to interpret the raw value",
           "rw": "Read-only, write-only, or both",
           "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
-          "format": "Optional format string after decoding (example: use {{d}} for days, {{h}} for hours, {{m}} for minutes)",
-          "options": "Optional JSON mapping for select entity (example: use {{\"0\": \"Off\", \"1\": \"On\"}})"
+          "format": "Optional format string after decoding (example: use {d} for days, {h} for hours, {m} for minutes)",
+          "options": "Optional JSON mapping for select entity (example: use {"0": "Off", "1": "On"})"
         }
       },
       "edit_entity_form": {
@@ -117,8 +117,8 @@
           "address": "Register address (Modbus) or OID (SNMP)",
           "data_type": "How to interpret the raw value",
           "rw": "Read-only, write-only, or both",
-          "format": "Optional format string after decoding (example: use {{d}} for days, {{h}} for hours, {{m}} for minutes)",
-          "options": "Optional JSON mapping for select entity (example: use {{\"0\": \"Off\", \"1\": \"On\"}})"
+          "format": "Optional format string after decoding (example: use {d} for days, {h} for hours, {m} for minutes)",
+          "options": "Optional JSON mapping for select entity (example: use {"0": "Off", "1": "On"})"
         }
       },
       "load_template": {
