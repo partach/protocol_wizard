@@ -33,6 +33,12 @@ class ProtocolWizardCard extends LitElement {
       _lastReadData: { type: Object },
       _showEntityForm: { type: Boolean },
       _newEntityName: { type: String },
+      _newEntityRW: { type: String },
+      _newEntityScale: { type: Number },
+      _newEntityOffset: { type: Number },
+      _newEntityOptions: { type: String },
+      _newEntityFormat: { type: String },
+      _newEntityIcon: { type: String },
       _createEntityStatus: { type: String },
     };
   }
@@ -65,6 +71,12 @@ class ProtocolWizardCard extends LitElement {
     this._lastReadData = null;
     this._showEntityForm = false;
     this._newEntityName = "";
+    this._newEntityRW = "read";
+    this._newEntityScale = 1.0;
+    this._newEntityOffset = 0.0;
+    this._newEntityOptions = "";
+    this._newEntityFormat = "";
+    this._newEntityIcon = "";
     this._createEntityStatus = "";
   }
 
@@ -522,6 +534,12 @@ class ProtocolWizardCard extends LitElement {
   _cancelCreateEntity() {
     this._showEntityForm = false;
     this._newEntityName = "";
+    this._newEntityRW = "read";
+    this._newEntityScale = 1.0;
+    this._newEntityOffset = 0.0;
+    this._newEntityOptions = "";
+    this._newEntityFormat = "";
+    this._newEntityIcon = "";
     this._createEntityStatus = "";
     this.requestUpdate();
   }
@@ -547,10 +565,21 @@ class ProtocolWizardCard extends LitElement {
         entity_id: targetEntity,  // This becomes the target
         name: this._newEntityName,
         address: String(this._lastReadData.address),
-        rw: "read", // Default to read-only for safety
-        scale: 1.0,
-        offset: 0.0,
+        rw: this._newEntityRW || "read",
+        scale: this._newEntityScale !== undefined ? this._newEntityScale : 1.0,
+        offset: this._newEntityOffset !== undefined ? this._newEntityOffset : 0.0,
       };
+      
+      // Add optional fields if provided
+      if (this._newEntityOptions && this._newEntityOptions.trim()) {
+        serviceData.options = this._newEntityOptions.trim();
+      }
+      if (this._newEntityFormat && this._newEntityFormat.trim()) {
+        serviceData.format = this._newEntityFormat.trim();
+      }
+      if (this._newEntityIcon && this._newEntityIcon.trim()) {
+        serviceData.icon = this._newEntityIcon.trim();
+      }
       
       if (this._protocol === "modbus") {
         serviceData = {
@@ -602,7 +631,7 @@ class ProtocolWizardCard extends LitElement {
     return html`
       <div class="create-entity-section">
         <button class="create-entity-btn" @click=${this._showCreateEntityForm}>
-          ➕ Create Entity from this Read
+          Create Entity from this Read
         </button>
       </div>
     `;
@@ -626,6 +655,76 @@ class ProtocolWizardCard extends LitElement {
             @input=${e => this._newEntityName = e.target.value}
           />
         </div>
+
+        <div class="field-row">
+          <span class="label">Read/Write Mode:</span>
+          <select .value=${this._newEntityRW || "read"} @change=${e => this._newEntityRW = e.target.value}>
+            <option value="read">Read Only</option>
+            <option value="write">Write Only</option>
+            <option value="rw">Read/Write</option>
+          </select>
+        </div>
+
+        <div class="form-section-title">Value Processing</div>
+
+        <div class="field-row">
+          <span class="label">Scale Factor:</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="1.0"
+            .value=${this._newEntityScale !== undefined ? this._newEntityScale : 1.0}
+            @input=${e => this._newEntityScale = Number(e.target.value)}
+          />
+        </div>
+        <div class="field-help">Multiply raw value by this factor</div>
+
+        <div class="field-row">
+          <span class="label">Offset:</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0.0"
+            .value=${this._newEntityOffset !== undefined ? this._newEntityOffset : 0.0}
+            @input=${e => this._newEntityOffset = Number(e.target.value)}
+          />
+        </div>
+        <div class="field-help">Add this value after scaling</div>
+
+        <div class="form-section-title">Display Options</div>
+
+        <div class="field-row">
+          <span class="label">Options (JSON):</span>
+          <input
+            type="text"
+            placeholder='{"0": "Off", "1": "On"}'
+            .value=${this._newEntityOptions || ""}
+            @input=${e => this._newEntityOptions = e.target.value}
+          />
+        </div>
+        <div class="field-help">For select entities: map values to labels</div>
+
+        <div class="field-row">
+          <span class="label">Format String:</span>
+          <input
+            type="text"
+            placeholder="{d} days {h} hours"
+            .value=${this._newEntityFormat || ""}
+            @input=${e => this._newEntityFormat = e.target.value}
+          />
+        </div>
+        <div class="field-help">Custom display format (e.g., temperature, time)</div>
+
+        <div class="field-row">
+          <span class="label">Icon:</span>
+          <input
+            type="text"
+            placeholder="mdi:thermometer"
+            .value=${this._newEntityIcon || ""}
+            @input=${e => this._newEntityIcon = e.target.value}
+          />
+        </div>
+        <div class="field-help">Material Design Icon name</div>
 
         <div class="read-summary">
           <strong>Configuration from last read:</strong><br>
@@ -833,6 +932,23 @@ class ProtocolWizardCard extends LitElement {
         font-weight: bold;
         margin-bottom: 12px;
         color: var(--primary-text-color);
+      }
+      .form-section-title {
+        font-size: 0.95em;
+        font-weight: bold;
+        margin-top: 16px;
+        margin-bottom: 8px;
+        color: var(--primary-color);
+        border-bottom: 1px solid var(--divider-color);
+        padding-bottom: 4px;
+      }
+      .field-help {
+        font-size: 0.85em;
+        color: var(--secondary-text-color);
+        margin-top: -8px;
+        margin-bottom: 8px;
+        margin-left: 160px;
+        font-style: italic;
       }
       .read-summary {
         padding: 12px;
