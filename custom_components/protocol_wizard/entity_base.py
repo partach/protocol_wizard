@@ -28,6 +28,43 @@ from .protocols.base import BaseProtocolCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+def apply_common_entity_attributes(
+    entity: Entity,
+    entity_config: dict[str, Any],
+    hass: HomeAssistant | None = None,
+) -> None:
+    """
+    Apply common attributes (device_class, state_class, entity_category, icon, unit, precision)
+    from entity_config to any HA entity (Sensor, Number, Select, Switch, etc.).
+    """
+    # Device class
+    entity._attr_device_class = entity_config.get("device_class")
+
+    # State class (only for Sensor/Number)
+    if isinstance(entity, (SensorEntity, NumberEntity)):
+        entity._attr_state_class = entity_config.get("state_class")
+
+    # Entity category (map string to enum)
+    category_str = entity_config.get("entity_category")
+    if category_str:
+        try:
+            entity._attr_entity_category = EntityCategory(category_str)
+        except ValueError:
+            _LOGGER.warning("Invalid entity_category '%s' - using None", category_str)
+            entity._attr_entity_category = None
+
+    # Icon
+    if entity_config.get("icon"): entity._attr_icon = icon
+        
+
+    # Display precision (only for sensor/number if no custom format)
+    if isinstance(entity, (SensorEntity, NumberEntity)) and not entity_config.get("format"):
+        data_type = entity_config.get("data_type", "")
+        entity._attr_native_unit_of_measurement = entity_config.get("unit") # only set unit if we don't try to format it
+        if "float" in data_type.lower():
+            entity._attr_suggested_display_precision = entity_config.get("precision", 2)
+        elif any(t in data_type.lower() for t in ["int", "uint"]):
+            entity._attr_suggested_display_precision = 0
 
 class BaseEntityManager(ABC):
     """
@@ -161,21 +198,8 @@ class ProtocolWizardSensorBase(CoordinatorEntity, SensorEntity):
         
         self._attr_unique_id = unique_id
         self._attr_name = entity_config.get("name")
-        self._attr_device_class = entity_config.get("device_class")
         self._attr_device_info = device_info
-        self._attr_device_class = entity_config.get("device_class")
-        self._attr_state_class = entity_config.get("state_class")
-        self._attr_entity_category = entity_config.get("entity_category")
-        self._attr_icon = entity_config.get("icon")    
-        # Set display precision based on data type
-        data_type = entity_config.get("data_type", "")
-        if not entity_config.get("format"):
-            self._attr_native_unit_of_measurement = entity_config.get("unit")
-            data_type = entity_config.get("data_type", "")
-            if "float" in data_type.lower():
-                self._attr_suggested_display_precision = entity_config.get("precision", 2)
-            elif any(t in data_type.lower() for t in ["int", "uint"]):
-                self._attr_suggested_display_precision = 0
+        apply_common_entity_attributes(self, entity_config, hass=self.hass)
     
     @property
     def native_value(self):
@@ -224,19 +248,8 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         self._attr_native_min_value = entity_config.get("min")
         self._attr_native_max_value = entity_config.get("max")
         self._attr_native_step = entity_config.get("step", 1)
-        self._attr_device_class = entity_config.get("device_class")
-        self._attr_state_class = entity_config.get("state_class")
-        self._attr_entity_category = entity_config.get("entity_category")
-        self._attr_icon = entity_config.get("icon")    
+        apply_common_entity_attributes(self, entity_config, hass=self.hass)
         
-        # Set display precision
-        self.data_type = entity_config.get("data_type", "")
-        if not entity_config.get("format"):
-            self._attr_native_unit_of_measurement = entity_config.get("unit")
-            if "float" in self.data_type.lower():
-                self._attr_suggested_display_precision = entity_config.get("precision", 2)
-            elif any(t in self.data_type.lower() for t in ["int", "uint"]):
-                self._attr_suggested_display_precision = 0
     
     @property
     def native_value(self):
@@ -312,11 +325,8 @@ class ProtocolWizardSwitchBase(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = unique_id
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
-        self._attr_icon = "mdi:toggle-switch"
-        self._attr_device_class = entity_config.get("device_class")
-        self._attr_state_class = entity_config.get("state_class")
-        self._attr_entity_category = entity_config.get("entity_category")
-        self._attr_icon = entity_config.get("icon")    
+        self._attr_icon = "mdi:toggle-switch" # can be overwritten if there is an icon requested by config
+        apply_common_entity_attributes(self, entity_config, hass=self.hass)
 
     @property
     def is_on(self) -> bool:
@@ -365,10 +375,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
         self.data_type = entity_config.get("data_type", "")
-        self._attr_device_class = entity_config.get("device_class")
-        self._attr_state_class = entity_config.get("state_class")
-        self._attr_entity_category = entity_config.get("entity_category")
-        self._attr_icon = entity_config.get("icon")    
+        apply_common_entity_attributes(self, entity_config, hass=self.hass
         
         # Build value mapping from options dict
         options_raw = entity_config.get("options")
