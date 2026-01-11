@@ -35,6 +35,7 @@ class ProtocolWizardCard extends LitElement {
       _showEntityForm: { type: Boolean },
       _newEntityName: { type: String },
       _newEntityRW: { type: String },
+      _newEntityReadMode: { type: String },
       _newEntityScale: { type: Number },
       _newEntityOffset: { type: Number },
       _newEntityOptions: { type: String },
@@ -74,6 +75,7 @@ class ProtocolWizardCard extends LitElement {
     this._showEntityForm = false;
     this._newEntityName = "";
     this._newEntityRW = "read";
+    this._newEntityReadMode = "get";
     this._newEntityScale = 1.0;
     this._newEntityOffset = 0.0;
     this._newEntityOptions = "";
@@ -548,6 +550,7 @@ class ProtocolWizardCard extends LitElement {
     this._showEntityForm = false;
     this._newEntityName = "";
     this._newEntityRW = "read";
+    this._newEntityReadMode = "get";
     this._newEntityScale = 1.0;
     this._newEntityOffset = 0.0;
     this._newEntityOptions = "";
@@ -607,7 +610,7 @@ class ProtocolWizardCard extends LitElement {
         serviceData = {
           ...serviceData,
           data_type: this._lastReadData.data_type,
-          read_mode: "get",
+          read_mode: this._newEntityReadMode || "get",
         };
       }
 
@@ -677,6 +680,17 @@ class ProtocolWizardCard extends LitElement {
             <option value="rw">Read/Write</option>
           </select>
         </div>
+
+        ${this._protocol === "snmp" ? html`
+          <div class="field-row">
+            <span class="label">SNMP Read Mode:</span>
+            <select .value=${this._newEntityReadMode || "get"} @change=${e => this._newEntityReadMode = e.target.value}>
+              <option value="get">Get (single value)</option>
+              <option value="walk">Walk (subtree table)</option>
+            </select>
+          </div>
+          <div class="field-help">Get: reads single OID value. Walk: retrieves entire subtree</div>
+        ` : ''}
 
         <div class="form-section-title">Value Processing</div>
 
