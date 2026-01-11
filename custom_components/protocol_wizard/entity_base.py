@@ -249,6 +249,7 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         self._attr_native_min_value = entity_config.get("min")
         self._attr_native_max_value = entity_config.get("max")
         self._attr_native_step = entity_config.get("step", 1)
+        self.data_type = entity_config.get("data_type", "")
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
         
     
