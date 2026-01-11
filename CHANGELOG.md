@@ -1,5 +1,7 @@
 ## Changelog
 
+### [0.4.8] - Nr entity error message fix
+
 ### [0.4.7] - Bug in selecting Device_class, state_class, entity_class
 - Also bug in translation file (json doet allow braces character)
   
