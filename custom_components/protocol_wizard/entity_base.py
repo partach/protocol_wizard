@@ -54,7 +54,8 @@ def apply_common_entity_attributes(
             entity._attr_entity_category = None
 
     # Icon
-    if entity_config.get("icon"): entity._attr_icon = icon
+    if entity_config.get("icon"): 
+        entity._attr_icon = icon
         
 
     # Display precision (only for sensor/number if no custom format)
@@ -375,7 +376,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
         self.data_type = entity_config.get("data_type", "")
-        apply_common_entity_attributes(self, entity_config, hass=self.hass
+        apply_common_entity_attributes(self, entity_config, hass=self.hass)
         
         # Build value mapping from options dict
         options_raw = entity_config.get("options")
