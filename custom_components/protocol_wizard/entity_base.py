@@ -55,7 +55,7 @@ def apply_common_entity_attributes(
 
     # Icon
     if entity_config.get("icon"): 
-        entity._attr_icon = icon
+        entity._attr_icon = entity_config.get("icon")
         
 
     # Display precision (only for sensor/number if no custom format)
