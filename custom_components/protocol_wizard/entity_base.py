@@ -67,6 +67,35 @@ def apply_common_entity_attributes(
         elif any(t in data_type.lower() for t in ["int", "uint"]):
             entity._attr_suggested_display_precision = 0
 
+def get_safe_number_defaults(data_type: str) -> dict[str, float]:
+    """
+    Returns safe default min/max/step values based on data_type.
+    Used for NumberEntity to prevent NoneType errors on write.
+    """
+    data_type = data_type.lower()
+
+    # Integer types (signed/unsigned 16/32 bit)
+    if "uint16" in data_type:
+        return {"min": 0.0, "max": 65535.0, "step": 1.0}
+    if "int16" in data_type:
+        return {"min": -32768.0, "max": 32767.0, "step": 1.0}
+    if "uint32" in data_type:
+        return {"min": 0.0, "max": 4294967295.0, "step": 1.0}
+    if "int32" in data_type:
+        return {"min": -2147483648.0, "max": 2147483647.0, "step": 1.0}
+    if "uint64" in data_type:
+        return {"min": 0.0, "max": 1.8446744e+19, "step": 1.0}  # approx max uint64
+    if "int64" in data_type:
+        return {"min": -9.223372e+18, "max": 9.223372e+18, "step": 1.0}  # approx max int64
+
+    # Float types
+    if "float" in data_type:
+        # Reasonable wide range for most sensors (can be overridden)
+        return {"min": -1000000.0, "max": 1000000.0, "step": 0.1}
+
+    # Fallback for unknown types
+    return {"min": 0.0, "max": 100.0, "step": 1.0}
+    
 class BaseEntityManager(ABC):
     """
     Base class for managing dynamic entity lifecycle.
@@ -246,10 +275,17 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
         
-        self._attr_native_min_value = entity_config.get("min")
-        self._attr_native_max_value = entity_config.get("max")
-        self._attr_native_step = entity_config.get("step", 1)
-        self.data_type = entity_config.get("data_type", "")
+        # Defensive data_type (needed for write logic)
+        self.data_type = entity_config.get("data_type", "uint16")
+    
+        # Get safe defaults based on data_type
+        defaults = get_safe_number_defaults(self.data_type)
+    
+        # Use config values if provided, otherwise safe defaults
+        self._attr_native_min_value = float(entity_config.get("min", defaults["min"]))
+        self._attr_native_max_value = float(entity_config.get("max", defaults["max"]))
+        self._attr_native_step = float(entity_config.get("step", defaults["step"]))
+        
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
         
     
