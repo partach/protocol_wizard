@@ -117,8 +117,11 @@ def set_readonly_protocol_settings(entity: Entity, entity_config: dict[str, Any]
     # Optional: Clean up None values (makes attributes cleaner)
     settings = {k: v for k, v in settings.items() if v is not None}
 
+    # Use getattr with a default to avoid AttributeError
+    existing_attrs = getattr(entity, '_attr_extra_state_attributes', None) or {}
+    
     entity._attr_extra_state_attributes = {
-        **(entity._attr_extra_state_attributes or {}),
+        **existing_attrs,
         "protocol_settings": MappingProxyType(settings)  # truly read-only view
     }
 
