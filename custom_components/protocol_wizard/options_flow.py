@@ -431,39 +431,19 @@ class ModbusSchemaHandler:
                 ),
             vol.Optional("device_class"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "", "label": "None (auto)"},
-                        {"value": "temperature", "label": "Temperature"},
-                        {"value": "power", "label": "Power"},
-                        {"value": "energy", "label": "Energy"},
-                        {"value": "voltage", "label": "Voltage"},
-                        {"value": "current", "label": "Current"},
-                        {"value": "frequency", "label": "Frequency"},
-                        {"value": "duration", "label": "Duration"},
-                        # Add more as needed
-                    ],
+                    options=["", "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("state_class"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "", "label": "None"},
-                        {"value": "measurement", "label": "Measurement"},
-                        {"value": "total", "label": "Total"},
-                        {"value": "total_increasing", "label": "Total Increasing"},
-                    ],
+                    options=["", "measurement", "total", "total_increasing"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("entity_category"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "", "label": "Standard"},
-                        {"value": "diagnostic", "label": "Diagnostic"},
-                        {"value": "config", "label": "Configuration"},
-                        {"value": "system", "label": "System"},
-                    ],
+                    options=["", "diagnostic", "config", "system"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
@@ -621,39 +601,19 @@ class SNMPSchemaHandler:
                 ),
             vol.Optional("device_class"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "", "label": "None (auto)"},
-                        {"value": "temperature", "label": "Temperature"},
-                        {"value": "power", "label": "Power"},
-                        {"value": "energy", "label": "Energy"},
-                        {"value": "voltage", "label": "Voltage"},
-                        {"value": "current", "label": "Current"},
-                        {"value": "frequency", "label": "Frequency"},
-                        {"value": "duration", "label": "Duration"},
-                        # Add more as needed
-                    ],
+                    options=["", "temperature", "power", "energy", "voltage", "current", "frequency", "duration"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("state_class"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "", "label": "None"},
-                        {"value": "measurement", "label": "Measurement"},
-                        {"value": "total", "label": "Total"},
-                        {"value": "total_increasing", "label": "Total Increasing"},
-                    ],
+                    options=["", "measurement", "total", "total_increasing"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
             vol.Optional("entity_category"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
-                    options=[
-                        {"value": "", "label": "Standard"},
-                        {"value": "diagnostic", "label": "Diagnostic"},
-                        {"value": "config", "label": "Configuration"},
-                        {"value": "system", "label": "System"},
-                    ],
+                    options=["", "diagnostic", "config", "system"],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
