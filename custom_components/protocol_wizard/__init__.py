@@ -42,7 +42,8 @@ from .const import (
     CONF_PROTOCOL,
     CONF_TEMPLATE,
     CONF_TEMPLATE_APPLIED,
-#    CONF_ENTITIES,
+    CONF_ENTITIES,
+    CONF_REGISTERS,
 )
 
 # Import protocol registry and plugins
@@ -434,7 +435,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             
         except Exception as err:
             _LOGGER.error("Failed to add entity: %s", err, exc_info=True)
-            raise HomeAssistantError(f"Failed to add entity: {str(err)}") from err    
+            raise HomeAssistantError(f"Failed to add entity: {str(err)}") from err
     
     async def handle_write_register(call: ServiceCall):
         """Generic write service (protocol-agnostic) with detailed logging."""
@@ -570,35 +571,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN,
         "add_entity",
         handle_add_entity,
-        schema=vol.Schema({
-            vol.Optional("device_id"): cv.string,
-            vol.Optional("entity_id"): cv.entity_id,
-            vol.Required("name"): cv.string,
-            vol.Required("address"): cv.string,
-            vol.Optional("data_type", default="uint16"): cv.string,
-            vol.Optional("rw", default="read"): vol.In(["read", "write", "rw"]),
-            vol.Optional("scale", default=1.0): vol.Coerce(float),
-            vol.Optional("offset", default=0.0): vol.Coerce(float),
-            # Modbus-specific
-            vol.Optional("register_type"): cv.string,
-            vol.Optional("byte_order"): cv.string,
-            vol.Optional("word_order"): cv.string,
-            vol.Optional("size"): vol.Coerce(int),
-            # SNMP-specific
-            vol.Optional("read_mode"): cv.string,
-            # Optional fields
-            vol.Optional("format"): cv.string,
-            vol.Optional("options"): cv.string,
-            vol.Optional("device_class"): cv.string,
-            vol.Optional("state_class"): cv.string,
-            vol.Optional("entity_category"): cv.string,
-            vol.Optional("icon"): cv.string,
-            vol.Optional("min"): vol.Coerce(float),
-            vol.Optional("max"): vol.Coerce(float),
-            vol.Optional("step"): vol.Coerce(float),
-        }),
-        supports_response=SupportsResponse.OPTIONAL,
-    )    
+    )
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
