@@ -99,7 +99,7 @@
           "rw": "Read-only, write-only, or both",
           "read_mode": "Get: single value; Walk: full subtree (SNMP only)",
           "format": "Optional string in json format to tranform value",
-          "options": "Optional JSON creating select entity (use ["0": "Off", "1": "On"] but then json braces )"
+          "options": "Optional JSON creating select entity (specify dict in json braces)"
         }
       },
       "edit_entity_form": {
@@ -118,7 +118,7 @@
           "data_type": "How to interpret the raw value",
           "rw": "Read-only, write-only, or both",
           "format": "Optional string in json format to tranform value",
-          "options": "Optional JSON creating select entity (use ["0": "Off", "1": "On"] but then json braces )"
+          "options": "Optional JSON creating select entity (specify dict in json braces)"
         }
       },
       "load_template": {
