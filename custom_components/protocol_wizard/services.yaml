@@ -247,22 +247,10 @@ read_snmp:
 add_entity:
   name: Add Entity
   description: Add a new entity to the Protocol Wizard integration from the frontend.
+  target:
+    entity:
+      integration: protocol_wizard
   fields:
-    device_id:
-      name: Device ID
-      description: Device ID to add entity to (use either device_id or entity_id).
-      required: false
-      example: "abc123"
-      selector:
-        text:
-    entity_id:
-      name: Entity ID
-      description: Any entity ID from the device (use either device_id or entity_id).
-      required: false
-      example: "sensor.modbus_hub"
-      selector:
-        entity:
-          integration: protocol_wizard
     name:
       name: Entity Name
       description: Unique name for the new entity.
@@ -314,7 +302,7 @@ add_entity:
         number:
           min: -1000000
           max: 1000000
-          step: 0.0001
+          step: 0.01
           mode: box
     offset:
       name: Offset
