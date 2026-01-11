@@ -257,6 +257,7 @@ class ProtocolWizardSensorBase(CoordinatorEntity, SensorEntity):
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
+        set_readonly_protocol_settings(self, entity_config)
     
     @property
     def native_value(self):
@@ -314,7 +315,8 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         self._attr_native_step = float(entity_config.get("step", defaults["step"]))
         
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
-        
+        set_readonly_protocol_settings(self, entity_config)
+
     
     @property
     def native_value(self):
@@ -392,6 +394,8 @@ class ProtocolWizardSwitchBase(CoordinatorEntity, SwitchEntity):
         self._attr_device_info = device_info
         self._attr_icon = "mdi:toggle-switch" # can be overwritten if there is an icon requested by config
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
+        set_readonly_protocol_settings(self, entity_config)
+
 
     @property
     def is_on(self) -> bool:
@@ -441,6 +445,8 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         self._attr_device_info = device_info
         self.data_type = entity_config.get("data_type", "")
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
+        set_readonly_protocol_settings(self, entity_config)
+
         
         # Build value mapping from options dict
         options_raw = entity_config.get("options")
