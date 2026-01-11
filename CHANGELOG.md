@@ -1,6 +1,6 @@
 ## Changelog
 
-### [0.5.0] - Nr entity error message fix
+### [0.5.0] - Entity creation from card
 - Adds ability to create entity right from the card after successfull read
 - Adds protocol settings attribute to sensors (great for debugging)
 - browser cache needs to be emptied for card updates (CTRL-SHIFT-R in browser window)
