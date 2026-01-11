@@ -554,6 +554,54 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         
         if not success:
             raise HomeAssistantError(f"Failed to write to OID {oid}")
+
+        async def handle_read_mqtt(call: ServiceCall):
+        """MQTT read service."""
+        coordinator = _get_coordinator(call)
+        
+        topic = call.data["topic"]
+        wait_time = call.data.get("wait_time", 5.0)
+        
+        entity_config = {
+            "data_type": "string",  # Default to string
+        }
+        
+        value = await coordinator.async_read_entity(
+            address=topic,
+            entity_config=entity_config,
+            wait_time=wait_time,
+        )
+        
+        if value is None:
+            raise HomeAssistantError(f"Failed to read MQTT topic {topic} (timeout or no data)")
+        
+        return {"value": value}
+    
+    async def handle_write_mqtt(call: ServiceCall):
+        """MQTT write/publish service."""
+        coordinator = _get_coordinator(call)
+        
+        topic = call.data["topic"]
+        payload = call.data["payload"]
+        qos = int(call.data.get("qos", 0))
+        retain = call.data.get("retain", False)
+        
+        entity_config = {
+            "data_type": "string",
+        }
+        
+        success = await coordinator.async_write_entity(
+            address=topic,
+            value=payload,
+            entity_config=entity_config,
+            qos=qos,
+            retain=retain,
+        )
+        
+        if not success:
+            raise HomeAssistantError(f"Failed to publish to MQTT topic {topic}")
+        
+        return {"success": True}
     
     hass.services.async_register(DOMAIN, "write_register", handle_write_register)
     hass.services.async_register(
@@ -574,6 +622,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         "add_entity",
         handle_add_entity,
     )
+    hass.services.async_register(
+        DOMAIN,
+        "read_mqtt",
+        handle_read_mqtt,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
