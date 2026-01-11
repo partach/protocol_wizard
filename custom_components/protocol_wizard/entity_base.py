@@ -107,8 +107,8 @@ def set_readonly_protocol_settings(entity: Entity, entity_config: dict[str, Any]
         k: entity_config[k]
         for k in [
             "address", "register_type", "data_type", "rw", "scale", "offset",
-            "byte_order", "word_order", "size", "min", "max", "step",
-            "device_class", "state_class", "entity_category", "icon"
+            "format", "options", "byte_order", "word_order", "size", "min", "max", "step",
+            "device_class", "state_class", "entity_category", "icon", "unit"
         ]
         if k in entity_config
     }
