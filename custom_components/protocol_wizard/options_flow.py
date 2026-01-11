@@ -449,6 +449,9 @@ class ModbusSchemaHandler:
             ),
             vol.Optional("icon", default=defaults.get("icon", "")): str,  # e.g. mdi:thermometer
             vol.Optional("unit", default=defaults.get("unit", "")): str,
+            vol.Optional("min", default=0.0): vol.Coerce(float),
+            vol.Optional("max", default=65535.0 if "uint" in defaults.get("data_type", "") else 100.0): vol.Coerce(float),
+            vol.Optional("step", default=0.1 if "float" in defaults.get("data_type", "") else 1.0): vol.Coerce(float),
             vol.Optional("format", default=defaults.get("format", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
