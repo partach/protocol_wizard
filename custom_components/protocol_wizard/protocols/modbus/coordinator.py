@@ -261,8 +261,12 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                 else:
                     decoded = int("".join("1" if b else "0" for b in values[::-1]), 2)
                 # Try options mapping for boolean/coil values
+                # Convert bool to "0"/"1" for lookup (templates use "0"/"1" as keys)
                 if options and isinstance(options, dict):
-                    decoded_str = str(decoded)
+                    if isinstance(decoded, bool):
+                        decoded_str = "1" if decoded else "0"
+                    else:
+                        decoded_str = str(decoded)
                     if decoded_str in options:
                         return options[decoded_str]
                 return decoded
