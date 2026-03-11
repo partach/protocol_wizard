@@ -1178,7 +1178,7 @@ class BACnetSchemaHandler:
 
 class SNMPSchemaHandler:
     config_key = CONF_ENTITIES
-            
+
     def get_schema(self, defaults=None):
         defaults = defaults or {}
         return vol.Schema({
@@ -1196,7 +1196,14 @@ class SNMPSchemaHandler:
             vol.Required("data_type", default=defaults.get("data_type", "string")):
                 selector.SelectSelector(
                     selector.SelectSelectorConfig(
-                        options=["string", "integer", "counter32", "counter64"],
+                        options=["string", "integer", "counter32", "counter64", "gauge32", "float"],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+            vol.Required("rw", default=defaults.get("rw", "read")):
+                selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["read", "write", "rw"],
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
@@ -1218,10 +1225,12 @@ class SNMPSchemaHandler:
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Optional("icon", default=defaults.get("icon", "")): str,  # e.g. mdi:thermometer
+            vol.Optional("icon", default=defaults.get("icon", "")): str,
+            vol.Optional("unit", default=defaults.get("unit", "")): str,
             vol.Optional("scale", default=defaults.get("scale", 1.0)): vol.Coerce(float),
             vol.Optional("offset", default=defaults.get("offset", 0.0)): vol.Coerce(float),
             vol.Optional("format", default=defaults.get("format", "")): str,
+            vol.Optional("options", default=defaults.get("options", "")): str,
         })
 
     
@@ -1236,21 +1245,23 @@ class SNMPSchemaHandler:
         Process user input for SNMP entity.
         Handles both new entities and edits, preserving old fields.
         """
+        import json
+
         # Required validation - check for None/missing, not falsy (empty string is invalid for OID)
         if "address" not in user_input or not user_input.get("address"):
             errors["address"] = "required"
             return None
-        
+
         # Start with existing data (for edits) or empty dict
         processed = dict(existing) if existing else {}
-        
+
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():
-            if value in (" ","", None):
+            if value in (" ", "", None):
                 processed.pop(key, None)  # Clear if empty
             elif value is not None:
-                processed[key] = value        
-        
+                processed[key] = value
+
         # Convert types
         try:
             processed["scale"] = float(processed.get("scale", 1.0))
@@ -1259,13 +1270,31 @@ class SNMPSchemaHandler:
             _LOGGER.error("Type conversion error: %s", err)
             errors["scale"] = "invalid_number"
             return None
-        
+
+        # Parse options JSON if provided
+        options_raw = processed.get("options", "")
+        if options_raw and isinstance(options_raw, str):
+            try:
+                parsed = json.loads(options_raw)
+                if isinstance(parsed, dict):
+                    # Normalize keys to strings
+                    processed["options"] = {str(k): v for k, v in parsed.items()}
+                else:
+                    errors["options"] = "invalid_json"
+                    return None
+            except json.JSONDecodeError:
+                errors["options"] = "invalid_json"
+                return None
+        elif not options_raw:
+            processed.pop("options", None)
+
         # Ensure required fields exist with defaults
         processed.setdefault("data_type", "string")
         processed.setdefault("read_mode", "get")
+        processed.setdefault("rw", "read")
         processed.setdefault("scale", 1.0)
         processed.setdefault("offset", 0.0)
-        
+
         return processed
 
     def get_defaults(self, entity):
@@ -1273,23 +1302,33 @@ class SNMPSchemaHandler:
         Get defaults for editing an entity.
         Returns the entity dict with all fields, using empty string for missing optional fields.
         """
+        import json
+
         defaults = dict(entity)
-        
+
         # Set empty string for optional fields that don't exist
         defaults.setdefault("device_class", " ")  # to ensure it work in dropdown
         defaults.setdefault("state_class", " ")
         defaults.setdefault("entity_category", " ")
         defaults.setdefault("icon", "")
         defaults.setdefault("format", "")
-        
+        defaults.setdefault("unit", "")
+
         # Ensure numeric fields have values
         defaults.setdefault("scale", 1.0)
         defaults.setdefault("offset", 0.0)
-        
+
         # Ensure required fields
         defaults.setdefault("read_mode", "get")
         defaults.setdefault("data_type", "string")
-        
+        defaults.setdefault("rw", "read")
+
+        # Convert options dict to JSON string for editing
+        if "options" in defaults and isinstance(defaults["options"], dict):
+            defaults["options"] = json.dumps(defaults["options"])
+        else:
+            defaults.setdefault("options", "")
+
         return defaults
 
     def format_label(self, entity):
