@@ -332,29 +332,33 @@ class BACnetCoordinator(BaseProtocolCoordinator):
     def _decode_value(self, raw_value: Any, entity_config: dict) -> Any:
         """
         Decode BACnet value with type conversion, scale, and offset.
-        
+
         Args:
             raw_value: Raw value from BACnet read
             entity_config: Entity configuration dict
-        
+
         Returns:
             Decoded value
         """
-        # Start with raw value
         value = raw_value
-        
-        # Type conversion based on data_type
         data_type = entity_config.get("data_type", "float")
-        
+        options = entity_config.get("options")
+
+        # Try options mapping with raw value FIRST (handles "inactive"/"active" etc.)
+        if options and isinstance(options, dict):
+            raw_str = str(raw_value)
+            if raw_str in options:
+                return options[raw_str]
+
+        # Type conversion based on data_type
         try:
             if data_type == "float":
                 value = float(value)
             elif data_type == "integer":
                 value = int(value)
             elif data_type == "boolean":
-                # Handle various boolean representations
                 if isinstance(value, bool):
-                    pass  # Already boolean
+                    pass
                 elif isinstance(value, (int, float)):
                     value = bool(value)
                 elif isinstance(value, str):
@@ -372,26 +376,29 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                 data_type,
                 err
             )
-            # Return raw value if conversion fails
             return raw_value
-        
+
         # Apply scale and offset for numeric types
         if isinstance(value, (int, float)) and data_type != "boolean":
             scale = float(entity_config.get("scale", 1.0))
             offset = float(entity_config.get("offset", 0.0))
-            
+
             if scale != 1.0:
                 value = value * scale
             if offset != 0.0:
                 value = value + offset
-        
-        # Apply options mapping (value → text)
-        options = entity_config.get("options")
+
+        # Try options mapping with converted value (handles 1/2/3 → labels)
         if options and isinstance(options, dict):
             value_str = str(value)
             if value_str in options:
                 return options[value_str]
-        
+            # Handle float that's really an int (e.g., 1.0 -> "1")
+            if isinstance(value, float) and value.is_integer():
+                int_str = str(int(value))
+                if int_str in options:
+                    return options[int_str]
+
         return value
     
     
