@@ -614,8 +614,6 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
     def current_option(self):
         raw = self.coordinator.data.get(self._key)
         if raw is None:
-            _LOGGER.debug("current_option: key=%s not in data (available: %s)",
-                         self._key, list(self.coordinator.data.keys())[:10])
             return None
 
         raw_str = str(raw)
@@ -634,21 +632,14 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
             if int_str in self._value_map:
                 return self._value_map[int_str]
 
-        _LOGGER.debug("current_option: no match for key=%s, raw=%s (type=%s), value_map=%s",
-                     self._key, raw, type(raw).__name__, list(self._value_map.keys()))
         return None
     
     async def async_select_option(self, option: str) -> None:
         """Write selected option to protocol."""
-        _LOGGER.debug("async_select_option called: option=%s, entity=%s", option, self._config.get("name"))
-        _LOGGER.debug("  _reverse_map=%s", self._reverse_map)
-
         value = self._reverse_map.get(option)
         if value is None:
             _LOGGER.warning("No reverse mapping for option: %s", option)
             return
-
-        _LOGGER.debug("  reverse_map lookup: %s -> %s", option, value)
 
         if self._config.get("rw") not in ("write", "rw"):
             _LOGGER.warning(
@@ -660,7 +651,6 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
 
         # Protocol-specific value conversion
         protocol = self.coordinator.protocol_name
-        _LOGGER.debug("  protocol=%s, data_type=%s", protocol, self._config.get("data_type"))
     
         try:
             if protocol == CONF_PROTOCOL_MQTT:
@@ -697,9 +687,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
                     value = float(value)
                 except (ValueError, TypeError):
                     value = str(value)
-    
-            _LOGGER.debug("Writing value: %s (type: %s)", value, type(value))
-    
+
             # Use coordinator's write method
             success = await self.coordinator.async_write_entity(
                 address=str(self._config["address"]),

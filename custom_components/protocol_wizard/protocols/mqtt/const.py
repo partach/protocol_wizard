@@ -22,5 +22,5 @@ DATA_TYPES = [
 
 
 def topic_key(name: str) -> str:
-    """Generate a stable key from entity name."""
-    return name.lower().strip().replace(" ", "_").replace("/", "_")
+    """Generate a stable key from entity name (consistent with entity_base._entity_key)."""
+    return name.lower().strip().replace(" ", "_")
