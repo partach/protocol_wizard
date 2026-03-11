@@ -609,21 +609,29 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         self._value_map = {str(k): v for k, v in options_dict.items()}
         self._reverse_map = {v: k for k, v in self._value_map.items()}
         self._attr_options = list(self._reverse_map.keys())
-        
-        self._attr_options = list(self._reverse_map.keys())
-    
+
     @property
     def current_option(self):
         raw = self.coordinator.data.get(self._key)
         if raw is None:
             return None
-        # Try exact match first, then try as int (handles 0.0 -> "0")
+
         raw_str = str(raw)
+
+        # Check if raw value is already a mapped option label (coordinator pre-mapped it)
+        if raw_str in self._reverse_map:
+            return raw_str
+
+        # Try to map raw value to option label
         if raw_str in self._value_map:
             return self._value_map[raw_str]
-        # Handle float that's really an int (e.g., 0.0 -> "0")
+
+        # Handle float that's really an int (e.g., 1.0 -> "1")
         if isinstance(raw, float) and raw.is_integer():
-            return self._value_map.get(str(int(raw)))
+            int_str = str(int(raw))
+            if int_str in self._value_map:
+                return self._value_map[int_str]
+
         return None
     
     async def async_select_option(self, option: str) -> None:
