@@ -614,6 +614,8 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
     def current_option(self):
         raw = self.coordinator.data.get(self._key)
         if raw is None:
+            _LOGGER.debug("current_option: key=%s not in data (available: %s)",
+                         self._key, list(self.coordinator.data.keys())[:10])
             return None
 
         raw_str = str(raw)
@@ -632,6 +634,8 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
             if int_str in self._value_map:
                 return self._value_map[int_str]
 
+        _LOGGER.debug("current_option: no match for key=%s, raw=%s (type=%s), value_map=%s",
+                     self._key, raw, type(raw).__name__, list(self._value_map.keys()))
         return None
     
     async def async_select_option(self, option: str) -> None:
