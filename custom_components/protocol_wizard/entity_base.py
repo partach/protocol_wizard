@@ -640,14 +640,15 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         if value is None:
             _LOGGER.warning("No reverse mapping for option: %s", option)
             return
-    
+
         if self._config.get("rw") not in ("write", "rw"):
             _LOGGER.warning(
-                "Blocked write to read-only entity %s",
+                "Blocked write to read-only entity %s (rw=%s)",
                 self._config.get("name"),
+                self._config.get("rw"),
             )
             return
-    
+
         # Protocol-specific value conversion
         protocol = self.coordinator.protocol_name
     
@@ -686,9 +687,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
                     value = float(value)
                 except (ValueError, TypeError):
                     value = str(value)
-    
-            _LOGGER.debug("Writing value: %s (type: %s)", value, type(value))
-    
+
             # Use coordinator's write method
             success = await self.coordinator.async_write_entity(
                 address=str(self._config["address"]),

@@ -108,25 +108,33 @@ class BACnetCoordinator(BaseProtocolCoordinator):
     ) -> bool:
         """
         Write a value to an entity (required by base class).
-        
+
         Args:
             entity_config: Entity configuration dict
             value: Value to write
-            
+
         Returns:
             True if write successful, False otherwise
         """
         try:
+            _LOGGER.debug("async_write_entity called: address=%s, value=%s, entity=%s",
+                         address, value, entity_config.get("name"))
+
             # Parse address
             if not address:
                 address = entity_config.get("address")
             object_type, instance, property_name = parse_bacnet_address(address)
-            
+
+            _LOGGER.debug("Parsed address: %s, %s, %s", object_type, instance, property_name)
+
             # Encode value (reverse scale/offset, type conversion)
             write_value = self._encode_value(value, entity_config)
-            
+
             # Write to BACnet device (default priority 8)
             priority = entity_config.get("priority", 8)
+            _LOGGER.debug("Calling write_property: %s,%s.%s = %s (priority %d)",
+                         object_type, instance, property_name, write_value, priority)
+
             success = await self.client.write_property(
                 object_type,
                 instance,
@@ -134,53 +142,55 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                 write_value,
                 priority
             )
-            
+
             if success:
-                _LOGGER.info(
-                    "Wrote %s to %s (priority %d)",
-                    write_value,
-                    entity_config.get("name"),
-                    priority
-                )
+                _LOGGER.info("Wrote %s to %s (priority %d)",
+                           write_value, entity_config.get("name"), priority)
             else:
-                _LOGGER.error("Write failed for %s", entity_config.get("name"))
-            
+                _LOGGER.error("Write failed for %s (no exception but returned False)",
+                            entity_config.get("name"))
+
             return success
-        
+
         except ValueError as err:
             _LOGGER.error("Invalid address for entity %s: %s", entity_config.get("name"), err)
             return False
-        
+
         except Exception as err:
             _LOGGER.error("Write error for entity %s: %s", entity_config.get("name"), err)
+            import traceback
+            _LOGGER.error(traceback.format_exc())
             return False
     
     
     def _encode_value(self, value: Any, entity_config: dict) -> Any:
         """
         Encode value for BACnet write (reverse of _decode_value).
-        
+
         Args:
             value: Value from Home Assistant
             entity_config: Entity configuration dict
-        
+
         Returns:
             Encoded value ready for BACnet write
         """
         write_value = value
         data_type = entity_config.get("data_type", "float")
-        
+
+        _LOGGER.debug("Encoding value: %s (type: %s) for data_type: %s",
+                     value, type(value).__name__, data_type)
+
         # Reverse scale/offset for numeric values
-        if isinstance(value, (int, float)) and data_type != "boolean":
+        if isinstance(value, (int, float)) and data_type not in ("boolean", "string"):
             offset = float(entity_config.get("offset", 0.0))
             scale = float(entity_config.get("scale", 1.0))
-            
+
             # Reverse: (value - offset) / scale
             if offset != 0.0:
                 write_value = write_value - offset
             if scale != 1.0 and scale != 0:
                 write_value = write_value / scale
-        
+
         # Type conversion based on data_type
         try:
             if data_type == "integer":
@@ -188,10 +198,16 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             elif data_type == "float":
                 write_value = float(write_value)
             elif data_type == "boolean":
-                write_value = bool(write_value)
+                # BACnet binary values need "active"/"inactive" strings
+                if isinstance(write_value, str) and write_value in ("active", "inactive"):
+                    pass  # Keep as string
+                elif write_value in (True, 1, "1", "true", "True", "on", "On"):
+                    write_value = "active"
+                else:
+                    write_value = "inactive"
             elif data_type == "string":
                 write_value = str(write_value)
-            elif data_type in ("enumerated", "unsigned"):
+            elif data_type in ("enumerated", "unsigned", "enum"):
                 write_value = int(write_value)
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
@@ -201,6 +217,8 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                 err
             )
             return value  # Return original if conversion fails
+
+        _LOGGER.debug("Encoded value: %s (type: %s)", write_value, type(write_value).__name__)
         
         return write_value
     
