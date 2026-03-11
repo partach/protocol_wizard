@@ -1,0 +1,364 @@
+[
+  {
+    "name": "Battery SOC",
+    "address": "analogInput:1:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "%"
+  },
+  {
+    "name": "Battery Voltage",
+    "address": "analogInput:2:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "V"
+  },
+  {
+    "name": "Battery Power",
+    "address": "analogInput:3:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "Battery Temperature",
+    "address": "analogInput:4:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Grid Power",
+    "address": "analogInput:10:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "Grid Current L1",
+    "address": "analogInput:11:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "A"
+  },
+  {
+    "name": "Grid Current L2",
+    "address": "analogInput:12:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "A"
+  },
+  {
+    "name": "Grid Current L3",
+    "address": "analogInput:13:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "A"
+  },
+  {
+    "name": "Grid Voltage L1",
+    "address": "analogInput:14:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "V"
+  },
+  {
+    "name": "Grid Voltage L2",
+    "address": "analogInput:15:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "V"
+  },
+  {
+    "name": "Grid Voltage L3",
+    "address": "analogInput:16:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "V"
+  },
+  {
+    "name": "PV Power Total",
+    "address": "analogInput:20:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "PV String 1 Power",
+    "address": "analogInput:21:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "PV String 2 Power",
+    "address": "analogInput:22:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "PV Daily Energy",
+    "address": "analogInput:23:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "kWh"
+  },
+  {
+    "name": "PV Panel Temperature",
+    "address": "analogInput:24:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Home Consumption Power",
+    "address": "analogInput:30:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "Home Daily Energy",
+    "address": "analogInput:31:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "kWh"
+  },
+  {
+    "name": "Load Power",
+    "address": "analogInput:32:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "EV Charger Power",
+    "address": "analogInput:40:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "EV Battery SOC",
+    "address": "analogInput:41:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "%"
+  },
+  {
+    "name": "EV Charger Current",
+    "address": "analogInput:42:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "A"
+  },
+  {
+    "name": "EV Session Energy",
+    "address": "analogInput:43:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "kWh"
+  },
+  {
+    "name": "EV Connected",
+    "address": "binaryValue:40:presentValue",
+    "data_type": "boolean",
+    "rw": "rw",
+    "object_type_helper": "Binary Value",
+    "options": {
+      "inactive": "Disconnected",
+      "active": "Connected"
+    }
+  },
+  {
+    "name": "EV Charger State",
+    "address": "multiStateValue:40:presentValue",
+    "data_type": "enum",
+    "rw": "rw",
+    "read_mode": "get",
+    "object_type_helper": "Multi State Value",
+    "options": {
+      "1": "Disconnected",
+      "2": "Connected Idle",
+      "3": "Charging",
+      "4": "Finished"
+    }
+  },
+  {
+    "name": "Heat Pump Power",
+    "address": "analogInput:50:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "Heat Pump Water Temperature",
+    "address": "analogInput:51:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Heat Pump Outdoor Temperature",
+    "address": "analogInput:52:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Heat Pump Running",
+    "address": "binaryValue:50:presentValue",
+    "data_type": "boolean",
+    "rw": "rw",
+    "object_type_helper": "Binary Value",
+    "options": {
+      "inactive": "Off",
+      "active": "Running"
+    }
+  },
+  {
+    "name": "Heat Pump Mode",
+    "address": "multiStateValue:50:presentValue",
+    "data_type": "enum",
+    "rw": "rw",
+    "read_mode": "get",
+    "object_type_helper": "Multi State Value",
+    "options": {
+      "1": "Off",
+      "2": "Heat",
+      "3": "Cool",
+      "4": "Auto"
+    }
+  },
+  {
+    "name": "Hot Water Power",
+    "address": "analogInput:60:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "Hot Water Tank Temperature",
+    "address": "analogInput:61:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Hot Water Flow Rate",
+    "address": "analogInput:62:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "L/s"
+  },
+  {
+    "name": "Hot Water Heating",
+    "address": "binaryValue:60:presentValue",
+    "data_type": "boolean",
+    "rw": "rw",
+    "object_type_helper": "Binary Value",
+    "options": {
+      "inactive": "Off",
+      "active": "Heating"
+    }
+  },
+  {
+    "name": "Pool Pump Power",
+    "address": "analogInput:70:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W"
+  },
+  {
+    "name": "Pool Water Temperature",
+    "address": "analogInput:71:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Pool Pump Running",
+    "address": "binaryValue:70:presentValue",
+    "data_type": "boolean",
+    "rw": "read",
+    "object_type_helper": "Binary Value",
+    "options": {
+      "inactive": "Off",
+      "active": "Running"
+    }
+  },
+  {
+    "name": "Outdoor Temperature",
+    "address": "analogInput:80:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "C"
+  },
+  {
+    "name": "Solar Irradiance",
+    "address": "analogInput:81:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "W/m2"
+  },
+  {
+    "name": "Outdoor Humidity",
+    "address": "analogInput:82:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "object_type_helper": "Analog Input",
+    "unit": "%"
+  },
+  {
+    "name": "Energy Import Total",
+    "address": "analogValue:90:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "read_mode": "get",
+    "object_type_helper": "Analog Value",
+    "unit": "kWh"
+  },
+  {
+    "name": "Energy Export Total",
+    "address": "analogValue:91:presentValue",
+    "data_type": "float",
+    "rw": "read",
+    "read_mode": "get",
+    "object_type_helper": "Analog Value",
+    "unit": "kWh"
+  }
+]
