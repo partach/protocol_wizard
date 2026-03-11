@@ -78,11 +78,7 @@ def calculate_broadcast_address(ip_with_subnet):
         broadcast = str(network.broadcast_address)
         netmask = str(network.netmask)
 
-        _LOGGER.info("Calculated network info:")
-        _LOGGER.info("  IP: %s", ip)
-        _LOGGER.info("  Network: %s", network.network_address)
-        _LOGGER.info("  Netmask: %s", netmask)
-        _LOGGER.info("  Broadcast: %s", broadcast)
+        _LOGGER.debug("Network: %s, Broadcast: %s", network.network_address, broadcast)
 
         return ip, netmask, broadcast
     except Exception as e:
@@ -94,13 +90,10 @@ def calculate_broadcast_address(ip_with_subnet):
 
 class BACnetClientApp(Application):
     """BACnet client application following bacpypes3 patterns."""
-    
+
     def __init__(self):
         """Initialize with proper setup."""
-        # Call parent init
         Application.__init__(self)
-        
-        _LOGGER.info("BACnet client app initialized")
 
 
 class BACnetClient:
@@ -147,40 +140,28 @@ class BACnetClient:
                     _LOGGER.warning("Error in getting HA local IP info: %s",  err)
 
                 if self.host == "0.0.0.0": # Discovery mode - use actual IP
-                    # CRITICAL FIX: Don't use 0.0.0.0 - bacpypes3 can't calculate broadcast!
-                    # Use the actual HA IP address with subnet instead
                     if address_adapter and address_adapter[0]:
                         ip_with_subnet = f"{address_adapter[0]}/{address_adapter[1]}"
                         ip_to_use = ip_with_subnet
-                        _LOGGER.info("Discovery mode: Using actual IP %s instead of 0.0.0.0 (bacpypes3 requirement)", ip_to_use)
-
-                        # Calculate broadcast address
                         ip, netmask, broadcast = calculate_broadcast_address(ip_with_subnet)
                         if broadcast:
                             broadcast_addr = broadcast
-                            _LOGGER.info("Calculated broadcast address: %s", broadcast_addr)
                     else:
                         _LOGGER.error("Cannot use 0.0.0.0 - no network adapter found!")
                         raise ValueError("Discovery requires valid network interface")
 
-                elif address_adapter[0]: # we want an IP address but probably from a client, let's use our own (HA client) with right subnet
-                    ip_with_subnet = f"{address_adapter[0]}/{address_adapter[1]}" # includes subnet which is important
+                elif address_adapter[0]:
+                    ip_with_subnet = f"{address_adapter[0]}/{address_adapter[1]}"
                     ip_to_use = ip_with_subnet
-
-                    # Calculate broadcast address for diagnostics
                     ip, netmask, broadcast = calculate_broadcast_address(ip_with_subnet)
                     if broadcast:
                         broadcast_addr = broadcast
-                        _LOGGER.info("Calculated broadcast address: %s", broadcast_addr)
 
-                elif source_ip:  # we want an IP address but probably from a client, let's use the fallback if previous one not working.. but lacks subnet!
+                elif source_ip:
                     ip_to_use = source_ip
                     _LOGGER.warning("Using source_ip without subnet: %s (broadcast may not work!)", source_ip)
 
-                _LOGGER.info("BACnet binding to address: %s",  ip_to_use)
-                _LOGGER.debug("IP address available: %s", address_adapter)
-                if broadcast_addr:
-                    _LOGGER.info("Expected broadcast address: %s", broadcast_addr)
+                _LOGGER.debug("BACnet binding to address: %s", ip_to_use)
                 # Create a proper Namespace with required arguments
                 # CRITICAL: Specify the correct network address to use
                 # Use the actual HA IP address on the correct subnet
@@ -204,42 +185,12 @@ class BACnetClient:
                     route_aware=None,
                 )
                 
-                _LOGGER.info("Calling Application.from_args() with instance=%s, address=%s", 
+                _LOGGER.debug("Creating BACnet application with instance=%s, address=%s",
                             args.instance, args.address)
-                
-                # from_args is synchronous, not async!
+
                 theApp = Application.from_args(args)
+                _LOGGER.debug("BACnet application initialized")
 
-                _LOGGER.info("BACnet application initialized successfully!")
-                _LOGGER.info("Has elementService: %s", hasattr(theApp, 'elementService'))
-
-                # DIAGNOSTIC: Check socket configuration
-                if hasattr(theApp, 'link_layers'):
-                    _LOGGER.info("Link layers: %s", theApp.link_layers)
-                    for port_id, link_layer in theApp.link_layers.items():
-                        if hasattr(link_layer, 'address'):
-                            _LOGGER.info("  Link layer %s address: %s", port_id, link_layer.address)
-                        if hasattr(link_layer, 'broadcast'):
-                            _LOGGER.info("  Link layer %s broadcast: %s", port_id, link_layer.broadcast)
-
-                        # CRITICAL: Check if socket is configured for broadcasting
-                        if hasattr(link_layer, 'annexJ') and hasattr(link_layer.annexJ, 'protocol'):
-                            protocol = link_layer.annexJ.protocol
-                            _LOGGER.info("  Link layer %s protocol: %s", port_id, protocol)
-                            if hasattr(protocol, 'transport'):
-                                transport = protocol.transport
-                                _LOGGER.info("  Transport: %s", transport)
-                                if hasattr(transport, '_sock'):
-                                    sock = transport._sock
-                                    _LOGGER.info("  Socket: %s", sock)
-                                    # Check SO_BROADCAST option
-                                    try:
-                                        import socket
-                                        broadcast_enabled = sock.getsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST)
-                                        _LOGGER.info("  SO_BROADCAST enabled: %s", broadcast_enabled)
-                                    except Exception as e:
-                                        _LOGGER.warning("  Could not check SO_BROADCAST: %s", e)
-                
                 return theApp
                 
             except Exception as err:
@@ -252,287 +203,115 @@ class BACnetClient:
     async def connect(self) -> bool:
         """Connect to BACnet network."""
         try:
-            _LOGGER.info("Connecting to BACnet network")
-            
-            # Initialize bacpypes3 using from_args
             self._bacpypeinstance = await self._initialize_bacpypes3(self.hass)
-            
-            
+
             if self._bacpypeinstance is None:
                 _LOGGER.error("Failed to create BACnet application")
                 return False
-            
+
             self.app = self._bacpypeinstance
-            
-            # Check if initialized properly
-            has_element_service = hasattr(self.app, 'elementService')
-            _LOGGER.info("App ready (has elementService: %s)", has_element_service)
-            
-            # List available methods for debugging
-            methods = [m for m in dir(self.app) if not m.startswith('_')]
-            _LOGGER.info("App has %d methods including: who_is=%s, read_property=%s, write_property=%s", 
-                        len(methods),
-                        'who_is' in methods,
-                        'read_property' in methods, 
-                        'write_property' in methods)
-            
             self._connected = True
+            _LOGGER.debug("BACnet connected")
             return True
-        
+
         except Exception as err:
             _LOGGER.error("BACnet connection failed: %s", err)
-            import traceback
-            traceback.print_exc()
             return False
     
     
     async def discover_devices(self, timeout: int = 10) -> list[dict]:
         """Discover BACnet devices using Who-Is."""
         try:
-            _LOGGER.info("Starting BACnet device discovery (timeout: %ds)", timeout)
-            
+            _LOGGER.debug("Starting BACnet device discovery (timeout: %ds)", timeout)
+
             if not self.app:
                 await self.connect()
-            
+
             if not self.app:
                 _LOGGER.error("Cannot discover without BACnet connection")
                 return []
-            
-            # Log app info
-            _LOGGER.info("App local device ID: %s", 
-                        getattr(self.app, 'objectIdentifier', 'unknown'))
-            
-            # Check if we have link layers
-            if hasattr(self.app, 'link_layers'):
-                _LOGGER.info("Link layers: %s", self.app.link_layers)
-            
-            # Send Who-Is
-            _LOGGER.info("Sending Who-Is broadcast...")
-            _LOGGER.info("Target host: %s, device_id: %s", self.host, self.device_id)
-            
+
             try:
-                # Check cache before Who-Is
-                if hasattr(self.app, 'device_info_cache'):
-                    cache_before = len(self.app.device_info_cache.instance_cache) if hasattr(self.app.device_info_cache, 'instance_cache') else 0
-                    _LOGGER.info("Cache has %d devices BEFORE Who-Is", cache_before)
-                
-                # Log what address we're using
-                if hasattr(self.app, 'link_layers'):
-                    for port_id, link_layer in self.app.link_layers.items():
-                        _LOGGER.info("Link layer %s:", port_id)
-                        if hasattr(link_layer, 'address'):
-                            _LOGGER.info("  Local address: %s", link_layer.address)
-                        if hasattr(link_layer, 'broadcast'):
-                            _LOGGER.info("  Broadcast address: %s", link_layer.broadcast)
-                        if hasattr(link_layer, 'addrBroadcastTuple'):
-                            _LOGGER.info("  Broadcast tuple: %s", link_layer.addrBroadcastTuple)
-                
-                # If we're looking for a specific device (not 0.0.0.0), try directed Who-Is first
                 if self.host != "0.0.0.0" and self.device_id:
-                    _LOGGER.info("Trying directed Who-Is to %s:%s for device %s", 
-                                self.host, self.port, self.device_id)
-                    # Send Who-Is directly to the device's IP
                     target_address = Address(f"{self.host}:{self.port}")
-                    _LOGGER.info("Target address object: %s", target_address)
-                    
                     await self.app.who_is(
                         device_instance_range_low_limit=self.device_id,
                         device_instance_range_high_limit=self.device_id,
                         address=target_address
                     )
-                    _LOGGER.info("Directed Who-Is sent to %s", target_address)
                 else:
-                    # Broadcast Who-Is
-                    _LOGGER.info("Sending broadcast Who-Is (no specific target)")
-
-                    # DIAGNOSTIC: Log broadcast address details
-                    local_broadcast = LocalBroadcast()
-                    _LOGGER.info("LocalBroadcast object: %s", local_broadcast)
-                    _LOGGER.info("LocalBroadcast type: %s", type(local_broadcast))
-
-                    # Check if link layer has broadcast address
-                    if hasattr(self.app, 'link_layers'):
-                        for port_id, link_layer in self.app.link_layers.items():
-                            if hasattr(link_layer, 'broadcast'):
-                                _LOGGER.info("Using broadcast address from link layer %s: %s",
-                                           port_id, link_layer.broadcast)
-
                     await self.app.who_is(address=LocalBroadcast())
-                    _LOGGER.info("Broadcast Who-Is sent (LocalBroadcast)")
-                
-                _LOGGER.info("Who-Is sent successfully")
-                
-                # Give a moment for immediate responses
+
                 await asyncio.sleep(0.5)
-                
-                # Check cache immediately after
-                if hasattr(self.app, 'device_info_cache'):
-                    cache_after = len(self.app.device_info_cache.instance_cache) if hasattr(self.app.device_info_cache, 'instance_cache') else 0
-                    _LOGGER.info("Cache has %d devices immediately after Who-Is", cache_after)
-                
+
             except Exception as err:
                 _LOGGER.error("Who-Is failed: %s", err)
-                import traceback
-                traceback.print_exc()
                 return []
-            
-            # Wait for I-Am responses with periodic checks
-            _LOGGER.info("Waiting %ds for I-Am responses...", timeout)
-            
-            for i in range(timeout):
+
+            # Wait for I-Am responses
+            for _ in range(timeout):
                 await asyncio.sleep(1)
-                
-                if hasattr(self.app, 'device_info_cache') and hasattr(self.app.device_info_cache, 'instance_cache'):
-                    cache_count = len(self.app.device_info_cache.instance_cache)
-                    if cache_count > 0:
-                        _LOGGER.info("After %ds: %d devices in cache", i+1, cache_count)
-            
-            # Collect discovered devices
+
             devices = self._collect_discovered_devices()
-            
-            _LOGGER.info("Discovered %d BACnet devices", len(devices))
+            _LOGGER.debug("Discovered %d BACnet devices", len(devices))
             return devices
-        
+
         except Exception as err:
             _LOGGER.error("BACnet discovery failed: %s", err)
-            import traceback
-            traceback.print_exc()
             return []
     
     
     def _collect_discovered_devices(self) -> list[dict]:
         """Collect devices from app's device info cache."""
         devices = []
-        
+
         try:
-            _LOGGER.info("=" * 60)
-            _LOGGER.info("COLLECTING DISCOVERED DEVICES")
-            _LOGGER.info("=" * 60)
-            
-            # Check what attributes the app has
-            _LOGGER.info("App type: %s", type(self.app))
-            _LOGGER.info("App class: %s", self.app.__class__.__name__)
-            
-            # List all attributes
-            all_attrs = dir(self.app)
-            cache_attrs = [a for a in all_attrs if 'cache' in a.lower()]
-            device_attrs = [a for a in all_attrs if 'device' in a.lower()]
-            
-            _LOGGER.info("Cache-related attributes (%d): %s", len(cache_attrs), cache_attrs)
-            _LOGGER.info("Device-related attributes (%d): %s", len(device_attrs), device_attrs)
-            
-            # Check for device_info_cache
-            has_device_info_cache = hasattr(self.app, 'device_info_cache')
-            _LOGGER.info("Has device_info_cache: %s", has_device_info_cache)
-            
-            if has_device_info_cache:
-                cache = self.app.device_info_cache
-                _LOGGER.info("device_info_cache type: %s", type(cache))
-                _LOGGER.info("device_info_cache class: %s", cache.__class__.__name__)
-                _LOGGER.info("device_info_cache attributes: %s", [a for a in dir(cache) if not a.startswith('_')])
-                
-                # Check for instance_cache
-                has_instance_cache = hasattr(cache, 'instance_cache')
-                _LOGGER.info("Has instance_cache: %s", has_instance_cache)
-                
-                if has_instance_cache:
-                    instance_cache = cache.instance_cache
-                    _LOGGER.info("instance_cache type: %s", type(instance_cache))
-                    _LOGGER.info("instance_cache length: %d", len(instance_cache))
-                    
-                    if len(instance_cache) == 0:
-                        _LOGGER.warning("!!! instance_cache is EMPTY - no devices found !!!")
-                        _LOGGER.info("This means either:")
-                        _LOGGER.info("  1. No I-Am responses were received")
-                        _LOGGER.info("  2. I-Am responses went to a different cache")
-                        _LOGGER.info("  3. Network/firewall is blocking responses")
+            if not hasattr(self.app, 'device_info_cache'):
+                _LOGGER.warning("No device_info_cache found")
+                return devices
+
+            cache = self.app.device_info_cache
+            if not hasattr(cache, 'instance_cache'):
+                return devices
+
+            instance_cache = cache.instance_cache
+
+            for device_id, device_info in instance_cache.items():
+                try:
+                    address = getattr(device_info, 'device_address', None)
+
+                    if address:
+                        addr_str = str(address)
+                        if ':' in addr_str:
+                            ip, port_str = addr_str.rsplit(':', 1)
+                            port = int(port_str)
+                        else:
+                            ip = addr_str
+                            port = 47808
                     else:
-                        _LOGGER.info("!!! instance_cache has %d entries !!!", len(instance_cache))
-                    
-                    # Log all entries in detail
-                    for idx, (device_id, device_info) in enumerate(instance_cache.items()):
-                        _LOGGER.info("-" * 60)
-                        _LOGGER.info("Device %d/%d:", idx+1, len(instance_cache))
-                        _LOGGER.info("  device_id: %s (type: %s)", device_id, type(device_id))
-                        _LOGGER.info("  device_info type: %s", type(device_info))
-                        _LOGGER.info("  device_info class: %s", device_info.__class__.__name__)
-                        _LOGGER.info("  device_info attributes: %s", [a for a in dir(device_info) if not a.startswith('_')])
-                        
-                        try:
-                            # Try to extract all possible attributes
-                            for attr_name in ['device_address', 'address', 'device_name', 'name', 
-                                            'objectName', 'vendor_name', 'vendorName', 'vendorIdentifier']:
-                                if hasattr(device_info, attr_name):
-                                    attr_value = getattr(device_info, attr_name)
-                                    _LOGGER.info("    %s: %s", attr_name, attr_value)
-                            
-                            # Extract device information for our list
-                            address = getattr(device_info, 'device_address', None)
-                            _LOGGER.info("  Extracted address: %s", address)
-                            
-                            if address:
-                                addr_str = str(address)
-                                if ':' in addr_str:
-                                    ip, port_str = addr_str.rsplit(':', 1)
-                                    port = int(port_str)
-                                else:
-                                    ip = addr_str
-                                    port = 47808
-                            else:
-                                ip = self.host if self.host != "0.0.0.0" else "127.0.0.1"
-                                port = self.port
-                            
-                            name = getattr(device_info, 'device_name', None)
-                            if not name:
-                                name = getattr(device_info, 'objectName', f"Device {device_id}")
-                            
-                            vendor = getattr(device_info, 'vendor_name', 'Unknown')
-                            
-                            device_dict = {
-                                'device_id': int(device_id),
-                                'address': ip,
-                                'port': port,
-                                'name': name,
-                                'vendor': vendor,
-                            }
-                            
-                            devices.append(device_dict)
-                            
-                            _LOGGER.info("  ✓ Added device: %s (%s) at %s:%s", 
-                                       name, device_id, ip, port)
-                        
-                        except Exception as err:
-                            _LOGGER.error("  ✗ Error parsing device %s: %s", device_id, err)
-                            import traceback
-                            traceback.print_exc()
-                else:
-                    _LOGGER.error("device_info_cache exists but has NO instance_cache!")
-                    # Try to access cache directly as dict
-                    if isinstance(cache, dict):
-                        _LOGGER.info("Cache is a dict with %d items", len(cache))
-                        for key, value in cache.items():
-                            _LOGGER.info("  Cache[%s] = %s (type: %s)", key, value, type(value))
-            else:
-                _LOGGER.error("App has NO device_info_cache attribute!")
-                _LOGGER.info("Trying alternative cache locations...")
-                
-                # Try other possible cache locations
-                for attr_name in ['i_am_cache', 'iAmCache', 'devices', '_devices']:
-                    if hasattr(self.app, attr_name):
-                        alt_cache = getattr(self.app, attr_name)
-                        _LOGGER.info("Found %s: %s (type: %s)", attr_name, alt_cache, type(alt_cache))
-                        if isinstance(alt_cache, dict):
-                            _LOGGER.info("  Has %d items", len(alt_cache))
-        
+                        ip = self.host if self.host != "0.0.0.0" else "127.0.0.1"
+                        port = self.port
+
+                    name = getattr(device_info, 'device_name', None)
+                    if not name:
+                        name = getattr(device_info, 'objectName', f"Device {device_id}")
+
+                    vendor = getattr(device_info, 'vendor_name', 'Unknown')
+
+                    devices.append({
+                        'device_id': int(device_id),
+                        'address': ip,
+                        'port': port,
+                        'name': name,
+                        'vendor': vendor,
+                    })
+
+                except Exception as err:
+                    _LOGGER.warning("Error parsing device %s: %s", device_id, err)
+
         except Exception as err:
-            _LOGGER.error("CRITICAL ERROR in _collect_discovered_devices: %s", err)
-            import traceback
-            traceback.print_exc()
-        
-        _LOGGER.info("=" * 60)
-        _LOGGER.info("COLLECTION COMPLETE: Found %d devices", len(devices))
-        _LOGGER.info("=" * 60)
-        
+            _LOGGER.error("Error collecting discovered devices: %s", err)
+
         return devices
     
     
@@ -565,29 +344,16 @@ class BACnetClient:
             device_address = Address(f"{self.host}:{self.port}")
             prop_id = PropertyIdentifier(property_name)
 
-            _LOGGER.error("===== BACNET READ DEBUG =====")
-            _LOGGER.error("Reading %s from %s at %s", property_name, object_id, device_address)
-            _LOGGER.error("self.host = %s", self.host)
-            _LOGGER.error("self.port = %s", self.port)
-            _LOGGER.error("device_address type: %s", type(device_address))
-            _LOGGER.error("device_address value: %s", device_address)
-            _LOGGER.error("app bound to: %s", self.app.link_layers if hasattr(self.app, 'link_layers') else 'unknown')
-            _LOGGER.error("============================")
-
-            # Add timeout to prevent hanging forever
             try:
-                _LOGGER.error("Calling app.read_property()...")
                 result = await asyncio.wait_for(
                     self.app.read_property(
                         address=device_address,
                         objid=object_id,
                         prop=prop_id
                     ),
-                    timeout=5.0  # 5 second timeout
+                    timeout=5.0
                 )
-                _LOGGER.error("app.read_property() returned: %s", result)
-                
-                _LOGGER.debug("Read result: %s (type: %s)", result, type(result))
+                _LOGGER.debug("Read %s from %s: %s", property_name, object_id, result)
                 return result
                 
             except asyncio.TimeoutError:
@@ -620,9 +386,6 @@ class BACnetClient:
             device_address = Address(f"{self.host}:{self.port}")
             prop_id = PropertyIdentifier(property_name)
             
-            _LOGGER.debug("Writing %s to %s.%s at %s (priority %d)", 
-                         value, object_id, property_name, device_address, priority)
-            
             result = await self.app.write_property(
                 address=device_address,
                 objid=object_id,
@@ -630,9 +393,8 @@ class BACnetClient:
                 value=value,
                 priority=priority
             )
-            
-            _LOGGER.info("Wrote %s to %s:%s.%s. Result:%s", 
-                         value, object_type, object_instance, property_name,result)
+
+            _LOGGER.debug("Wrote %s to %s:%s.%s", value, object_type, object_instance, property_name)
             return True
         
         except Exception as err:
@@ -645,13 +407,9 @@ class BACnetClient:
     
     async def disconnect(self):
         """Disconnect from BACnet network."""
-        # Properly close the bacpypes3 Application to free the port
         if self.app:
             try:
-                _LOGGER.info("Disconnecting BACnet Application (instance: %s)",
-                           getattr(self.app, 'objectIdentifier', 'unknown'))
-
-                # Try to close link layers first to release sockets
+                # Close link layers first to release sockets
                 if hasattr(self.app, 'link_layers'):
                     for port_id, link_layer in self.app.link_layers.items():
                         try:
@@ -660,32 +418,27 @@ class BACnetClient:
                                     await link_layer.close()
                                 else:
                                     link_layer.close()
-                                _LOGGER.info("Closed link layer %s", port_id)
                         except Exception as err:
-                            _LOGGER.warning("Error closing link layer %s: %s", port_id, err)
+                            _LOGGER.debug("Error closing link layer %s: %s", port_id, err)
 
-                # Try to close the application properly (may be sync or async)
+                # Close the application
                 if hasattr(self.app, 'close'):
                     close_method = self.app.close
                     if asyncio.iscoroutinefunction(close_method):
                         await close_method()
                     else:
                         close_method()
-                    _LOGGER.info("BACnet Application closed")
                 elif hasattr(self.app, 'stop'):
                     stop_method = self.app.stop
                     if asyncio.iscoroutinefunction(stop_method):
                         await stop_method()
                     else:
                         stop_method()
-                    _LOGGER.info("BACnet Application stopped")
-                else:
-                    _LOGGER.warning("Application has no close() or stop() method - port may remain bound!")
+
+                _LOGGER.debug("BACnet disconnected")
 
             except Exception as err:
-                _LOGGER.error("Error disconnecting BACnet Application: %s", err)
-                import traceback
-                traceback.print_exc()
+                _LOGGER.error("Error disconnecting BACnet: %s", err)
             finally:
                 self.app = None
                 self._bacpypeinstance = None
