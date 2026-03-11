@@ -636,20 +636,27 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
     
     async def async_select_option(self, option: str) -> None:
         """Write selected option to protocol."""
+        _LOGGER.debug("async_select_option called: option=%s, entity=%s", option, self._config.get("name"))
+        _LOGGER.debug("  _reverse_map=%s", self._reverse_map)
+
         value = self._reverse_map.get(option)
         if value is None:
             _LOGGER.warning("No reverse mapping for option: %s", option)
             return
-    
+
+        _LOGGER.debug("  reverse_map lookup: %s -> %s", option, value)
+
         if self._config.get("rw") not in ("write", "rw"):
             _LOGGER.warning(
-                "Blocked write to read-only entity %s",
+                "Blocked write to read-only entity %s (rw=%s)",
                 self._config.get("name"),
+                self._config.get("rw"),
             )
             return
-    
+
         # Protocol-specific value conversion
         protocol = self.coordinator.protocol_name
+        _LOGGER.debug("  protocol=%s, data_type=%s", protocol, self._config.get("data_type"))
     
         try:
             if protocol == CONF_PROTOCOL_MQTT:
