@@ -1,4 +1,10 @@
 ## Changelog
+
+### [0.7.4] - Ehanced Template Handling
+- if you come from 0.7.0 or before: Needs re-install of your devices (should be less painfull then it sounds)
+- fixes for drop down / options
+- Bacnet working
+  
 ### [0.7.3] - Ehanced Template Handling
 - Needs re-install of your devices (should be less painfull then it sounds)
      - Make sure you export your exotic device to a template if you have not done so first!
