@@ -668,20 +668,17 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
                     value = int(round(float(value)))  # Regular registers
     
             elif protocol == CONF_PROTOCOL_BACNET:
-                # BACnet: Keep strings for binary/multiState, convert index for enum
+                # BACnet: convert based on data type
                 data_type = self._config.get("data_type", "")
-                if data_type == "enum":
-                    # If value is string label, convert to numeric index (e.g. "Heat" → 2)
-                    if isinstance(value, str) and value in self._config.get("options", {}).values():
-                        for key, label in self._config["options"].items():
-                            if label == value:
-                                value = int(key)
-                                break
+                if data_type in ("enum", "enumerated", "unsigned"):
+                    # Value is the key from reverse_map (e.g., "2"), convert to int
+                    try:
+                        value = int(value)
+                    except (ValueError, TypeError):
+                        _LOGGER.warning("Could not convert %s to int for BACnet enum", value)
                 elif data_type == "boolean":
-                    # Map to "active"/"inactive"
-                    value = "active" if value in (True, "On", "active") else "inactive"
-    
-                # No float conversion for BACnet strings/enums
+                    # Value is "active" or "inactive" from reverse_map, keep as string
+                    pass
     
             else:
                 # Other protocols: try numeric conversion as fallback
