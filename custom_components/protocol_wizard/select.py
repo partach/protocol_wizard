@@ -19,8 +19,10 @@ class SelectManager(BaseEntityManager):
     """Manages select entities for any protocol."""
 
     def _should_create_entity(self, entity_config: dict) -> bool:
-        """Create select for entities with options mapping."""
-        return bool(entity_config.get("options"))
+        """Create select for writable entities with options mapping."""
+        has_options = bool(entity_config.get("options"))
+        is_writable = entity_config.get("rw") in ("rw", "write")
+        return has_options and is_writable
 
     def _create_entity(self, entity_config: dict, unique_id: str, key: str):
         """Create a select entity."""
