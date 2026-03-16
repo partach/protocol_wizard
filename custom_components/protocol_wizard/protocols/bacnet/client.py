@@ -185,11 +185,15 @@ class BACnetClient:
                     route_aware=None,
                 )
                 
-                _LOGGER.debug("Creating BACnet application with instance=%s, address=%s",
-                            args.instance, args.address)
+                _LOGGER.info("[BACnet] Creating application: instance=%s, address=%s, network=%s",
+                            args.instance, args.address, args.network)
 
                 theApp = Application.from_args(args)
-                _LOGGER.debug("BACnet application initialized")
+
+                # Log the actual binding info
+                if hasattr(theApp, 'nsap') and theApp.nsap:
+                    _LOGGER.info("[BACnet] App NSAP adapters: %s", list(theApp.nsap.adapters.keys()) if hasattr(theApp.nsap, 'adapters') else 'N/A')
+                _LOGGER.info("[BACnet] Application initialized successfully")
 
                 return theApp
                 
@@ -203,19 +207,24 @@ class BACnetClient:
     async def connect(self) -> bool:
         """Connect to BACnet network."""
         try:
+            _LOGGER.info("[BACnet] Connecting to device %s:%s (device_id=%s)",
+                        self.host, self.port, self.device_id)
+
             self._bacpypeinstance = await self._initialize_bacpypes3(self.hass)
 
             if self._bacpypeinstance is None:
-                _LOGGER.error("Failed to create BACnet application")
+                _LOGGER.error("[BACnet] Failed to create BACnet application")
                 return False
 
             self.app = self._bacpypeinstance
             self._connected = True
-            _LOGGER.debug("BACnet connected")
+            _LOGGER.info("[BACnet] Connected successfully, app=%s", type(self.app).__name__)
             return True
 
         except Exception as err:
-            _LOGGER.error("BACnet connection failed: %s", err)
+            _LOGGER.error("[BACnet] Connection failed: %s", err)
+            import traceback
+            traceback.print_exc()
             return False
     
     
