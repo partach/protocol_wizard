@@ -345,6 +345,7 @@ class BACnetClient:
             prop_id = PropertyIdentifier(property_name)
 
             try:
+                _LOGGER.info("[BACnet] Reading %s from %s at %s...", property_name, object_id, device_address)
                 result = await asyncio.wait_for(
                     self.app.read_property(
                         address=device_address,
@@ -353,11 +354,11 @@ class BACnetClient:
                     ),
                     timeout=5.0
                 )
-                _LOGGER.debug("Read %s from %s: %s", property_name, object_id, result)
+                _LOGGER.info("[BACnet] Read result: %s = %s (type: %s)", object_id, result, type(result).__name__)
                 return result
-                
+
             except asyncio.TimeoutError:
-                _LOGGER.debug("Read timed out after 5 seconds - no response from %s", device_address)
+                _LOGGER.warning("[BACnet] Read timed out after 5s - no response from %s for %s", device_address, object_id)
                 return None
         
         except Exception as err:
