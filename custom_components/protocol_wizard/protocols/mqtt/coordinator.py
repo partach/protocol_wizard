@@ -130,17 +130,10 @@ class MQTTCoordinator(BaseProtocolCoordinator):
         """
         data_type = entity_config.get("data_type", "string")
         expects_numeric = self._expects_numeric(entity_config)
-        options = entity_config.get("options")
 
         # If no raw data received, return None (HA will show as "unavailable")
         if raw_value is None:
             return None
-
-        # Try options mapping with raw value first (before any conversion)
-        if options and isinstance(options, dict):
-            raw_str = str(raw_value)
-            if raw_str in options:
-                return options[raw_str]
 
         try:
             # If already a dict/list (parsed JSON), handle accordingly

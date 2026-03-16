@@ -253,23 +253,11 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         try:
             data_type = entity_config.get("data_type", "uint16").lower()
             word_order = entity_config.get("word_order", "big")
-            options = entity_config.get("options")
 
             if isinstance(values[0], bool):
                 if len(values) == 1:
-                    decoded = bool(values[0])
-                else:
-                    decoded = int("".join("1" if b else "0" for b in values[::-1]), 2)
-                # Try options mapping for boolean/coil values
-                # Convert bool to "0"/"1" for lookup (templates use "0"/"1" as keys)
-                if options and isinstance(options, dict):
-                    if isinstance(decoded, bool):
-                        decoded_str = "1" if decoded else "0"
-                    else:
-                        decoded_str = str(decoded)
-                    if decoded_str in options:
-                        return options[decoded_str]
-                return decoded
+                    return bool(values[0])
+                return int("".join("1" if b else "0" for b in values[::-1]), 2)
 
             expected = TYPE_SIZES.get(data_type, 1)
             if len(values) < expected:
@@ -308,17 +296,6 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                 if data_type in ("uint16", "int16", "uint32", "int32", "uint64", "int64"):
                     if isinstance(decoded, float) and decoded.is_integer():
                         decoded = int(decoded)
-
-            # Apply options mapping (after scale/offset)
-            if options and isinstance(options, dict):
-                decoded_str = str(decoded)
-                if decoded_str in options:
-                    return options[decoded_str]
-                # Handle float that's really an int (e.g., 2.0 -> "2")
-                if isinstance(decoded, float) and decoded.is_integer():
-                    int_str = str(int(decoded))
-                    if int_str in options:
-                        return options[int_str]
 
             return decoded
 
