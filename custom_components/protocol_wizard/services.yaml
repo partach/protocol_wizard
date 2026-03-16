@@ -596,19 +596,22 @@ read_bacnet:
       integration: protocol_wizard
   fields:
     device_id:
-      required: true
+      name: Device
+      description: Home Assistant device to read from
+      required: false
       selector:
-        number:
-          min: 0
-          max: 4194303
+        device:
+          integration: protocol_wizard
     device_instance:
-      required: true
+      name: BACnet Device Instance
+      description: BACnet device instance number (optional, uses configured device if not specified)
+      required: false
       selector:
         number:
           min: 0
           max: 4194303
     address:
-      name: BACnetAddress
+      name: BACnet Address
       required: true
       description: BACnet object address in format "objectType:instance:property"
       example: "analogInput:0:presentValue"
@@ -622,25 +625,30 @@ write_bacnet:
       integration: protocol_wizard
   fields:
     device_id:
-      required: true
+      name: Device
+      description: Home Assistant device to write to
+      required: false
       selector:
-        number:
-          min: 0
-          max: 4194303
+        device:
+          integration: protocol_wizard
     device_instance:
-      required: true
+      name: BACnet Device Instance
+      description: BACnet device instance number (optional, uses configured device if not specified)
+      required: false
       selector:
         number:
           min: 0
           max: 4194303
     address:
-      name: BACnetAddress
+      name: BACnet Address
       required: true
       description: BACnet object address in format "objectType:instance:property"
       example: "analogInput:0:presentValue"
       selector:
         text:
     value:
+      name: Value
+      description: Value to write
       required: true
       selector:
         text:

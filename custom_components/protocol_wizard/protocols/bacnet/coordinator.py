@@ -241,23 +241,23 @@ class BACnetCoordinator(BaseProtocolCoordinator):
         
         # Get entities from config (multi-device structure)
         bacnet_devices = self.my_config_entry.options.get(CONF_BACNET_DEVICES, [])
-        _LOGGER.info("[BACnet] _async_update_data: has device_index=%s, bacnet_devices count=%d",
-                    hasattr(self, 'device_index'), len(bacnet_devices))
+        _LOGGER.debug("[BACnet] _async_update_data: has device_index=%s, bacnet_devices count=%d",
+                     hasattr(self, 'device_index'), len(bacnet_devices))
 
         if bacnet_devices and hasattr(self, 'device_index'):
             # Multi-device mode: get entities from this device
             device_index = self.device_index
             if device_index < len(bacnet_devices):
                 entities = bacnet_devices[device_index].get('entities', [])
-                _LOGGER.info("[BACnet] Loaded %d entities from device_index %d", len(entities), device_index)
+                _LOGGER.debug("[BACnet] Loaded %d entities from device_index %d", len(entities), device_index)
             else:
                 _LOGGER.warning("[BACnet] Device index %d out of range (total: %d)",
-                              device_index, len(bacnet_devices))
+                               device_index, len(bacnet_devices))
                 entities = []
         else:
             # Fallback to old structure for backward compatibility
             entities = self.my_config_entry.options.get(CONF_ENTITIES, [])
-            _LOGGER.info("[BACnet] Fallback: loaded %d entities from CONF_ENTITIES", len(entities))
+            _LOGGER.debug("[BACnet] Fallback: loaded %d entities from CONF_ENTITIES", len(entities))
 
         if not entities:
             _LOGGER.warning("[BACnet] No entities configured for this device")

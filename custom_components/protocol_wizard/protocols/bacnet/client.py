@@ -185,15 +185,15 @@ class BACnetClient:
                     route_aware=None,
                 )
                 
-                _LOGGER.info("[BACnet] Creating application: instance=%s, address=%s, network=%s",
-                            args.instance, args.address, args.network)
+                _LOGGER.debug("[BACnet] Creating application: instance=%s, address=%s, network=%s",
+                             args.instance, args.address, args.network)
 
                 theApp = Application.from_args(args)
 
                 # Log the actual binding info
                 if hasattr(theApp, 'nsap') and theApp.nsap:
-                    _LOGGER.info("[BACnet] App NSAP adapters: %s", list(theApp.nsap.adapters.keys()) if hasattr(theApp.nsap, 'adapters') else 'N/A')
-                _LOGGER.info("[BACnet] Application initialized successfully")
+                    _LOGGER.debug("[BACnet] App NSAP adapters: %s", list(theApp.nsap.adapters.keys()) if hasattr(theApp.nsap, 'adapters') else 'N/A')
+                _LOGGER.debug("[BACnet] Application initialized successfully")
 
                 return theApp
                 
@@ -207,8 +207,8 @@ class BACnetClient:
     async def connect(self) -> bool:
         """Connect to BACnet network."""
         try:
-            _LOGGER.info("[BACnet] Connecting to device %s:%s (device_id=%s)",
-                        self.host, self.port, self.device_id)
+            _LOGGER.debug("[BACnet] Connecting to device %s:%s (device_id=%s)",
+                         self.host, self.port, self.device_id)
 
             self._bacpypeinstance = await self._initialize_bacpypes3(self.hass)
 
@@ -218,7 +218,7 @@ class BACnetClient:
 
             self.app = self._bacpypeinstance
             self._connected = True
-            _LOGGER.info("[BACnet] Connected successfully, app=%s", type(self.app).__name__)
+            _LOGGER.debug("[BACnet] Connected successfully, app=%s", type(self.app).__name__)
             return True
 
         except Exception as err:
@@ -354,7 +354,7 @@ class BACnetClient:
             prop_id = PropertyIdentifier(property_name)
 
             try:
-                _LOGGER.info("[BACnet] Reading %s from %s at %s...", property_name, object_id, device_address)
+                _LOGGER.debug("[BACnet] Reading %s from %s at %s...", property_name, object_id, device_address)
                 result = await asyncio.wait_for(
                     self.app.read_property(
                         address=device_address,
@@ -363,7 +363,7 @@ class BACnetClient:
                     ),
                     timeout=5.0
                 )
-                _LOGGER.info("[BACnet] Read result: %s = %s (type: %s)", object_id, result, type(result).__name__)
+                _LOGGER.debug("[BACnet] Read result: %s = %s (type: %s)", object_id, result, type(result).__name__)
                 return result
 
             except asyncio.TimeoutError:
