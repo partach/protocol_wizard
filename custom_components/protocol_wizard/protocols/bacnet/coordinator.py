@@ -356,17 +356,10 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             entity_config: Entity configuration dict
 
         Returns:
-            Decoded value
+            Decoded value (raw, not mapped to options labels)
         """
         value = raw_value
         data_type = entity_config.get("data_type", "float")
-        options = entity_config.get("options")
-
-        # Try options mapping with raw value FIRST (handles "inactive"/"active" etc.)
-        if options and isinstance(options, dict):
-            raw_str = str(raw_value)
-            if raw_str in options:
-                return options[raw_str]
 
         # Type conversion based on data_type
         try:
@@ -375,7 +368,10 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             elif data_type == "integer":
                 value = int(value)
             elif data_type == "boolean":
-                if isinstance(value, bool):
+                # Keep string values like "active"/"inactive" for select entity mapping
+                if isinstance(value, str) and value.lower() in ("active", "inactive"):
+                    pass  # Keep as string for options mapping in select entity
+                elif isinstance(value, bool):
                     pass
                 elif isinstance(value, (int, float)):
                     value = bool(value)
@@ -405,17 +401,6 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                 value = value * scale
             if offset != 0.0:
                 value = value + offset
-
-        # Try options mapping with converted value (handles 1/2/3 → labels)
-        if options and isinstance(options, dict):
-            value_str = str(value)
-            if value_str in options:
-                return options[value_str]
-            # Handle float that's really an int (e.g., 1.0 -> "1")
-            if isinstance(value, float) and value.is_integer():
-                int_str = str(int(value))
-                if int_str in options:
-                    return options[int_str]
 
         return value
     

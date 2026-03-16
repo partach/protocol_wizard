@@ -616,7 +616,11 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         if raw is None:
             return None
 
-        raw_str = str(raw)
+        # Handle boolean values (from coils) - convert to "0"/"1" for lookup
+        if isinstance(raw, bool):
+            raw_str = "1" if raw else "0"
+        else:
+            raw_str = str(raw)
 
         # Check if raw value is already a mapped option label (coordinator pre-mapped it)
         if raw_str in self._reverse_map:

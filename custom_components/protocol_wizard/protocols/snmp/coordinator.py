@@ -92,11 +92,9 @@ class SNMPCoordinator(BaseProtocolCoordinator):
         return new_data
 
     def _decode_value(self, raw_value: Any, entity_config: dict) -> Any | None:
-        """Decode SNMP value to Python type with scale/offset and options mapping."""
+        """Decode SNMP value to Python type with scale/offset support."""
         if raw_value is None:
             return None
-
-        options = entity_config.get("options")
 
         try:
             # pysnmp returns typed objects — convert to basic Python types
@@ -104,11 +102,6 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                 decoded = raw_value.prettyPrint()
             else:
                 decoded = str(raw_value)
-
-            # Try options mapping with raw string value first
-            if options and isinstance(options, dict):
-                if decoded in options:
-                    return options[decoded]
 
             # Attempt numeric conversion based on data_type
             data_type = entity_config.get("data_type", "string").lower()
@@ -130,17 +123,6 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                 scale = entity_config.get("scale", 1.0)
                 offset = entity_config.get("offset", 0.0)
                 decoded = decoded * scale + offset
-
-            # Try options mapping with converted value
-            if options and isinstance(options, dict):
-                decoded_str = str(decoded)
-                if decoded_str in options:
-                    return options[decoded_str]
-                # Handle float that's really an int
-                if isinstance(decoded, float) and decoded.is_integer():
-                    int_str = str(int(decoded))
-                    if int_str in options:
-                        return options[int_str]
 
             return decoded
 
