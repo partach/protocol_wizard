@@ -78,9 +78,6 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             self._protocol = user_input.get(CONF_PROTOCOL, CONF_PROTOCOL_MODBUS)
-            unique_id = f"{DOMAIN}_{user_input.get('device_id', 'default')}_{self._protocol}"
-            await self.async_set_unique_id(unique_id)
-            self._abort_if_unique_id_configured()
 
             if self._protocol == CONF_PROTOCOL_MODBUS:
                 return await self.async_step_modbus_common()
@@ -466,6 +463,11 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
                 }
 
+                # Set unique ID based on host
+                unique_id = f"snmp_{final_data[CONF_HOST]}_{final_data[CONF_PORT]}"
+                await self.async_set_unique_id(unique_id)
+                self._abort_if_unique_id_configured()
+
                 # Test SNMP connection
                 await self._async_test_snmp_connection(final_data)
 
@@ -737,6 +739,11 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             device_name = self._data.get("device_name", f"BACnet Device {device_id}")
             network_number = self._data.get("network_number", 0)
 
+            # Set unique ID based on host and device
+            unique_id = f"bacnet_{host}_{port}_{device_id}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
             # Test connection
             try:
                 from .protocols.bacnet.client import BACnetClient
@@ -835,6 +842,11 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_PASSWORD: user_input.get(CONF_PASSWORD, ""),
                     CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
                 }
+
+                # Set unique ID based on broker
+                unique_id = f"mqtt_{final_data[CONF_BROKER]}_{final_data[CONF_PORT]}"
+                await self.async_set_unique_id(unique_id)
+                self._abort_if_unique_id_configured()
 
                 # Test MQTT connection
                 await self._async_test_mqtt_connection(final_data)
