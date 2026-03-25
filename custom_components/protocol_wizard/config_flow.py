@@ -276,15 +276,15 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             final_data[CONF_FIRST_REG] = user_input.get(CONF_FIRST_REG, 0)
             final_data[CONF_FIRST_REG_SIZE] = user_input.get(CONF_FIRST_REG_SIZE, 1)
 
-            try:
-                # Set unique ID based on connection (not slave)
-                if final_data.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_SERIAL:
-                    unique_id = f"modbus_serial_{final_data[CONF_SERIAL_PORT]}"
-                else:
-                    unique_id = f"modbus_ip_{final_data[CONF_HOST]}_{final_data[CONF_PORT]}"
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
+            # Set unique ID based on connection - must be outside try/except to properly abort
+            if final_data.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_SERIAL:
+                unique_id = f"modbus_serial_{final_data[CONF_SERIAL_PORT]}"
+            else:
+                unique_id = f"modbus_ip_{final_data[CONF_HOST]}_{final_data[CONF_PORT]}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
 
+            try:
                 await self._async_test_modbus_connection(final_data)
 
                 # Build first slave entry
@@ -452,22 +452,22 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
+            final_data = {
+                CONF_PROTOCOL: CONF_PROTOCOL_SNMP,
+                CONF_NAME: user_input[CONF_NAME],
+                CONF_HOST: user_input[CONF_HOST],
+                CONF_PORT: user_input.get(CONF_PORT, 161),
+                "community": user_input["community"],
+                "version": user_input["version"],
+                CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
+            }
+
+            # Set unique ID based on host - must be outside try/except to properly abort
+            unique_id = f"snmp_{final_data[CONF_HOST]}_{final_data[CONF_PORT]}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
             try:
-                final_data = {
-                    CONF_PROTOCOL: CONF_PROTOCOL_SNMP,
-                    CONF_NAME: user_input[CONF_NAME],
-                    CONF_HOST: user_input[CONF_HOST],
-                    CONF_PORT: user_input.get(CONF_PORT, 161),
-                    "community": user_input["community"],
-                    "version": user_input["version"],
-                    CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
-                }
-
-                # Set unique ID based on host
-                unique_id = f"snmp_{final_data[CONF_HOST]}_{final_data[CONF_PORT]}"
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
-
                 # Test SNMP connection
                 await self._async_test_snmp_connection(final_data)
 
@@ -832,22 +832,22 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
+            final_data = {
+                CONF_PROTOCOL: CONF_PROTOCOL_MQTT,
+                CONF_NAME: user_input[CONF_NAME],
+                CONF_BROKER: user_input[CONF_BROKER],
+                CONF_PORT: user_input.get(CONF_PORT, DEFAULT_PORT),
+                CONF_USERNAME: user_input.get(CONF_USERNAME, ""),
+                CONF_PASSWORD: user_input.get(CONF_PASSWORD, ""),
+                CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
+            }
+
+            # Set unique ID based on broker - must be outside try/except to properly abort
+            unique_id = f"mqtt_{final_data[CONF_BROKER]}_{final_data[CONF_PORT]}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
             try:
-                final_data = {
-                    CONF_PROTOCOL: CONF_PROTOCOL_MQTT,
-                    CONF_NAME: user_input[CONF_NAME],
-                    CONF_BROKER: user_input[CONF_BROKER],
-                    CONF_PORT: user_input.get(CONF_PORT, DEFAULT_PORT),
-                    CONF_USERNAME: user_input.get(CONF_USERNAME, ""),
-                    CONF_PASSWORD: user_input.get(CONF_PASSWORD, ""),
-                    CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, 30),
-                }
-
-                # Set unique ID based on broker
-                unique_id = f"mqtt_{final_data[CONF_BROKER]}_{final_data[CONF_PORT]}"
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
-
                 # Test MQTT connection
                 await self._async_test_mqtt_connection(final_data)
 
