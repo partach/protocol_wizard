@@ -262,46 +262,69 @@ class BACnetCoordinator(BaseProtocolCoordinator):
         if not entities:
             _LOGGER.warning("[BACnet] No entities configured for this device")
             return {}
-        
+
         new_data = {}
         failed_count = 0
-        
+        consecutive_failures = 0
+        max_consecutive_failures = 2
+        # Also limit total failures to prevent long update cycles
+        max_total_failures = min(5, max(2, len(entities) // 3))
+
         async with self._lock:
             for entity in entities:
+                # Early abort if device is clearly dead (consecutive failures)
+                if consecutive_failures >= max_consecutive_failures:
+                    _LOGGER.warning(
+                        "[BACnet] Too many consecutive failures (%d) — aborting update cycle",
+                        max_consecutive_failures
+                    )
+                    break
+
+                # Also abort if too many total failures (even if not consecutive)
+                if failed_count >= max_total_failures:
+                    _LOGGER.warning(
+                        "[BACnet] Too many total failures (%d/%d) — aborting update cycle",
+                        failed_count, len(entities)
+                    )
+                    break
+
                 try:
                     # Parse BACnet address: "analogInput:0:presentValue"
                     address = entity.get("address")
                     if not address:
                         _LOGGER.warning("Entity %s has no address", entity.get("name"))
                         continue
-                    
+
                     object_type, instance, property_name = parse_bacnet_address(address)
-                    
+
                     # Read property value
                     result = await self.client.read_property(
                         object_type,
                         instance,
                         property_name
                     )
-                    
+
                     if result is None:
                         failed_count += 1
+                        consecutive_failures += 1
                         _LOGGER.debug(
                             "Failed to read %s for entity %s",
                             address,
                             entity.get("name")
                         )
                         continue
-                    
+
+                    consecutive_failures = 0  # reset on success
+
                     # Generate entity key
                     key = entity_key(entity["name"])
-                    
+
                     # Decode and format value
                     decoded = self._decode_value(result, entity)
                     formatted = self._format_value(decoded, entity)
-                    
+
                     new_data[key] = formatted
-                    
+
                 except ValueError as err:
                     _LOGGER.error(
                         "Invalid address format for entity %s: %s",
@@ -309,7 +332,8 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                         err
                     )
                     failed_count += 1
-                    
+                    consecutive_failures += 1
+
                 except Exception as err:
                     _LOGGER.error(
                         "Error reading entity %s: %s",
@@ -317,7 +341,8 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                         err
                     )
                     failed_count += 1
-        
+                    consecutive_failures += 1
+
         # Log summary
         if failed_count > 0:
             _LOGGER.info(

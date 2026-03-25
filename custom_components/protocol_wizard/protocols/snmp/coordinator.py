@@ -54,9 +54,30 @@ class SNMPCoordinator(BaseProtocolCoordinator):
             return {}
 
         new_data = {}
+        failed_count = 0
+        consecutive_failures = 0
+        max_consecutive_failures = 2
+        # Also limit total failures to prevent long update cycles
+        max_total_failures = min(5, max(2, len(entities) // 3))
 
         async with self._lock:
             for entity in entities:
+                # Early abort if device is clearly dead (consecutive failures)
+                if consecutive_failures >= max_consecutive_failures:
+                    _LOGGER.warning(
+                        "[SNMP] Too many consecutive failures (%d) — aborting update cycle",
+                        max_consecutive_failures
+                    )
+                    break
+
+                # Also abort if too many total failures (even if not consecutive)
+                if failed_count >= max_total_failures:
+                    _LOGGER.warning(
+                        "[SNMP] Too many total failures (%d/%d) — aborting update cycle",
+                        failed_count, len(entities)
+                    )
+                    break
+
                 key = oid_key(entity["name"])
                 oid = entity["address"]
                 read_mode = entity.get("read_mode", "get")
@@ -68,7 +89,10 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                         if not walk_results:
                             new_data[key] = "No results"
                             new_data[f"{key}_raw"] = []  # empty list
+                            failed_count += 1
+                            consecutive_failures += 1
                         else:
+                            consecutive_failures = 0  # reset on success
                             # Simple, straight OID = value dump
                             walk_lines = [
                                 f"{oid_str} = {value.prettyPrint() if hasattr(value, 'prettyPrint') else value}"
@@ -80,7 +104,10 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                     else:
                         raw_value = await self.client.read(oid)
                         if raw_value is None:
+                            failed_count += 1
+                            consecutive_failures += 1
                             continue
+                        consecutive_failures = 0  # reset on success
                         # Decode / format
                         decoded = self._decode_value(raw_value, entity)
                         formatted = self._format_value(decoded, entity)
@@ -88,6 +115,12 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
                 except Exception as err:
                     _LOGGER.error("Error processing %s %s: %s", read_mode, oid, err)
+                    failed_count += 1
+                    consecutive_failures += 1
+
+        # Log summary if there were failures
+        if failed_count > 0:
+            _LOGGER.info("[SNMP] Update completed with %d/%d failures", failed_count, len(entities))
 
         return new_data
 
