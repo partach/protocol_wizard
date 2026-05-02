@@ -18,6 +18,9 @@ class ProtocolWizardCard extends LitElement {
       _modbusByteOrder: { type: String },
       _modbusWordOrder: { type: String },
       _modbusRawMode: { type: Boolean },
+      _modbusAutoRead: { type: Boolean },
+      _modbusAutoReadInterval: { type: Number },
+      _autoReadTimer: { type: Number },
       
       // SNMP properties
       _snmpOid: { type: String },
@@ -65,6 +68,9 @@ class ProtocolWizardCard extends LitElement {
     this._modbusByteOrder = "big";
     this._modbusWordOrder = "big";
     this._modbusRawMode = false;
+    this._modbusAutoRead = false;
+    this._modbusAutoReadInterval = 3;
+    this._autoReadTimer = null;
     
     // SNMP defaults
     this._snmpOid = "1.3.6.1.2.1.1.1.0";
@@ -105,6 +111,46 @@ class ProtocolWizardCard extends LitElement {
       advanced: true,
       ...config,
     };
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._stopAutoRead();
+  }
+
+  _startAutoRead() {
+    if (this._autoReadTimer) {
+      clearInterval(this._autoReadTimer);
+    }
+    const intervalMs = (this._modbusAutoReadInterval || 3) * 1000;
+    this._autoReadTimer = setInterval(() => {
+      this._sendRead();
+    }, intervalMs);
+  }
+
+  _stopAutoRead() {
+    if (this._autoReadTimer) {
+      clearInterval(this._autoReadTimer);
+      this._autoReadTimer = null;
+    }
+  }
+
+  _toggleAutoRead(enabled) {
+    this._modbusAutoRead = enabled;
+    if (enabled) {
+      this._startAutoRead();
+    } else {
+      this._stopAutoRead();
+    }
+    this.requestUpdate();
+  }
+
+  _updateAutoReadInterval(interval) {
+    this._modbusAutoReadInterval = interval;
+    if (this._modbusAutoRead) {
+      this._startAutoRead();
+    }
+    this.requestUpdate();
   }
 
   getCardSize() {
@@ -400,7 +446,8 @@ class ProtocolWizardCard extends LitElement {
       const registers = rawData.registers || [];
       const bits = rawData.bits || [];
       const hex = registers.map(r => `0x${r.toString(16).toUpperCase().padStart(4, '0')}`).join(' ');
-      
+      const dec = registers.map(r => r.toString(10)).join(' ');
+
       let ascii = '';
       try {
         const bytes = new Uint8Array(registers.flatMap(r => [r >> 8, r & 0xFF]));
@@ -413,13 +460,14 @@ class ProtocolWizardCard extends LitElement {
       const binary = registers.map(r => r.toString(2).padStart(16, '0')).join(' ');
       const bitsView = bits.length > 0 ? `Bits: [${bits.map(b => b ? 1 : 0).join(', ')}]` : '';
 
-      displayValue = `HEX: ${hex}\nASCII: ${ascii}\nBinary: ${binary}`;
+      displayValue = `HEX: ${hex}\nDEC: ${dec}\nASCII: ${ascii}\nBinary: ${binary}`;
       if (bitsView) displayValue += `\n${bitsView}`;
       if (rawData.detected_type) displayValue += `\nType: ${rawData.detected_type}`;
-      
+
       // Store parsed data for table
       this._lastReadData.table = {
         hex: hex,
+        dec: dec,
         ascii: ascii,
         binary: binary,
         bits: bitsView,
@@ -956,6 +1004,29 @@ class ProtocolWizardCard extends LitElement {
           Enable
         </label>
       </div>
+
+      <div class="field-row checkbox-row">
+        <span class="label">Auto Read:</span>
+        <label>
+          <input type="checkbox" @change=${e => this._toggleAutoRead(e.target.checked)} ?checked=${this._modbusAutoRead} />
+          Enable
+        </label>
+      </div>
+
+      ${this._modbusAutoRead ? html`
+        <div class="field-row">
+          <span class="label">Interval (s):</span>
+          <input
+            type="number"
+            placeholder="3"
+            min="1"
+            max="60"
+            step="1"
+            .value=${this._modbusAutoReadInterval}
+            @input=${e => this._updateAutoReadInterval(Number(e.target.value))}
+          />
+        </div>
+      ` : ''}
     `;
   }
 
