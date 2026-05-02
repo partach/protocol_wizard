@@ -128,7 +128,6 @@ class BACnetClient:
                 import random
         
                 source_ip = address_adapter = ip_to_use = self.host
-                broadcast_addr = None
 
                 try:
                     address_adapter = await get_my_lan_ip_and_subnet(hass)
@@ -143,9 +142,8 @@ class BACnetClient:
                     if address_adapter and address_adapter[0]:
                         ip_with_subnet = f"{address_adapter[0]}/{address_adapter[1]}"
                         ip_to_use = ip_with_subnet
-                        ip, netmask, broadcast = calculate_broadcast_address(ip_with_subnet)
-                        if broadcast:
-                            broadcast_addr = broadcast
+                        # Calculate broadcast for potential future use
+                        _, _, _ = calculate_broadcast_address(ip_with_subnet)
                     else:
                         _LOGGER.error("Cannot use 0.0.0.0 - no network adapter found!")
                         raise ValueError("Discovery requires valid network interface")
@@ -153,9 +151,8 @@ class BACnetClient:
                 elif address_adapter[0]:
                     ip_with_subnet = f"{address_adapter[0]}/{address_adapter[1]}"
                     ip_to_use = ip_with_subnet
-                    ip, netmask, broadcast = calculate_broadcast_address(ip_with_subnet)
-                    if broadcast:
-                        broadcast_addr = broadcast
+                    # Calculate broadcast for potential future use, but we don't need to store it
+                    _, _, _ = calculate_broadcast_address(ip_with_subnet)
 
                 elif source_ip:
                     ip_to_use = source_ip
@@ -395,8 +392,8 @@ class BACnetClient:
             object_id = ObjectIdentifier(f"{object_type},{object_instance}")
             device_address = Address(f"{self.host}:{self.port}")
             prop_id = PropertyIdentifier(property_name)
-            
-            result = await self.app.write_property(
+
+            await self.app.write_property(
                 address=device_address,
                 objid=object_id,
                 prop=prop_id,
