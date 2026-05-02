@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-# from homeassistant.helpers.entity import DeviceInfo
 
 from .const import DOMAIN, CONF_PROTOCOL, CONF_PROTOCOL_MODBUS
 from .entity_base import (
