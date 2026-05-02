@@ -51,6 +51,12 @@ class ProtocolWizardCard extends LitElement {
       _mqttQos: { type: Number },
       _mqttRetain: { type: Boolean },
       _mqttWaitTime: { type: Number },
+      // BACnet properties
+      _bacnetObjectType: { type: String },
+      _bacnetInstance: { type: Number },
+      _bacnetProperty: { type: String },
+      _bacnetAddress: { type: String },
+      _bacnetDeviceInstance: { type: Number },
     };
   }
 
@@ -81,7 +87,7 @@ class ProtocolWizardCard extends LitElement {
     this._viewMode = "text";
     this._tableData = [];
     
-    // Entity creation defaults (NEW)
+    // Entity creation defaults
     this._lastReadSuccess = false;
     this._lastReadData = null;
     this._showEntityForm = false;
@@ -94,12 +100,21 @@ class ProtocolWizardCard extends LitElement {
     this._newEntityFormat = "";
     this._newEntityIcon = "";
     this._createEntityStatus = "";
-    // MQTT defaults (NEW)
-    this._mqttTopic = "home/sensor/test";
+
+    // MQTT defaults
+    this._mqttTopic = "$SYS/broker/clients/#";
     this._mqttPayload = "";
     this._mqttQos = 0;
     this._mqttRetain = false;
     this._mqttWaitTime = 5.0;
+
+    // BACnet defaults
+    this._bacnetObjectType = "analogInput";
+    this._bacnetInstance = 0;
+    this._bacnetProperty = "presentValue";
+    this._bacnetDeviceInstance = 0;
+    this._bacnetAddress = "";
+
   }
 
   static getConfigElement() {
@@ -247,6 +262,7 @@ class ProtocolWizardCard extends LitElement {
     if (entities.some(eid => eid.endsWith("_modbus_hub"))) return "modbus";
     if (entities.some(eid => eid.endsWith("_snmp_hub"))) return "snmp";
     if (entities.some(eid => eid.endsWith("_mqtt_hub"))) return "mqtt";
+    if (entities.some(eid => eid.endsWith("_bacnet_hub"))) return "bacnet";
 
     return "unknown";
   }
@@ -385,6 +401,8 @@ class ProtocolWizardCard extends LitElement {
         await this._sendSnmpRead(targetEntity);
       } else if (this._protocol === "mqtt") { 
         await this._sendMqttRead(targetEntity);
+      } else if (this._protocol === "bacnet") {
+        await this._sendBacnetRead(targetEntity);
       }
       this._lastReadSuccess = true; // Mark success
     } catch (err) {
@@ -484,7 +502,8 @@ class ProtocolWizardCard extends LitElement {
     }
 
     this._writeValue = displayValue;
-    this._selectedStatus = "Read OK";
+    this._status = "Read OK";
+    this._lastReadSuccess = true;
     this.requestUpdate();
   }
 
@@ -521,6 +540,51 @@ class ProtocolWizardCard extends LitElement {
     this.requestUpdate();
   }
 
+  async _sendBacnetRead(targetEntity) {
+    this._bacnetAddress = `${this._bacnetObjectType}:${this._bacnetInstance}:${this._bacnetProperty}`;
+    
+    this._selectedStatus = "Reading...";
+    this.requestUpdate();
+
+    try {
+      const result = await this.hass.callWS({
+        type: "call_service",
+        domain: "protocol_wizard",
+        service: "read_bacnet",
+        service_data: {
+          entity_id: targetEntity,
+          device_id: this.config.device_id,
+          device_instance: this._bacnetDeviceInstance,
+          address: this._bacnetAddress,
+        },
+        return_response: true,
+      });
+
+      const value = result?.value ?? result?.response?.value ?? null;
+      
+      // Store read data for entity creation
+      this._lastReadData = {
+        address: this._bacnetAddress,
+        data_type: "float",
+        value: value,
+        table: {
+          value: value !== null ? String(value) : "No value",
+        },
+      };
+      
+      this._writeValue = value !== null ? String(value) : "No value";
+      this._status = "Read OK";
+      this._lastReadSuccess = true;
+      this.requestUpdate();
+      
+    } catch (err) {
+      console.error("BACnet read error:", err);
+      this._selectedStatus = `Read failed: ${err.message || err}`;
+      this._lastReadSuccess = false;
+      this.requestUpdate();
+    }
+  }
+
   async _sendWrite() {
     const targetEntity = this._getTargetEntity();
     if (!targetEntity) {
@@ -551,6 +615,8 @@ class ProtocolWizardCard extends LitElement {
         await this._sendSnmpWrite(targetEntity);
       } else if (this._protocol === "mqtt") {
         await this._sendMqttWrite(targetEntity);
+      } else if (this._protocol === "bacnet") {
+        await this._sendBacnetWrite(targetEntity);
       }
     } catch (err) {
       console.error("Write error:", err);
@@ -606,6 +672,42 @@ class ProtocolWizardCard extends LitElement {
 
     this._status = "Write OK";
     this.requestUpdate();
+  }
+
+  async _sendBacnetWrite(targetEntity) {
+    if (!this._writeValue) {
+      this._writeStatus = "Missing value";
+      this.requestUpdate();
+      return;
+    }
+
+    this._bacnetAddress = `${this._bacnetObjectType}:${this._bacnetInstance}:${this._bacnetProperty}`;
+    
+    this._writeStatus = "Writing...";
+    this.requestUpdate();
+
+    try {
+      await this.hass.callWS({
+        type: "call_service",
+        domain: "protocol_wizard",
+        service: "write_bacnet",
+        service_data: {
+          entity_id: targetEntity,
+          device_id: this.config.device_id,
+          device_instance: this._bacnetDeviceInstance,
+          address: this._bacnetAddress,
+          value: this._parseWriteValue(),
+        },
+      });
+
+      this._writeStatus = "Write OK";
+      this.requestUpdate();
+      
+    } catch (err) {
+      console.error("BACnet write error:", err);
+      this._writeStatus = `Write failed: ${err.message || err}`;
+      this.requestUpdate();
+    }
   }
 
   // NEW: Entity creation methods
@@ -698,6 +800,11 @@ class ProtocolWizardCard extends LitElement {
           data_type: "string",  // Default, user can change later
           qos: this._mqttQos,
           retain: this._mqttRetain,
+        };
+      } else if (this._protocol === "bacnet") {
+        serviceData = {
+          ...serviceData,
+          data_type: "float",  // Default for BACnet
         };
       }
 
@@ -1134,6 +1241,64 @@ class ProtocolWizardCard extends LitElement {
     `;
   }
   
+  _renderBacnetFields() {
+    return html`
+      <div class="field-row">
+        <span class="label">Object Type:</span>
+        <select .value=${this._bacnetObjectType} @change=${e => this._bacnetObjectType = e.target.value}>
+          <option value="analogInput">Analog Input</option>
+          <option value="analogOutput">Analog Output</option>
+          <option value="analogValue">Analog Value</option>
+          <option value="binaryInput">Binary Input</option>
+          <option value="binaryOutput">Binary Output</option>
+          <option value="binaryValue">Binary Value</option>
+          <option value="multiStateInput">Multi-State Input</option>
+          <option value="multiStateOutput">Multi-State Output</option>
+          <option value="multiStateValue">Multi-State Value</option>
+          <option value="device">Device</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <span class="label">Object Instance:</span>
+        <input
+          type="number"
+          placeholder="e.g. 0"
+          min="0"
+          max="4194303"
+          .value=${this._bacnetInstance}
+          @input=${e => this._bacnetInstance = Number(e.target.value)}
+        />
+      </div>
+
+      <div class="field-row">
+        <span class="label">Property:</span>
+        <select .value=${this._bacnetProperty} @change=${e => this._bacnetProperty = e.target.value}>
+          <option value="presentValue">Present Value</option>
+          <option value="objectName">Object Name</option>
+          <option value="description">Description</option>
+          <option value="statusFlags">Status Flags</option>
+          <option value="units">Engineering Units</option>
+          <option value="outOfService">Out Of Service</option>
+          <option value="reliability">Reliability</option>
+          <option value="priorityArray">Priority Array</option>
+          <option value="relinquishDefault">Relinquish Default</option>
+          <option value="covIncrement">COV Increment</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <span class="label">Address: </span>
+        <span class="label">${this._bacnetAddress}</span>
+      </div>
+      <div class="field-row">
+        <span class="label">Device Instance:</span>
+        <input type="number" .value=${this._bacnetDeviceInstance} @input=${e => this._bacnetDeviceInstance = Number(e.target.value)} min="0" max="4194303">
+      </div>
+    `;
+  }
+
+
+
   render() {
     if (!this.hass || !this.config) return html``;
 
@@ -1161,6 +1326,7 @@ class ProtocolWizardCard extends LitElement {
             ${protocol === "modbus" ? this._renderModbusFields() :
             protocol === "snmp" ? this._renderSnmpFields() :
             protocol === "mqtt" ? this._renderMqttFields() :
+            protocol === "bacnet" ? this._renderBacnetFields() :
             html`<div class="error">Unknown protocol</div>`}
 
             <!-- Value field with view mode toggle -->
@@ -1494,6 +1660,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "protocol_wizard-card",
   name: "Protocol Wizard Card",
-  description: "Multi-protocol device manipulation (Modbus, SNMP)",
+  description: "Multi-protocol device manipulation (Modbus, SNMP, MQTT, BACnet)",
   preview: true,
 });

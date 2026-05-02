@@ -2,7 +2,6 @@
 [![Home Assistant](https://img.shields.io/badge/Home_Assistant-00A1DF?style=flat-square&logo=home-assistant&logoColor=white)](https://www.home-assistant.io)
 [![HACS](https://img.shields.io/badge/HACS-Default-41BDF5?style=flat-square)](https://hacs.xyz)
 [![HACS Action](https://img.shields.io/github/actions/workflow/status/partach/protocol_wizard/validate-hacs.yml?label=HACS%20Action&style=flat-square)](https://github.com/partach/protocol_wizard/actions)
-[![Installs](https://img.shields.io/github/downloads/partach/protocol_wizard/total?color=28A745&label=Installs&style=flat-square)](https://github.com/partach/protocol_wizard/releases)
 [![License](https://img.shields.io/github/license/partach/protocol_wizard?color=ffca28&style=flat-square)](https://github.com/partach/protocol_wizard/blob/main/LICENSE)
 [![HACS validated](https://img.shields.io/badge/HACS-validated-41BDF5?style=flat-square)](https://github.com/hacs/integration)
 

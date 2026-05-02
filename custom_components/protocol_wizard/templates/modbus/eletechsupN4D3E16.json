@@ -1,0 +1,386 @@
+[
+  {
+    "name": "Digital Input 1",
+    "address": 129,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 2",
+    "address": 130,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 3",
+    "address": 131,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 4",
+    "address": 132,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 5",
+    "address": 133,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 6",
+    "address": 134,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 7",
+    "address": 135,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 8",
+    "address": 136,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+    {
+    "name": "Digital Input 9",
+    "address": 137,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 10",
+    "address": 138,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 11",
+    "address": 139,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 12",
+    "address": 140,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 13",
+    "address": 141,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 14",
+    "address": 142,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 15",
+    "address": 143,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Digital Input 16",
+    "address": 144,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "read",
+    "device_class": "binary_sensor",
+    "icon": "mdi:toggle-switch"
+  },
+  {
+    "name": "Relay 1",
+    "address": 1,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 2",
+    "address": 2,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 3",
+    "address": 3,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 4",
+    "address": 4,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 5",
+    "address": 5,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 6",
+    "address": 6,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 7",
+    "address": 7,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 8",
+    "address": 8,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 9",
+    "address": 9,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 10",
+    "address": 10,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 11",
+    "address": 11,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 12",
+    "address": 12,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 13",
+    "address": 13,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 14",
+    "address": 14,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 15",
+    "address": 15,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Relay 16",
+    "address": 16,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "options": {
+      "256": "Open",
+      "512": "Close",
+      "768" : "Toggle",
+      "1024" : "Latch",
+      "1280" : "Momentary"
+    }
+  },
+  {
+    "name": "Baud Rate Setting",
+    "address": 255,
+    "data_type": "uint16",
+    "register_type": "holding",
+    "rw": "rw",
+    "icon": "mdi:speedometer",
+    "options": {
+      "0": "1200",
+      "1": "2400",
+      "2" : "4800",
+      "3" : "9600",
+      "4" : "19200",
+      "5" : "Factory reset"
+    }
+  }
+]
