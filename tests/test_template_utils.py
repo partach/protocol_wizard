@@ -5,7 +5,6 @@ import json
 import os
 import tempfile
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from pathlib import Path
 
 from custom_components.protocol_wizard.template_utils import (
@@ -158,7 +157,7 @@ class TestBuiltinTemplates:
         for path in self._get_template_files():
             with open(path, "r", encoding="utf-8") as f:
                 try:
-                    data = json.load(f)
+                    json.load(f)
                 except json.JSONDecodeError:
                     pytest.fail(f"Invalid JSON in template: {path}")
 
