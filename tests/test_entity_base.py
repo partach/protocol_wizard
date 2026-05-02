@@ -1,8 +1,7 @@
 """Tests for entity_base module: helpers, managers, and entity types."""
 from __future__ import annotations
 
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 
 from custom_components.protocol_wizard.entity_base import (
     get_safe_number_defaults,

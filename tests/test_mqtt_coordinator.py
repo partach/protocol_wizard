@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import pytest
 from unittest.mock import MagicMock
 
 from custom_components.protocol_wizard.protocols.mqtt.coordinator import (

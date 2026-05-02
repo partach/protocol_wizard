@@ -1,8 +1,7 @@
 """Tests for Modbus coordinator decode/encode logic."""
 from __future__ import annotations
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from custom_components.protocol_wizard.protocols.modbus.coordinator import (
     ModbusCoordinator,

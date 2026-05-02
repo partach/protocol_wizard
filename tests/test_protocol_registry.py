@@ -1,11 +1,8 @@
 """Tests for the protocol registry and base protocol abstractions."""
 from __future__ import annotations
 
-import pytest
 from custom_components.protocol_wizard.protocols import ProtocolRegistry
 from custom_components.protocol_wizard.protocols.base import (
-    BaseProtocolClient,
-    BaseProtocolCoordinator,
     _SafeFormatDict,
 )
 
@@ -87,12 +84,6 @@ class TestBaseProtocolCoordinatorFormatValue:
         from custom_components.protocol_wizard.protocols.modbus.coordinator import (
             ModbusCoordinator,
         )
-        from unittest.mock import MagicMock
-
-        client = MagicMock()
-        hass = MagicMock()
-        entry = MagicMock()
-        from datetime import timedelta
 
         coord = object.__new__(ModbusCoordinator)
         # Manually init only what _format_value needs

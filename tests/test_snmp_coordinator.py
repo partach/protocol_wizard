@@ -1,7 +1,6 @@
 """Tests for SNMP coordinator decode/encode logic."""
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
 
 from custom_components.protocol_wizard.protocols.snmp.coordinator import (
