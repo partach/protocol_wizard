@@ -197,7 +197,8 @@ When adding or editing a register, the following fields are available:
 | **unit**           | No       | -             | Unit of measurement (e.g., "V", "A", "W")                                                                        |
 | **scale**          | No       | `1.0`         | Multiplier applied after decoding (`value × scale + offset`)                                                     |
 | **offset**         | No       | `0.0`         | Additive offset after scaling                                                                                    |
-| **options**        | No       | -             | JSON mapping for select entity (e.g., `{"0": "Off", "1": "On"}`)                                                 |
+| **options**        | No       | -             | JSON mapping for select/dropdown entity (e.g., `{"0": "Off", "1": "Heat", "2": "Cool"}`)                         |
+| **switch_options** | No       | -             | Creates a switch instead of select for 2-state values (e.g., `{"on_value": "1", "off_value": "0"}`)              |
 | **byte_order**     | No       | `big`         | Byte order within each word (big/little)                                                                         |
 | **word_order**     | No       | `big`         | Order of the 16-bit words (big/little) for multi-register values                                                 |
 | **format**         | No       | -             | python formating for read values like {d}d {h}h {m}m for seconds to human readible value                         |
@@ -209,6 +210,10 @@ When adding or editing a register, the following fields are available:
 - **Voltages/Currents**: `data_type = "uint16"`, `scale = 0.1` or `0.01`, unit "V"/"A"
 - **Power**: Often `uint32` or `float32` with appropriate scaling
 - **Status bits**: Use `coil`/`discrete` + `options` JSON for friendly names
+- **On/Off toggle**: Use `switch_options` for a simple switch instead of a dropdown:
+  ```json
+  {"name": "Pump", "address": 100, "rw": "rw", "switch_options": {"on_value": "1", "off_value": "0"}}
+  ```
 
 ## Why Choose Protocol Wizard?
 

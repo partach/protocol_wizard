@@ -499,7 +499,7 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
             _LOGGER.error("Failed to write value to %s", self._config.get("name"))
 
 class ProtocolWizardSwitchBase(CoordinatorEntity, SwitchEntity):
-    """Protocol-agnostic switch entity (for coils)."""
+    """Protocol-agnostic switch entity (for coils or switch_options)."""
 
     _attr_has_entity_name = True
     _attr_should_poll = False
@@ -519,31 +519,72 @@ class ProtocolWizardSwitchBase(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = unique_id
         self._attr_name = entity_config.get("name")
         self._attr_device_info = device_info
-        self._attr_icon = "mdi:toggle-switch" # can be overwritten if there is an icon requested by config
+        self._attr_icon = "mdi:toggle-switch"
         apply_common_entity_attributes(self, entity_config, hass=self.hass)
         set_readonly_protocol_settings(self, entity_config)
 
+        # Parse switch_options for value mapping
+        # Format: {"on_value": "1", "off_value": "0"} or {"on": "1", "off": "0"}
+        switch_opts = entity_config.get("switch_options", {})
+        if isinstance(switch_opts, str):
+            try:
+                switch_opts = json.loads(switch_opts)
+            except (json.JSONDecodeError, TypeError):
+                switch_opts = {}
+
+        # Support both "on_value"/"off_value" and "on"/"off" formats
+        self._on_value = switch_opts.get("on_value", switch_opts.get("on"))
+        self._off_value = switch_opts.get("off_value", switch_opts.get("off"))
+        self._use_switch_options = self._on_value is not None and self._off_value is not None
 
     @property
     def is_on(self) -> bool:
         """Return true if switch is on."""
         value = self.coordinator.data.get(self._key)
+        if self._use_switch_options:
+            return str(value) == str(self._on_value)
         return bool(value)
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn the switch on."""
+        if self._use_switch_options:
+            write_value = self._on_value
+            # Try to preserve numeric type
+            try:
+                if "." in str(self._on_value):
+                    write_value = float(self._on_value)
+                else:
+                    write_value = int(self._on_value)
+            except (ValueError, TypeError):
+                pass
+        else:
+            write_value = True
+
         await self.coordinator.async_write_entity(
             address=str(self._config["address"]),
-            value=True,
+            value=write_value,
             entity_config=self._config,
         )
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn the switch off."""
+        if self._use_switch_options:
+            write_value = self._off_value
+            # Try to preserve numeric type
+            try:
+                if "." in str(self._off_value):
+                    write_value = float(self._off_value)
+                else:
+                    write_value = int(self._off_value)
+            except (ValueError, TypeError):
+                pass
+        else:
+            write_value = False
+
         await self.coordinator.async_write_entity(
             address=str(self._config["address"]),
-            value=False,
+            value=write_value,
             entity_config=self._config,
         )
         await self.coordinator.async_request_refresh()

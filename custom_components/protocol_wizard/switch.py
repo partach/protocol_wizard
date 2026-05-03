@@ -13,18 +13,24 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SwitchManager(BaseEntityManager):
-    """Manages switch entities (coils)."""
+    """Manages switch entities (coils and switch_options)."""
 
     def _should_create_entity(self, entity_config: dict) -> bool:
-        """Create switch for writeable coils only."""
-        reg_type = entity_config.get("register_type", "holding").lower()
+        """Create switch for writeable coils or entities with switch_options."""
         rw = entity_config.get("rw", "read")
+        is_writable = rw in ("write", "rw")
 
-        # If options exist -> let select handle it
+        # If switch_options exists -> create switch with value mapping
+        if entity_config.get("switch_options") and is_writable:
+            return True
+
+        # If regular options exist -> let select handle it
         if entity_config.get("options"):
             return False
 
-        return reg_type == "coil" and rw in ("write", "rw")
+        # For coils without options
+        reg_type = entity_config.get("register_type", "holding").lower()
+        return reg_type == "coil" and is_writable
 
     def _create_entity(self, entity_config: dict, unique_id: str, key: str):
         return ProtocolWizardSwitchBase(
