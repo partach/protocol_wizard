@@ -8,7 +8,7 @@ import os
 import asyncio
 import re
 
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er, config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -64,6 +64,9 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH]
+
+# This integration can only be set up via config entries
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_install_frontend_resource(hass: HomeAssistant):
     """Ensure the frontend JS file is copied to the www/community folder."""
