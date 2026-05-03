@@ -19,6 +19,10 @@ class SelectManager(BaseEntityManager):
 
     def _should_create_entity(self, entity_config: dict) -> bool:
         """Create select for writable entities with options mapping."""
+        # If switch_options exists -> let switch handle it
+        if entity_config.get("switch_options"):
+            return False
+
         has_options = bool(entity_config.get("options"))
         is_writable = entity_config.get("rw") in ("rw", "write")
         return has_options and is_writable
