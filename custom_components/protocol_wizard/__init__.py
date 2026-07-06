@@ -168,13 +168,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         if protocol_name == CONF_PROTOCOL_MODBUS:
             # Get list of slaves (defaults to single slave from CONF_SLAVE_ID for backward compatibility)
-            slaves = entry.options.get(CONF_SLAVES, [])
+            slaves = entry.options.get(CONF_SLAVES)
 
             _LOGGER.debug("[Modbus Setup] Entry: %s, has CONF_SLAVES: %s, count: %d",
-                        entry.title, slaves is not None and len(slaves) > 0, len(slaves) if slaves else 0)
+                        entry.title, CONF_SLAVES in entry.options, len(slaves) if slaves else 0)
 
-            if not slaves:
-                # Backward compatibility: no slaves defined = use CONF_SLAVE_ID and global CONF_REGISTERS
+            if slaves is None:
+                # Backward compatibility: CONF_SLAVES key doesn't exist = use CONF_SLAVE_ID and global CONF_REGISTERS
                 default_slave_id = config.get(CONF_SLAVE_ID, 1)
                 # Check if there are entities in the old location (backward compatibility)
                 old_registers = entry.options.get(CONF_REGISTERS, [])
@@ -207,6 +207,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 options.pop(CONF_TEMPLATE, None)
                 hass.config_entries.async_update_entry(entry, options=options)
                 _LOGGER.info("[Modbus Setup] Migration complete")
+            elif not slaves:
+                # CONF_SLAVES exists but is empty - this shouldn't happen but handle gracefully
+                _LOGGER.warning("[Modbus Setup] CONF_SLAVES exists but is empty - no slaves to set up")
+                return True  # Setup "succeeded" but nothing to do
             else:
                 _LOGGER.debug("[Modbus Setup] Using existing slaves: %d slaves", len(slaves))
 
