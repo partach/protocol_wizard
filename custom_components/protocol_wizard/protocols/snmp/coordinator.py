@@ -114,7 +114,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                         formatted = self._format_value(decoded, entity)
                         new_data[key] = formatted
 
-                except Exception as err:
+                except (OSError, ConnectionError, TimeoutError) as err:
                     _LOGGER.error("Error processing %s %s: %s", read_mode, oid, err)
                     failed_count += 1
                     consecutive_failures += 1
@@ -160,7 +160,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
             return decoded
 
-        except Exception as err:
+        except (ValueError, TypeError) as err:
             _LOGGER.error("Decode error for OID %s: %s", entity_config.get("address"), err)
             return None
 
@@ -182,7 +182,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
             # pysnmp handles type mapping — just return clean Python value
             return value
 
-        except Exception as err:
+        except (ValueError, TypeError) as err:
             _LOGGER.error("Encode error for %s: %s", entity_config.get("name"), err)
             return None
 
@@ -214,7 +214,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
                 return self._decode_value(raw_value, entity_config)
 
-            except Exception as err:
+            except (OSError, ConnectionError, TimeoutError) as err:
                 _LOGGER.error("Service read failed for OID %s: %s", address, err)
                 return None
 
@@ -242,6 +242,6 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
             return success
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("Write failed for OID %s: %s", address, err)
             return False

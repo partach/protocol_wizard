@@ -4,13 +4,15 @@
 """Protocol registry for Protocol Wizard."""
 from __future__ import annotations
 
+from typing import ClassVar
+
 from .base import BaseProtocolCoordinator
 
 
 class ProtocolRegistry:
     """Registry of available protocols."""
-    
-    _protocols: dict[str, type[BaseProtocolCoordinator]] = {}
+
+    _protocols: ClassVar[dict[str, type[BaseProtocolCoordinator]]] = {}
     
     @classmethod
     def register(cls, protocol_name: str):

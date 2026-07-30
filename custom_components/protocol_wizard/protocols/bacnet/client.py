@@ -85,7 +85,7 @@ def calculate_broadcast_address(ip_with_subnet):
         _LOGGER.debug("Network: %s, Broadcast: %s", network.network_address, broadcast)
 
         return ip, netmask, broadcast
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         _LOGGER.error("Failed to calculate broadcast address from %s: %s", ip_with_subnet, e)
         return None, None, None
     
@@ -135,11 +135,11 @@ class BACnetClient:
 
                 try:
                     address_adapter = await get_my_lan_ip_and_subnet(hass)
-                except Exception as err:
+                except (OSError, ConnectionError, TimeoutError) as err:
                     _LOGGER.warning("Error in getting adapter info: %s",  err)
                 try:
                     source_ip = await async_get_source_ip(hass)
-                except Exception as err:
+                except (OSError, ConnectionError, TimeoutError) as err:
                     _LOGGER.warning("Error in getting HA local IP info: %s",  err)
 
                 if self.host == "0.0.0.0": # Discovery mode - use actual IP
@@ -198,7 +198,7 @@ class BACnetClient:
 
                 return theApp
                 
-            except Exception as err:
+            except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
                 _LOGGER.error("Failed to initialize bacpypes3: %s", err)
                 import traceback
                 traceback.print_exc()
@@ -222,7 +222,7 @@ class BACnetClient:
             _LOGGER.debug("[BACnet] Connected successfully, app=%s", type(self.app).__name__)
             return True
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.error("[BACnet] Connection failed: %s", err)
             import traceback
             traceback.print_exc()
@@ -254,7 +254,7 @@ class BACnetClient:
 
                 await asyncio.sleep(0.5)
 
-            except Exception as err:
+            except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
                 _LOGGER.error("Who-Is failed: %s", err)
                 return []
 
@@ -266,7 +266,7 @@ class BACnetClient:
             _LOGGER.debug("Discovered %d BACnet devices", len(devices))
             return devices
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.error("BACnet discovery failed: %s", err)
             return []
     
@@ -316,10 +316,10 @@ class BACnetClient:
                         'vendor': vendor,
                     })
 
-                except Exception as err:
+                except (ValueError, TypeError) as err:
                     _LOGGER.warning("Error parsing device %s: %s", device_id, err)
 
-        except Exception as err:
+        except (ValueError, TypeError) as err:
             _LOGGER.error("Error collecting discovered devices: %s", err)
 
         return devices
@@ -333,7 +333,7 @@ class BACnetClient:
             
             name = await self.read_property("device", self.device_id, "objectName")
             return name
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.warning("Could not read device name: %s", err)
             return None
     
@@ -371,8 +371,8 @@ class BACnetClient:
                 _LOGGER.warning("[BACnet] Read timed out after 5s - no response from %s for %s", device_address, object_id)
                 return None
         
-        except Exception as err:
-            _LOGGER.error("Read failed for %s:%s.%s: %s", 
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+            _LOGGER.error("Read failed for %s:%s.%s: %s",
                          object_type, object_instance, property_name, err)
             import traceback
             traceback.print_exc()
@@ -408,8 +408,8 @@ class BACnetClient:
             _LOGGER.debug("Wrote %s to %s:%s.%s", value, object_type, object_instance, property_name)
             return True
         
-        except Exception as err:
-            _LOGGER.error("Write failed for %s:%s.%s: %s", 
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+            _LOGGER.error("Write failed for %s:%s.%s: %s",
                          object_type, object_instance, property_name, err)
             import traceback
             traceback.print_exc()
@@ -429,7 +429,7 @@ class BACnetClient:
                                     await link_layer.close()
                                 else:
                                     link_layer.close()
-                        except Exception as err:
+                        except Exception as err:  # noqa: BLE001
                             _LOGGER.debug("Error closing link layer %s: %s", port_id, err)
 
                 # Close the application
@@ -448,8 +448,8 @@ class BACnetClient:
 
                 _LOGGER.debug("BACnet disconnected")
 
-            except Exception as err:
-                _LOGGER.error("Error disconnecting BACnet: %s", err)
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.debug("Error disconnecting BACnet: %s", err)
             finally:
                 self.app = None
                 self._bacpypeinstance = None
