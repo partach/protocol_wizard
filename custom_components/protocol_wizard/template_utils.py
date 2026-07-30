@@ -6,22 +6,15 @@ with a single, consistent interface supporting both built-in and user templates.
 """
 from __future__ import annotations
 
-import json
 import logging
-
+import json
 #import os
 from pathlib import Path
 from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .const import (
-    CONF_PROTOCOL_BACNET,
-    CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_MQTT,
-    CONF_PROTOCOL_SNMP,
-    DOMAIN,
-)
+from .const import DOMAIN, CONF_PROTOCOL_MODBUS, CONF_PROTOCOL_SNMP , CONF_PROTOCOL_MQTT, CONF_PROTOCOL_BACNET
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +61,7 @@ def ensure_user_template_dirs(hass: HomeAssistant) -> None:
     try:
         base_path = Path(hass.config.path(USER_TEMPLATES_DIR))
         
-        for protocol in PROTOCOL_SUBDIRS:
+        for protocol in PROTOCOL_SUBDIRS.keys():
             protocol_dir = base_path / protocol
             protocol_dir.mkdir(parents=True, exist_ok=True)
         
@@ -77,7 +70,7 @@ def ensure_user_template_dirs(hass: HomeAssistant) -> None:
         if not readme_path.exists():
             readme_path.write_text(_get_readme_content(), encoding='utf-8')
             _LOGGER.info("Created user templates directory: %s", base_path)
-    except OSError as err:
+    except Exception as err:
         _LOGGER.warning("Failed to create user template directories: %s", err)
 
 
@@ -142,7 +135,7 @@ async def get_available_templates(
                     "source": "builtin",
                     "path": str(builtin_dir / f"{name}.json"),
                 }
-        except OSError as err:
+        except Exception as err:
             _LOGGER.warning("Failed to list built-in templates for %s: %s", protocol, err)
     
     # Load user templates
@@ -164,7 +157,7 @@ async def get_available_templates(
                     "source": "user",
                     "path": str(user_dir / f"{name}.json"),
                 }
-        except OSError as err:
+        except Exception as err:
             _LOGGER.warning("Failed to list user templates for %s: %s", protocol, err)
     
     return templates
@@ -219,7 +212,7 @@ async def load_template(
     except json.JSONDecodeError as err:
         _LOGGER.error("Failed to parse template %s: %s", template_id, err)
         return None
-    except OSError as err:
+    except Exception as err:
         _LOGGER.error("Failed to load template %s: %s", template_id, err)
         return None
 
@@ -296,7 +289,7 @@ async def save_template(
         relative_path = template_path.relative_to(Path(hass.config.config_dir))
         _LOGGER.info("Saved template to %s", template_path)
         return True, f"Template saved to {relative_path}"
-    except OSError as err:
+    except Exception as err:
         _LOGGER.error("Failed to save template: %s", err)
         return False, f"Failed to save: {err}"
 
@@ -332,7 +325,7 @@ async def delete_template(
         await hass.async_add_executor_job(template_path.unlink)
         _LOGGER.info("Deleted template: %s", template_path)
         return True, "Template deleted"
-    except OSError as err:
+    except Exception as err:
         _LOGGER.error("Failed to delete template: %s", err)
         return False, f"Failed to delete: {err}"
 
@@ -376,7 +369,7 @@ async def get_available_templates_legacy(
     Returns list of filenames without .json extension, from both directories.
     """
     templates = await get_available_templates(hass, protocol)
-    return [tid.split(":", 1)[1] for tid in templates]
+    return [tid.split(":", 1)[1] for tid in templates.keys()]
 
 
 async def load_template_legacy(

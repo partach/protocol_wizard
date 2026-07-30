@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
+import json
 from typing import Any
 
 import paho.mqtt.client as mqtt_client
@@ -64,7 +64,7 @@ class MQTTClient(BaseProtocolClient):
                     try:
                         self._client.subscribe(topic, qos=0)
      #                   _LOGGER.debug("Resubscribed to %s", topic)
-                    except (OSError, ConnectionError, TimeoutError) as err:
+                    except Exception as err:
                         _LOGGER.error("Failed to resubscribe to %s: %s", topic, err)
         else:
             _LOGGER.error("MQTT connection failed with code %s", rc)
@@ -141,7 +141,7 @@ class MQTTClient(BaseProtocolClient):
             _LOGGER.error("MQTT connection timeout to %s:%s", self.broker, self.port)
             return False
             
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("MQTT connection failed: %s", err)
             self._connected = False
             return False
@@ -156,8 +156,8 @@ class MQTTClient(BaseProtocolClient):
                 
                 await asyncio.get_event_loop().run_in_executor(None, do_disconnect)
                 _LOGGER.info("MQTT disconnected and loop stopped")
-            except Exception as err:  # noqa: BLE001
-                _LOGGER.debug("Error during MQTT disconnect: %s", err)
+            except Exception as err:
+                _LOGGER.error("Error during MQTT disconnect: %s", err)
             
             self._connected = False
 
@@ -197,7 +197,7 @@ class MQTTClient(BaseProtocolClient):
                 _LOGGER.error("Failed to subscribe to %s", topic)
                 return False
                 
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("MQTT subscribe error: %s", err)
             return False
 
@@ -402,7 +402,7 @@ class MQTTClient(BaseProtocolClient):
             
             return success
             
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("MQTT publish error: %s", err)
             return False
 

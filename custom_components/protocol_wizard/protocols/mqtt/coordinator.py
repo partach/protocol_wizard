@@ -2,19 +2,19 @@
 """MQTT protocol coordinator implementation - Event-Driven Architecture."""
 from __future__ import annotations
 
+import logging
+from typing import Any
+from datetime import timedelta
 import asyncio
 import json
-import logging
-from datetime import timedelta
-from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 
-from ...const import CONF_ENTITIES, CONF_PROTOCOL_MQTT
-from .. import ProtocolRegistry
 from ..base import BaseProtocolCoordinator
+from .. import ProtocolRegistry
 from .client import MQTTClient
+from ...const import CONF_ENTITIES, CONF_PROTOCOL_MQTT
 from .const import topic_key
 
 _LOGGER = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
                     # Store raw for debugging
                     new_data[f"{key}_raw"] = payload
                 
-            except (ValueError, TypeError, KeyError) as err:
+            except Exception as err:
                 _LOGGER.warning(
                     "Failed to read MQTT topic %s: %s",
                     topic,
@@ -203,7 +203,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
                 return None
             return raw_value
             
-        except (json.JSONDecodeError, ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.warning("Failed to decode value: %s", err)
             # If numeric entity, return None on error (shows as unavailable)
             # Otherwise return None to avoid invalid state
@@ -333,7 +333,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
             # Single topic - decode normally
             return self._decode_value(payload, entity_config)
             
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("Failed to read MQTT topic %s: %s", address, err)
             return None
 
@@ -383,7 +383,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
                 retain=retain,
             )
             
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("Failed to write to MQTT topic %s: %s", address, err)
             return False
 
@@ -394,6 +394,6 @@ class MQTTCoordinator(BaseProtocolCoordinator):
         
         try:
             return await self.client.connect()
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("Failed to connect to MQTT broker: %s", err)
             return False

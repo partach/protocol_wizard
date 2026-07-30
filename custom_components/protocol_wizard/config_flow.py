@@ -1,64 +1,53 @@
 """Config flow for Protocol Wizard."""
-import asyncio
 import logging
 from typing import Any
-
 import serial.tools.list_ports
 import voluptuous as vol
+import asyncio
 from homeassistant import config_entries
+from homeassistant.helpers import selector
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import selector
-from pymodbus.client import (
-    AsyncModbusSerialClient,
-    AsyncModbusTcpClient,
-    AsyncModbusUdpClient,
-)
-from pymodbus.exceptions import ModbusIOException
-
+from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
+from .protocols.mqtt import CONF_BROKER, DEFAULT_PORT, CONF_USERNAME, CONF_PASSWORD
 from .const import (
-    CONF_BAUDRATE,
-    CONF_BYTESIZE,
-    CONF_CONNECTION_TYPE,
-    CONF_FIRST_REG,
-    CONF_FIRST_REG_SIZE,
-    CONF_HOST,
-    CONF_IP,
-    CONF_NAME,
-    CONF_PARITY,
-    CONF_PORT,
-    CONF_PROTOCOL,
-    CONF_PROTOCOL_BACNET,
-    CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_MQTT,
-    CONF_PROTOCOL_SNMP,
-    CONF_SERIAL_PORT,
-    CONF_SLAVE_ID,
-    CONF_SLAVES,
-    CONF_STOPBITS,
-    CONF_TEMPLATE,
-    CONF_UPDATE_INTERVAL,
-    CONNECTION_TYPE_IP,
     CONNECTION_TYPE_SERIAL,
+    CONNECTION_TYPE_IP,
     CONNECTION_TYPE_TCP,
     CONNECTION_TYPE_UDP,
-    DEFAULT_BAUDRATE,
-    DEFAULT_BYTESIZE,
-    DEFAULT_PARITY,
+    CONF_CONNECTION_TYPE,
+    CONF_HOST,
+    CONF_PORT,
+    CONF_SERIAL_PORT,
+    CONF_SLAVE_ID,
+    CONF_BAUDRATE,
+    CONF_PARITY,
+    CONF_NAME,
+    CONF_STOPBITS,
+    CONF_BYTESIZE,
+    CONF_FIRST_REG,
+    CONF_FIRST_REG_SIZE,
+    CONF_UPDATE_INTERVAL,
+    CONF_SLAVES,
     DEFAULT_SLAVE_ID,
-    DEFAULT_STOPBITS,
+    DEFAULT_BAUDRATE,
     DEFAULT_TCP_PORT,
+    DEFAULT_PARITY,
+    DEFAULT_STOPBITS,
+    DEFAULT_BYTESIZE,
     DOMAIN,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_SNMP,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_BACNET,
+    CONF_PROTOCOL,
+    CONF_IP,
+    CONF_TEMPLATE,
 )
 from .options_flow import ProtocolWizardOptionsFlow
 from .protocols import ProtocolRegistry
-from .protocols.mqtt import CONF_BROKER, CONF_PASSWORD, CONF_USERNAME, DEFAULT_PORT
-from .template_utils import (
-    get_available_templates,
-    get_template_dropdown_choices,
-    load_template,
-)
+from .template_utils import get_available_templates, get_template_dropdown_choices, load_template
 
 _LOGGER = logging.getLogger(__name__)
 # Reduce noise from pymodbus
@@ -319,8 +308,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-            except (ModbusIOException, OSError, ConnectionError, TimeoutError):
-                _LOGGER.exception("Connection test failed")
+            except Exception as err:
+                _LOGGER.exception("Connection test failed: %s", err)
                 errors["base"] = "cannot_connect"
 
         # Get available templates
@@ -436,7 +425,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         if not result.isError() and hasattr(result, "registers") and len(result.registers) == count:
                             success = True
                             break
-                except (ModbusIOException, OSError, ConnectionError, TimeoutError) as inner_err:
+                except Exception as inner_err:
                     _LOGGER.debug("Test read failed for %s at addr %d: %s", name, address, inner_err)
 
             if not success:
@@ -450,7 +439,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if client:
                 try:
                     client.close()
-                except Exception as err:  # noqa: BLE001
+                except Exception as err:
                     _LOGGER.debug("Error closing Modbus client: %s", err)
 
     # ================================================================
@@ -494,8 +483,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=options,
                 )
 
-            except (OSError, ConnectionError, TimeoutError):
-                _LOGGER.exception("SNMP connection test failed")
+            except Exception as err:
+                _LOGGER.exception("SNMP connection test failed: %s", err)
                 errors["base"] = "cannot_connect"
 
         # Get available templates
@@ -637,7 +626,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except asyncio.TimeoutError:
             _LOGGER.warning("BACnet discovery timed out")
             errors["base"] = "discovery_timeout"
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("BACnet discovery failed: %s", err)
             errors["base"] = "discovery_failed"
         finally:
@@ -645,7 +634,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 try:
                     await discovery_client.disconnect()
                     _LOGGER.info("Discovery client disconnected")
-                except Exception as err:  # noqa: BLE001
+                except Exception as err:
                     _LOGGER.warning("Error disconnecting discovery client: %s", err)
 
         # If no devices found or error, show option to go manual
@@ -786,7 +775,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 else:
                     errors["base"] = "cannot_connect"
-            except (OSError, ConnectionError, TimeoutError) as err:
+            except Exception as err:
                 _LOGGER.error("BACnet connection test failed: %s", err)
                 errors["base"] = "unknown"
 
@@ -874,8 +863,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=options,
                 )
 
-            except (OSError, ConnectionError, TimeoutError):
-                _LOGGER.exception("MQTT connection test failed")
+            except Exception as err:
+                _LOGGER.exception("MQTT connection test failed: %s", err)
                 errors["base"] = "cannot_connect"
 
         # Get available templates
@@ -937,21 +926,21 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             connected = await client.connect()
 
             if not connected:
-                raise ConnectionError("Could not connect to MQTT broker")
+                raise Exception("Could not connect to MQTT broker")
 
             _LOGGER.info("MQTT connection test successful to %s:%s",
                         config[CONF_BROKER], config[CONF_PORT])
 
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("MQTT connection test failed: %s", err)
-            raise ConnectionError(
+            raise Exception(
                 f"Cannot connect to MQTT broker at {config[CONF_BROKER]}:{config[CONF_PORT]}. "
                 "Check broker address, port, and credentials."
-            ) from err
+            )
 
         finally:
             if client:
                 try:
                     await client.disconnect()
-                except Exception as err:  # noqa: BLE001
+                except Exception as err:
                     _LOGGER.debug("Error disconnecting MQTT client: %s", err)

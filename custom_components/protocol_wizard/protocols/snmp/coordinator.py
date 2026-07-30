@@ -2,16 +2,15 @@
 """SNMP protocol coordinator implementation."""
 from __future__ import annotations
 
-import asyncio
 import logging
-from datetime import timedelta
 from typing import Any
-
-from homeassistant.config_entries import ConfigEntry
+from datetime import timedelta
+import asyncio
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 
-from .. import ProtocolRegistry
 from ..base import BaseProtocolCoordinator
+from .. import ProtocolRegistry
 from .client import SNMPClient
 from .const import CONF_ENTITIES, oid_key
 
@@ -114,7 +113,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                         formatted = self._format_value(decoded, entity)
                         new_data[key] = formatted
 
-                except (OSError, ConnectionError, TimeoutError) as err:
+                except Exception as err:
                     _LOGGER.error("Error processing %s %s: %s", read_mode, oid, err)
                     failed_count += 1
                     consecutive_failures += 1
@@ -160,7 +159,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
             return decoded
 
-        except (ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error("Decode error for OID %s: %s", entity_config.get("address"), err)
             return None
 
@@ -177,12 +176,12 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                     value = (value - offset) / scale
 
                 if data_type != "float":
-                    value = round(float(value))
+                    value = int(round(float(value)))
 
             # pysnmp handles type mapping — just return clean Python value
             return value
 
-        except (ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error("Encode error for %s: %s", entity_config.get("name"), err)
             return None
 
@@ -214,7 +213,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
                 return self._decode_value(raw_value, entity_config)
 
-            except (OSError, ConnectionError, TimeoutError) as err:
+            except Exception as err:
                 _LOGGER.error("Service read failed for OID %s: %s", address, err)
                 return None
 
@@ -242,6 +241,6 @@ class SNMPCoordinator(BaseProtocolCoordinator):
 
             return success
 
-        except (OSError, ConnectionError, TimeoutError) as err:
+        except Exception as err:
             _LOGGER.error("Write failed for OID %s: %s", address, err)
             return False

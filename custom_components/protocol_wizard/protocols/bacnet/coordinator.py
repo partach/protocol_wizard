@@ -1,20 +1,17 @@
 # protocols/bacnet/coordinator.py
 """BACnet coordinator for Protocol Wizard."""
 
-import asyncio
 import logging
-from datetime import timedelta
 from typing import Any
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-
-from ...const import CONF_BACNET_DEVICES, CONF_ENTITIES, CONF_PROTOCOL_BACNET
-from ...protocols.base import BaseProtocolCoordinator
+import asyncio
+from datetime import timedelta
 from .. import ProtocolRegistry
+from ...protocols.base import BaseProtocolCoordinator
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from .const import parse_bacnet_address, entity_key
 from .client import BACnetClient
-from .const import entity_key, parse_bacnet_address
-
+from ...const import CONF_ENTITIES, CONF_PROTOCOL_BACNET, CONF_BACNET_DEVICES
 _LOGGER = logging.getLogger(__name__)
 
 @ProtocolRegistry.register(CONF_PROTOCOL_BACNET)
@@ -93,7 +90,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             )
             return None
             
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.error(
                 "Error reading entity %s: %s",
                 entity_config.get("name"),
@@ -159,7 +156,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             _LOGGER.error("Invalid address for entity %s: %s", entity_config.get("name"), err)
             return False
 
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.error("Write error for entity %s: %s", entity_config.get("name"), err)
             import traceback
             _LOGGER.error(traceback.format_exc())
@@ -337,7 +334,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                     failed_count += 1
                     consecutive_failures += 1
 
-                except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+                except Exception as err:
                     _LOGGER.error(
                         "Error reading entity %s: %s",
                         entity.get("name"),
@@ -375,7 +372,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             else:
                 _LOGGER.warning("[BACnet] Connection failed")
                 return False
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.error("[BACnet] Connection error: %s", err)
             return False
     
@@ -561,7 +558,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             _LOGGER.error("Invalid address for entity %s: %s", entity_name, err)
             return False
         
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.error("Write error for entity %s: %s", entity_name, err)
             return False
     
