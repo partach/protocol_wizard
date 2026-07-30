@@ -4,21 +4,20 @@
 """Modbus protocol coordinator implementation."""
 from __future__ import annotations
 
-import asyncio
 import logging
-from datetime import timedelta
+import asyncio
 from typing import Any
+from datetime import timedelta
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from pymodbus.client.mixin import ModbusClientMixin
-from pymodbus.exceptions import ModbusIOException
-
-from ...const import CONF_REGISTERS, CONF_SLAVES
-from .. import ProtocolRegistry
-from ..base import BaseProtocolCoordinator
 from .client import ModbusClient
+
+from ..base import BaseProtocolCoordinator
+from .. import ProtocolRegistry
 from .const import TYPE_SIZES, reg_key
+from ...const import CONF_REGISTERS,CONF_SLAVES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,7 +70,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         # Need to connect
         try:
             return await self.client.connect()
-        except (ModbusIOException, OSError, ConnectionError) as err:
+        except Exception as err:
             _LOGGER.error("[Modbus] Failed to connect: %s", err)
             return False
 
@@ -219,8 +218,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                 result = await method(address=address, count=count, device_id=self.client.slave_id)
                 if not result.isError():
                     return name, result
-            except (ModbusIOException, OSError, ConnectionError):
-                _LOGGER.debug("Auto-detect: type %s failed at address %d", name, address)
+            except Exception:
                 continue
 
         _LOGGER.warning("Auto-detect failed at address %d", address)
@@ -242,7 +240,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
 
         try:
             return await method(address=address, count=count, device_id=self.client.slave_id)
-        except (ModbusIOException, OSError, ConnectionError) as err:
+        except Exception as err:
             _LOGGER.error("Direct read failed for type %s: %s", reg_type, err)
             return None
     
@@ -295,12 +293,13 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                 decoded = decoded * scale + offset
 
                 # Preserve integer type for integer data types when result is whole number
-                if data_type in ("uint16", "int16", "uint32", "int32", "uint64", "int64") and isinstance(decoded, float) and decoded.is_integer():
-                    decoded = int(decoded)
+                if data_type in ("uint16", "int16", "uint32", "int32", "uint64", "int64"):
+                    if isinstance(decoded, float) and decoded.is_integer():
+                        decoded = int(decoded)
 
             return decoded
 
-        except (ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error(
                 "Error decoding register '%s' at address %s: %s",
                 entity_config.get("name"), entity_config.get("address"), err
@@ -349,22 +348,22 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             if scale != 0:
                 try:
                     value = (value - offset) / scale
-                except (ValueError, TypeError) as err:
+                except Exception as err:
                     _LOGGER.error("Scale/offset failed for value %s: %s", original_value, err)
                     return None
         
             # Single register integer
             if data_type in ("uint16", "int16"):
                 try:
-                    value = round(float(value))
-                except (ValueError, TypeError):
+                    value = int(round(float(value)))
+                except Exception:
                     _LOGGER.error("Failed to convert to int for %s: %s", data_type, original_value)
                     return None
                 if data_type == "int16" and value < 0:
                     value += 65536
                 value = max(0, min(65535, value))
                 return [value]
-        except (ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error("Encoding error %s (%s): %s", value, data_type, err)
             return None    
         # Multi-register types
@@ -380,7 +379,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         if target_type == ModbusClientMixin.DATATYPE.FLOAT32:
             value = float(value)
         else:
-            value = round(float(value))
+            value = int(round(float(value)))
     
         try:
             return self.client.raw_client.convert_to_registers(
@@ -388,7 +387,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                 data_type=target_type,
                 word_order=0 if word_order == "big" else 1,
             )
-        except (ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error("pymodbus convert_to_registers failed for %s (%s): %s", original_value, data_type, err)
             return None
     # ----------------------------------------------------------------------------
@@ -396,6 +395,8 @@ class ModbusCoordinator(BaseProtocolCoordinator):
     #------------------------------------------------------------------------------
     
     async def async_read_entity(self, address: str, entity_config: dict, **kwargs) -> Any | None:
+        from pymodbus.exceptions import ModbusIOException
+
         addr = int(address)
         size = kwargs.get("size") or TYPE_SIZES.get(entity_config.get("data_type", "uint16").lower(), 1)
         reg_type = kwargs.get("register_type") or entity_config.get("register_type", "holding")
@@ -425,10 +426,10 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                                 values = test_values
                                 detected_type = test_type
                                 break
-                        except (ModbusIOException, OSError, ConnectionError):
+                        except ModbusIOException:
                             continue  # Try next type
 
-            except (ModbusIOException, OSError, ConnectionError) as err:
+            except ModbusIOException as err:
                 _LOGGER.warning("[Modbus] I/O error reading address %s: %s - will attempt reconnect on next request", address, err)
                 # Connection will be recovered on next _async_connect call
                 return None

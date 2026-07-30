@@ -5,32 +5,30 @@
 """Protocol-agnostic base entity classes."""
 from __future__ import annotations
 
-import json
 import logging
-from abc import ABC, abstractmethod
 from typing import Any
-
-from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.components.select import SelectEntity
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
+from abc import ABC, abstractmethod
+import json
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
+from homeassistant.helpers.entity import DeviceInfo, Entity, EntityCategory
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.number import NumberEntity,NumberMode
+from homeassistant.components.select import SelectEntity
+from homeassistant.helpers import entity_registry as er
+from homeassistant.components.switch import SwitchEntity
 from .const import (
-    CONF_BACNET_DEVICES,
     CONF_ENTITIES,
-    CONF_PROTOCOL,
-    CONF_PROTOCOL_BACNET,
-    CONF_PROTOCOL_MODBUS,
-    #    CONF_PROTOCOL_SNMP,
-    CONF_PROTOCOL_MQTT,
     CONF_REGISTERS,
+    CONF_PROTOCOL_MODBUS,
+#    CONF_PROTOCOL_SNMP,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_BACNET,
+    CONF_PROTOCOL,
     CONF_SLAVES,
+    CONF_BACNET_DEVICES,
     SIGNAL_ENTITY_SYNC,
 )
 from .protocols.base import BaseProtocolCoordinator
@@ -181,14 +179,17 @@ class BaseEntityManager(ABC):
     @abstractmethod
     def _should_create_entity(self, entity_config: dict) -> bool:
         """Determine if entity should be created for this config."""
+        pass
     
     @abstractmethod
     def _create_entity(self, entity_config: dict, unique_id: str, key: str) -> Entity:
         """Create the appropriate entity type."""
+        pass
     
     @abstractmethod
     def _get_entity_type_suffix(self) -> str:
         """Get suffix for unique_id (e.g., 'sensor', 'number')."""
+        pass
     
     def _get_entities_config_key(self) -> str:
         """Get the config key for entities list. Override if protocol uses different key."""
@@ -481,7 +482,7 @@ class ProtocolWizardNumberBase(CoordinatorEntity, NumberEntity):
         if register_type in ("coil", "discrete"):
             value = bool(int(float(value)))  # "0" → False, "1" → True
         elif "float" not in self.data_type:
-            value = round(float(value))  # Regular registers
+            value = int(round(float(value)))  # Regular registers
         else:
             value = float(value)  # Float registers
         
@@ -625,7 +626,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         if isinstance(options_raw, str):
             try:
                 options_dict = json.loads(options_raw)
-            except (json.JSONDecodeError, ValueError):
+            except Exception:
                 _LOGGER.error(
                     "Invalid options JSON for %s: %r",
                     entity_config.get("name"),
@@ -710,7 +711,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
                 elif "float" in self._config.get("data_type", ""):
                     value = float(value)
                 else:
-                    value = round(float(value))  # Regular registers
+                    value = int(round(float(value)))  # Regular registers
     
             elif protocol == CONF_PROTOCOL_BACNET:
                 # BACnet: convert based on data type
@@ -744,7 +745,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
             else:
                 _LOGGER.error("Failed to write value to %s", self._config.get("name"))
     
-        except (OSError, ConnectionError, TimeoutError, ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error("Error in async_select_option: %s", err)
             import traceback
             traceback.print_exc()
@@ -798,7 +799,7 @@ class ProtocolWizardHubEntity(CoordinatorEntity, SensorEntity):
     def native_value(self):
         try:
             return "connected" if self.coordinator.client.is_connected else "disconnected"
-        except (AttributeError, OSError, ConnectionError) as err:
+        except Exception as err:
             _LOGGER.debug("Failed to get hub status: %s", err)
             return "unknown"
 
@@ -898,9 +899,8 @@ def get_all_coordinators_for_entry(hass: HomeAssistant, entry: ConfigEntry):
     Returns list of (coordinator, device_info) tuples.
     Handles multi-slave Modbus and multi-device BACnet.
     """
+    from .const import DOMAIN, CONF_SLAVES, CONF_PROTOCOL, CONF_PROTOCOL_MODBUS
     from homeassistant.helpers.entity import DeviceInfo
-
-    from .const import CONF_PROTOCOL, CONF_PROTOCOL_MODBUS, CONF_SLAVES, DOMAIN
 
     coordinator_keys = hass.data[DOMAIN].get("entry_coordinator_keys", {}).get(
         entry.entry_id, [entry.entry_id]

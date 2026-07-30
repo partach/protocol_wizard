@@ -4,38 +4,35 @@
 """Options flow for Protocol Wizard – fully protocol-agnostic."""
 from __future__ import annotations
 
-import json
 import logging
+import json
 from datetime import timedelta
-
 import voluptuous as vol
+from .template_utils import ( 
+    save_template, 
+    get_available_templates, 
+    get_template_dropdown_choices, 
+    load_template,
+    delete_template,
+)
 from homeassistant import config_entries
-from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers import selector
-
+from homeassistant.helpers import selector, device_registry as dr
 #import asyncio
 from .const import (
-    CONF_BACNET_DEVICES,
-    CONF_BYTE_ORDER,
-    CONF_ENTITIES,
-    CONF_PROTOCOL,
-    CONF_PROTOCOL_BACNET,
-    CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_MQTT,
-    CONF_PROTOCOL_SNMP,
-    CONF_REGISTER_TYPE,
-    CONF_REGISTERS,
-    CONF_SLAVES,
-    CONF_UPDATE_INTERVAL,
-    CONF_WORD_ORDER,
     DOMAIN,
-)
-from .template_utils import (
-    delete_template,
-    get_available_templates,
-    get_template_dropdown_choices,
-    load_template,
-    save_template,
+    CONF_UPDATE_INTERVAL,
+    CONF_ENTITIES,
+    CONF_REGISTERS,
+    CONF_PROTOCOL,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_SNMP,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_BACNET,
+    CONF_BYTE_ORDER,
+    CONF_WORD_ORDER,
+    CONF_REGISTER_TYPE,
+    CONF_SLAVES,
+    CONF_BACNET_DEVICES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -788,7 +785,7 @@ class ModbusSchemaHandler:
                 processed["options"] = json.loads(processed["options"])
                 if not isinstance(processed["options"], dict):
                     processed["options"]="" # if it is rubish, we dont use it
-            except (json.JSONDecodeError, ValueError):
+            except Exception:
                 errors["options"] = ""
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():

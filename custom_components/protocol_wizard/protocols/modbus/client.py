@@ -4,8 +4,8 @@
 """Modbus protocol client wrapper."""
 from __future__ import annotations
 
-import asyncio
 import logging
+import asyncio
 from typing import Any
 
 from pymodbus.exceptions import ModbusIOException
@@ -59,7 +59,7 @@ class ModbusClient(BaseProtocolClient):
                 await self._client.connect()
             self._conn_state["failed"] = False
             return self._client.connected
-        except (ModbusIOException, OSError, ConnectionError) as err:
+        except Exception as err:
             _LOGGER.error("Modbus connection failed: %s", err)
             self._conn_state["failed"] = True
             return False
@@ -70,7 +70,7 @@ class ModbusClient(BaseProtocolClient):
             if self._client.connected:
                 self._client.close()
             self._conn_state["failed"] = False
-        except Exception as err:  # noqa: BLE001
+        except Exception as err:
             _LOGGER.debug("Error closing Modbus client: %s", err)
 
     async def reconnect(self) -> bool:
@@ -99,8 +99,8 @@ class ModbusClient(BaseProtocolClient):
                 # Force close regardless of state
                 try:
                     self._client.close()
-                except Exception:  # noqa: BLE001
-                    _LOGGER.debug("Error closing Modbus client during reconnect")
+                except Exception:
+                    pass
 
                 # Small delay before reconnecting
                 await asyncio.sleep(0.3)
@@ -110,7 +110,7 @@ class ModbusClient(BaseProtocolClient):
                 self._conn_state["failed"] = False
                 _LOGGER.info("Modbus reconnection successful")
                 return self._client.connected
-            except (ModbusIOException, OSError, ConnectionError) as err:
+            except Exception as err:
                 _LOGGER.error("Modbus reconnection failed: %s", err)
                 self._conn_state["failed"] = True
                 return False
@@ -163,7 +163,7 @@ class ModbusClient(BaseProtocolClient):
                           address, self.slave_id, err)
             self._conn_state["failed"] = True  # Mark shared state for reconnection
             raise  # Re-raise so coordinator can handle
-        except (OSError, ConnectionError) as err:
+        except Exception as err:
             _LOGGER.error("Modbus read error at %s (slave %d): %s",
                          address, self.slave_id, err)
             self._conn_state["failed"] = True
@@ -217,7 +217,7 @@ class ModbusClient(BaseProtocolClient):
                           address, self.slave_id, err)
             self._conn_state["failed"] = True
             return False
-        except (OSError, ConnectionError) as err:
+        except Exception as err:
             _LOGGER.error("Modbus write failed at %s (slave %d): %s",
                          address, self.slave_id, err)
             self._conn_state["failed"] = True

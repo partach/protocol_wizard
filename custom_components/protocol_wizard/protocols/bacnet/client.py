@@ -1,28 +1,24 @@
 # protocols/bacnet/client.py
 """BACnet/IP client for Protocol Wizard using bacpypes3 - proper initialization."""
 
-import asyncio
 import logging
-from typing import Any
-
-from homeassistant.components.network import async_get_adapters, async_get_source_ip
+import asyncio
+from typing import Any, Optional
 from homeassistant.core import HomeAssistant
-
+from homeassistant.components.network import async_get_source_ip, async_get_adapters
 #import sys
 
 _LOGGER = logging.getLogger(__name__)
 
 try:
 #    from bacpypes3.settings import settings
-    #    from bacpypes3.argparse import SimpleArgumentParser, create_log_handler
-    import ipaddress
-
     from bacpypes3.app import Application
+#    from bacpypes3.local.device import DeviceObject
+    from bacpypes3.primitivedata import ObjectIdentifier
     from bacpypes3.basetypes import PropertyIdentifier
     from bacpypes3.pdu import Address, LocalBroadcast
-
-    #    from bacpypes3.local.device import DeviceObject
-    from bacpypes3.primitivedata import ObjectIdentifier
+#    from bacpypes3.argparse import SimpleArgumentParser, create_log_handler
+    import ipaddress
     HAS_BACPYPES3 = True
 except ImportError:
     HAS_BACPYPES3 = False
@@ -64,7 +60,7 @@ async def get_my_lan_ip_and_subnet(hass):
     # 2. Fallback: first private LAN IP
     for entry in summary:
         ip = entry["ip"]
-        if ip.startswith(("192.168.", "10.", "172.")):
+        if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
             return entry["ip"], entry["prefix"]
 
     # 3. Last resort: first IP
@@ -85,7 +81,7 @@ def calculate_broadcast_address(ip_with_subnet):
         _LOGGER.debug("Network: %s, Broadcast: %s", network.network_address, broadcast)
 
         return ip, netmask, broadcast
-    except (ValueError, TypeError) as e:
+    except Exception as e:
         _LOGGER.error("Failed to calculate broadcast address from %s: %s", ip_with_subnet, e)
         return None, None, None
     
@@ -107,9 +103,9 @@ class BACnetClient:
         self, 
         hass: HomeAssistant,
         host: str, 
-        device_id: int | None = None,
+        device_id: Optional[int] = None,
         port: int = 47808,
-        network_number: int | None = 0
+        network_number: Optional[int] = 0
     ):
         """Initialize BACnet client."""
         if not HAS_BACPYPES3:
@@ -119,7 +115,7 @@ class BACnetClient:
         self.device_id = device_id
         self.port = port
         self.network_number = network_number
-        self.app: Application | None = None
+        self.app: Optional[Application] = None
         self._connected = False
         self.hass = hass
         self._bacpypeinstance = None
@@ -128,18 +124,18 @@ class BACnetClient:
         """Initialize bacpypes3 properly using from_args pattern."""
         if not self._bacpypeinstance:
             try:
-                import random
                 from argparse import Namespace
+                import random
         
                 source_ip = address_adapter = ip_to_use = self.host
 
                 try:
                     address_adapter = await get_my_lan_ip_and_subnet(hass)
-                except (OSError, ConnectionError, TimeoutError) as err:
+                except Exception as err:
                     _LOGGER.warning("Error in getting adapter info: %s",  err)
                 try:
                     source_ip = await async_get_source_ip(hass)
-                except (OSError, ConnectionError, TimeoutError) as err:
+                except Exception as err:
                     _LOGGER.warning("Error in getting HA local IP info: %s",  err)
 
                 if self.host == "0.0.0.0": # Discovery mode - use actual IP
@@ -198,7 +194,7 @@ class BACnetClient:
 
                 return theApp
                 
-            except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+            except Exception as err:
                 _LOGGER.error("Failed to initialize bacpypes3: %s", err)
                 import traceback
                 traceback.print_exc()
@@ -222,7 +218,7 @@ class BACnetClient:
             _LOGGER.debug("[BACnet] Connected successfully, app=%s", type(self.app).__name__)
             return True
 
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.error("[BACnet] Connection failed: %s", err)
             import traceback
             traceback.print_exc()
@@ -254,7 +250,7 @@ class BACnetClient:
 
                 await asyncio.sleep(0.5)
 
-            except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+            except Exception as err:
                 _LOGGER.error("Who-Is failed: %s", err)
                 return []
 
@@ -266,7 +262,7 @@ class BACnetClient:
             _LOGGER.debug("Discovered %d BACnet devices", len(devices))
             return devices
 
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.error("BACnet discovery failed: %s", err)
             return []
     
@@ -316,16 +312,16 @@ class BACnetClient:
                         'vendor': vendor,
                     })
 
-                except (ValueError, TypeError) as err:
+                except Exception as err:
                     _LOGGER.warning("Error parsing device %s: %s", device_id, err)
 
-        except (ValueError, TypeError) as err:
+        except Exception as err:
             _LOGGER.error("Error collecting discovered devices: %s", err)
 
         return devices
     
     
-    async def get_device_name(self) -> str | None:
+    async def get_device_name(self) -> Optional[str]:
         """Get device name."""
         try:
             if not self._connected or not self.device_id:
@@ -333,7 +329,7 @@ class BACnetClient:
             
             name = await self.read_property("device", self.device_id, "objectName")
             return name
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
+        except Exception as err:
             _LOGGER.warning("Could not read device name: %s", err)
             return None
     
@@ -343,7 +339,7 @@ class BACnetClient:
         object_type: str, 
         object_instance: int, 
         property_name: str
-    ) -> Any | None:
+    ) -> Optional[Any]:
         """Read BACnet property."""
         if not self._connected or not self.app:
             _LOGGER.error("Not connected to BACnet network")
@@ -371,8 +367,8 @@ class BACnetClient:
                 _LOGGER.warning("[BACnet] Read timed out after 5s - no response from %s for %s", device_address, object_id)
                 return None
         
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
-            _LOGGER.error("Read failed for %s:%s.%s: %s",
+        except Exception as err:
+            _LOGGER.error("Read failed for %s:%s.%s: %s", 
                          object_type, object_instance, property_name, err)
             import traceback
             traceback.print_exc()
@@ -408,8 +404,8 @@ class BACnetClient:
             _LOGGER.debug("Wrote %s to %s:%s.%s", value, object_type, object_instance, property_name)
             return True
         
-        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
-            _LOGGER.error("Write failed for %s:%s.%s: %s",
+        except Exception as err:
+            _LOGGER.error("Write failed for %s:%s.%s: %s", 
                          object_type, object_instance, property_name, err)
             import traceback
             traceback.print_exc()
@@ -429,7 +425,7 @@ class BACnetClient:
                                     await link_layer.close()
                                 else:
                                     link_layer.close()
-                        except Exception as err:  # noqa: BLE001
+                        except Exception as err:
                             _LOGGER.debug("Error closing link layer %s: %s", port_id, err)
 
                 # Close the application
@@ -448,8 +444,8 @@ class BACnetClient:
 
                 _LOGGER.debug("BACnet disconnected")
 
-            except Exception as err:  # noqa: BLE001
-                _LOGGER.debug("Error disconnecting BACnet: %s", err)
+            except Exception as err:
+                _LOGGER.error("Error disconnecting BACnet: %s", err)
             finally:
                 self.app = None
                 self._bacpypeinstance = None

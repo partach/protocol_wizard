@@ -2,17 +2,13 @@
 #-- protocol init.py protocol wizard
 #------------------------------------------
 """Protocol registry for Protocol Wizard."""
-from __future__ import annotations
-
-from typing import ClassVar
-
+from typing import Dict, Type
 from .base import BaseProtocolCoordinator
-
 
 class ProtocolRegistry:
     """Registry of available protocols."""
-
-    _protocols: ClassVar[dict[str, type[BaseProtocolCoordinator]]] = {}
+    
+    _protocols: Dict[str, Type[BaseProtocolCoordinator]] = {}
     
     @classmethod
     def register(cls, protocol_name: str):
@@ -23,7 +19,7 @@ class ProtocolRegistry:
         return wrapper
     
     @classmethod
-    def get_coordinator_class(cls, protocol_name: str) -> type[BaseProtocolCoordinator] | None:
+    def get_coordinator_class(cls, protocol_name: str) -> Type[BaseProtocolCoordinator] | None:
         """Get coordinator class for protocol."""
         return cls._protocols.get(protocol_name)
     
