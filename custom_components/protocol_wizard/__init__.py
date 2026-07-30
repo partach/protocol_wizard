@@ -93,7 +93,7 @@ async def async_install_frontend_resource(hass: HomeAssistant):
             else:
                 _LOGGER.warning("Frontend source file missing at %s", source_path)
 
-        except Exception as err:
+        except OSError as err:
             _LOGGER.error("Failed to install frontend resource: %s", err)
 
     await hass.async_add_executor_job(install)
@@ -428,7 +428,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             _LOGGER.error("Protocol %s not yet implemented", protocol_name)
             return False
-    except Exception as err:
+    except (OSError, ConnectionError, TimeoutError, ValueError) as err:
         _LOGGER.error("Failed to create client for %s: %s", protocol_name, err)
         return False
 
@@ -545,7 +545,7 @@ async def _load_template_into_options(
 
         hass.config_entries.async_update_entry(entry, options=new_options)
 
-    except Exception as err:
+    except (OSError, KeyError, TypeError, ValueError) as err:
         _LOGGER.error("Failed to load template %s: %s", template_name, err)
 
 
@@ -880,7 +880,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             }
 
         except Exception as err:
-            _LOGGER.error("Failed to add entity: %s", err, exc_info=True)
+            _LOGGER.exception("Failed to add entity")
             raise HomeAssistantError(f"Failed to add entity: {err!s}") from err
 
     async def handle_write_register(call: ServiceCall):
@@ -912,7 +912,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 raise HomeAssistantError(f"Write failed for address {address}")
 
         except Exception as err:
-            _LOGGER.error("Unexpected exception in write_register service for address %s: %s", address, err, exc_info=True)
+            _LOGGER.exception("Unexpected exception in write_register service for address %s", address)
             raise HomeAssistantError(f"Write failed for address {address}: {err!s}") from err
 
     async def handle_read_register(call: ServiceCall):
@@ -1066,7 +1066,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 address=address,
                 entity_config=entity_config,
             )
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.debug("BACnet Read failed with error: %s", err)
         if value is None:
             raise HomeAssistantError(f"Failed to read BACnet address {address}")
@@ -1105,7 +1105,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 value=value,
                 entity_config=entity_config,
             )
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.debug("BACnet write failed with error: %s", err)
 
         if not success:
@@ -1188,7 +1188,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if not still_used:
                 try:
                     await client.disconnect()
-                except Exception as err:
+                except Exception as err:  # noqa: BLE001
                     _LOGGER.debug("Error closing Modbus client: %s", err)
     else:
         # Other protocols (SNMP, MQTT, etc.)
@@ -1205,7 +1205,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if not still_used:
                 try:
                     await client.disconnect()
-                except Exception as err:
+                except Exception as err:  # noqa: BLE001
                     _LOGGER.debug("Error closing client: %s", err)
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

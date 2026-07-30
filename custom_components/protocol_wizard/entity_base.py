@@ -625,7 +625,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
         if isinstance(options_raw, str):
             try:
                 options_dict = json.loads(options_raw)
-            except Exception:
+            except (json.JSONDecodeError, ValueError):
                 _LOGGER.error(
                     "Invalid options JSON for %s: %r",
                     entity_config.get("name"),
@@ -744,7 +744,7 @@ class ProtocolWizardSelectBase(CoordinatorEntity, SelectEntity):
             else:
                 _LOGGER.error("Failed to write value to %s", self._config.get("name"))
     
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, ValueError, TypeError) as err:
             _LOGGER.error("Error in async_select_option: %s", err)
             import traceback
             traceback.print_exc()
@@ -798,7 +798,7 @@ class ProtocolWizardHubEntity(CoordinatorEntity, SensorEntity):
     def native_value(self):
         try:
             return "connected" if self.coordinator.client.is_connected else "disconnected"
-        except Exception as err:
+        except (AttributeError, OSError, ConnectionError) as err:
             _LOGGER.debug("Failed to get hub status: %s", err)
             return "unknown"
 

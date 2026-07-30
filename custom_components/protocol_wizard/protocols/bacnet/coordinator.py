@@ -93,7 +93,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             )
             return None
             
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.error(
                 "Error reading entity %s: %s",
                 entity_config.get("name"),
@@ -159,7 +159,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             _LOGGER.error("Invalid address for entity %s: %s", entity_config.get("name"), err)
             return False
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.error("Write error for entity %s: %s", entity_config.get("name"), err)
             import traceback
             _LOGGER.error(traceback.format_exc())
@@ -337,7 +337,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
                     failed_count += 1
                     consecutive_failures += 1
 
-                except Exception as err:
+                except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
                     _LOGGER.error(
                         "Error reading entity %s: %s",
                         entity.get("name"),
@@ -375,7 +375,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             else:
                 _LOGGER.warning("[BACnet] Connection failed")
                 return False
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.error("[BACnet] Connection error: %s", err)
             return False
     
@@ -561,7 +561,7 @@ class BACnetCoordinator(BaseProtocolCoordinator):
             _LOGGER.error("Invalid address for entity %s: %s", entity_name, err)
             return False
         
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError, RuntimeError) as err:
             _LOGGER.error("Write error for entity %s: %s", entity_name, err)
             return False
     

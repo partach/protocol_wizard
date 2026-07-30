@@ -788,7 +788,7 @@ class ModbusSchemaHandler:
                 processed["options"] = json.loads(processed["options"])
                 if not isinstance(processed["options"], dict):
                     processed["options"]="" # if it is rubish, we dont use it
-            except Exception:
+            except (json.JSONDecodeError, ValueError):
                 errors["options"] = ""
         # Update with new values, handling empty strings properly
         for key, value in user_input.items():

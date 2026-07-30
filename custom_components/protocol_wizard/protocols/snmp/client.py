@@ -75,7 +75,7 @@ class SNMPClient(BaseProtocolClient):
             value = await self.read("1.3.6.1.2.1.1.1.0")  # sysDescr
             self._connected = value is not None
             return self._connected
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("SNMP connection test failed for %s:%s: %s", self.host, self.port, err)
             self._connected = False
             return False
@@ -85,7 +85,7 @@ class SNMPClient(BaseProtocolClient):
         if self._engine:
             try:
                 self._engine.close_dispatcher()
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001
                 _LOGGER.debug("Error closing SNMP dispatcher: %s", err)
             finally:
                 self._engine = None
@@ -119,7 +119,7 @@ class SNMPClient(BaseProtocolClient):
                 return var_binds[0][1]  # Return just the value
             return None
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("SNMP read failed for OID %s: %s", address, err)
             return None
             
@@ -177,7 +177,7 @@ class SNMPClient(BaseProtocolClient):
                     pretty_value = value.prettyPrint() if hasattr(value, 'prettyPrint') else str(value)
                     results.append((pretty_oid, pretty_value))
     
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("SNMP walk failed for %s: %s", base_oid, err)
     
         return results
@@ -208,7 +208,7 @@ class SNMPClient(BaseProtocolClient):
 
             return True
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("SNMP write failed for OID %s: %s", address, err)
             return False
 

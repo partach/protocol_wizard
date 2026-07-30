@@ -318,8 +318,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-            except Exception as err:
-                _LOGGER.exception("Connection test failed: %s", err)
+            except (OSError, ConnectionError, TimeoutError):
+                _LOGGER.exception("Connection test failed")
                 errors["base"] = "cannot_connect"
 
         # Get available templates
@@ -435,7 +435,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         if not result.isError() and hasattr(result, "registers") and len(result.registers) == count:
                             success = True
                             break
-                except Exception as inner_err:
+                except (OSError, ConnectionError, TimeoutError) as inner_err:
                     _LOGGER.debug("Test read failed for %s at addr %d: %s", name, address, inner_err)
 
             if not success:
@@ -449,7 +449,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if client:
                 try:
                     client.close()
-                except Exception as err:
+                except Exception as err:  # noqa: BLE001
                     _LOGGER.debug("Error closing Modbus client: %s", err)
 
     # ================================================================
@@ -493,8 +493,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=options,
                 )
 
-            except Exception as err:
-                _LOGGER.exception("SNMP connection test failed: %s", err)
+            except (OSError, ConnectionError, TimeoutError):
+                _LOGGER.exception("SNMP connection test failed")
                 errors["base"] = "cannot_connect"
 
         # Get available templates
@@ -636,7 +636,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except asyncio.TimeoutError:
             _LOGGER.warning("BACnet discovery timed out")
             errors["base"] = "discovery_timeout"
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("BACnet discovery failed: %s", err)
             errors["base"] = "discovery_failed"
         finally:
@@ -644,7 +644,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 try:
                     await discovery_client.disconnect()
                     _LOGGER.info("Discovery client disconnected")
-                except Exception as err:
+                except Exception as err:  # noqa: BLE001
                     _LOGGER.warning("Error disconnecting discovery client: %s", err)
 
         # If no devices found or error, show option to go manual
@@ -785,7 +785,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 else:
                     errors["base"] = "cannot_connect"
-            except Exception as err:
+            except (OSError, ConnectionError, TimeoutError) as err:
                 _LOGGER.error("BACnet connection test failed: %s", err)
                 errors["base"] = "unknown"
 
@@ -873,8 +873,8 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=options,
                 )
 
-            except Exception as err:
-                _LOGGER.exception("MQTT connection test failed: %s", err)
+            except (OSError, ConnectionError, TimeoutError):
+                _LOGGER.exception("MQTT connection test failed")
                 errors["base"] = "cannot_connect"
 
         # Get available templates
@@ -936,21 +936,21 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             connected = await client.connect()
 
             if not connected:
-                raise Exception("Could not connect to MQTT broker")
+                raise ConnectionError("Could not connect to MQTT broker")
 
             _LOGGER.info("MQTT connection test successful to %s:%s",
                         config[CONF_BROKER], config[CONF_PORT])
 
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("MQTT connection test failed: %s", err)
-            raise Exception(
+            raise ConnectionError(
                 f"Cannot connect to MQTT broker at {config[CONF_BROKER]}:{config[CONF_PORT]}. "
                 "Check broker address, port, and credentials."
-            )
+            ) from err
 
         finally:
             if client:
                 try:
                     await client.disconnect()
-                except Exception as err:
+                except Exception as err:  # noqa: BLE001
                     _LOGGER.debug("Error disconnecting MQTT client: %s", err)

@@ -126,7 +126,7 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
             try:
                 numeric = float(value)
             except (TypeError, ValueError):
-                pass
+                _LOGGER.debug("Value %r is not numeric, skipping numeric format helpers", value)
     
             if numeric is not None:
                 total = int(numeric)
@@ -150,7 +150,7 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
     
             return result
     
-        except Exception as err:
+        except (ValueError, TypeError, KeyError) as err:
             _LOGGER.debug(
                 "Format error for entity '%s': %s",
                 entity_config.get("name"),
@@ -209,6 +209,6 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         
         try:
             return await self.client.connect()
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("[%s] Failed to connect: %s", self.protocol_name, err)
             return False

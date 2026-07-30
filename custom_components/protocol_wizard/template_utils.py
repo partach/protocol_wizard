@@ -77,7 +77,7 @@ def ensure_user_template_dirs(hass: HomeAssistant) -> None:
         if not readme_path.exists():
             readme_path.write_text(_get_readme_content(), encoding='utf-8')
             _LOGGER.info("Created user templates directory: %s", base_path)
-    except Exception as err:
+    except OSError as err:
         _LOGGER.warning("Failed to create user template directories: %s", err)
 
 
@@ -142,7 +142,7 @@ async def get_available_templates(
                     "source": "builtin",
                     "path": str(builtin_dir / f"{name}.json"),
                 }
-        except Exception as err:
+        except OSError as err:
             _LOGGER.warning("Failed to list built-in templates for %s: %s", protocol, err)
     
     # Load user templates
@@ -164,7 +164,7 @@ async def get_available_templates(
                     "source": "user",
                     "path": str(user_dir / f"{name}.json"),
                 }
-        except Exception as err:
+        except OSError as err:
             _LOGGER.warning("Failed to list user templates for %s: %s", protocol, err)
     
     return templates
@@ -219,7 +219,7 @@ async def load_template(
     except json.JSONDecodeError as err:
         _LOGGER.error("Failed to parse template %s: %s", template_id, err)
         return None
-    except Exception as err:
+    except OSError as err:
         _LOGGER.error("Failed to load template %s: %s", template_id, err)
         return None
 
@@ -296,7 +296,7 @@ async def save_template(
         relative_path = template_path.relative_to(Path(hass.config.config_dir))
         _LOGGER.info("Saved template to %s", template_path)
         return True, f"Template saved to {relative_path}"
-    except Exception as err:
+    except OSError as err:
         _LOGGER.error("Failed to save template: %s", err)
         return False, f"Failed to save: {err}"
 
@@ -332,7 +332,7 @@ async def delete_template(
         await hass.async_add_executor_job(template_path.unlink)
         _LOGGER.info("Deleted template: %s", template_path)
         return True, "Template deleted"
-    except Exception as err:
+    except OSError as err:
         _LOGGER.error("Failed to delete template: %s", err)
         return False, f"Failed to delete: {err}"
 

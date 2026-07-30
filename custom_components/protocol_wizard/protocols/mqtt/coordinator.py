@@ -93,7 +93,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
                     # Store raw for debugging
                     new_data[f"{key}_raw"] = payload
                 
-            except Exception as err:
+            except (ValueError, TypeError, KeyError) as err:
                 _LOGGER.warning(
                     "Failed to read MQTT topic %s: %s",
                     topic,
@@ -203,7 +203,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
                 return None
             return raw_value
             
-        except Exception as err:
+        except (json.JSONDecodeError, ValueError, TypeError) as err:
             _LOGGER.warning("Failed to decode value: %s", err)
             # If numeric entity, return None on error (shows as unavailable)
             # Otherwise return None to avoid invalid state
@@ -333,7 +333,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
             # Single topic - decode normally
             return self._decode_value(payload, entity_config)
             
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("Failed to read MQTT topic %s: %s", address, err)
             return None
 
@@ -383,7 +383,7 @@ class MQTTCoordinator(BaseProtocolCoordinator):
                 retain=retain,
             )
             
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("Failed to write to MQTT topic %s: %s", address, err)
             return False
 
@@ -394,6 +394,6 @@ class MQTTCoordinator(BaseProtocolCoordinator):
         
         try:
             return await self.client.connect()
-        except Exception as err:
+        except (OSError, ConnectionError, TimeoutError) as err:
             _LOGGER.error("Failed to connect to MQTT broker: %s", err)
             return False
