@@ -1,24 +1,28 @@
 # protocols/bacnet/client.py
 """BACnet/IP client for Protocol Wizard using bacpypes3 - proper initialization."""
 
-import logging
 import asyncio
-from typing import Any, Optional
+import logging
+from typing import Any
+
+from homeassistant.components.network import async_get_adapters, async_get_source_ip
 from homeassistant.core import HomeAssistant
-from homeassistant.components.network import async_get_source_ip, async_get_adapters
+
 #import sys
 
 _LOGGER = logging.getLogger(__name__)
 
 try:
 #    from bacpypes3.settings import settings
+    #    from bacpypes3.argparse import SimpleArgumentParser, create_log_handler
+    import ipaddress
+
     from bacpypes3.app import Application
-#    from bacpypes3.local.device import DeviceObject
-    from bacpypes3.primitivedata import ObjectIdentifier
     from bacpypes3.basetypes import PropertyIdentifier
     from bacpypes3.pdu import Address, LocalBroadcast
-#    from bacpypes3.argparse import SimpleArgumentParser, create_log_handler
-    import ipaddress
+
+    #    from bacpypes3.local.device import DeviceObject
+    from bacpypes3.primitivedata import ObjectIdentifier
     HAS_BACPYPES3 = True
 except ImportError:
     HAS_BACPYPES3 = False
@@ -60,7 +64,7 @@ async def get_my_lan_ip_and_subnet(hass):
     # 2. Fallback: first private LAN IP
     for entry in summary:
         ip = entry["ip"]
-        if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
+        if ip.startswith(("192.168.", "10.", "172.")):
             return entry["ip"], entry["prefix"]
 
     # 3. Last resort: first IP
@@ -103,9 +107,9 @@ class BACnetClient:
         self, 
         hass: HomeAssistant,
         host: str, 
-        device_id: Optional[int] = None,
+        device_id: int | None = None,
         port: int = 47808,
-        network_number: Optional[int] = 0
+        network_number: int | None = 0
     ):
         """Initialize BACnet client."""
         if not HAS_BACPYPES3:
@@ -115,7 +119,7 @@ class BACnetClient:
         self.device_id = device_id
         self.port = port
         self.network_number = network_number
-        self.app: Optional[Application] = None
+        self.app: Application | None = None
         self._connected = False
         self.hass = hass
         self._bacpypeinstance = None
@@ -124,8 +128,8 @@ class BACnetClient:
         """Initialize bacpypes3 properly using from_args pattern."""
         if not self._bacpypeinstance:
             try:
-                from argparse import Namespace
                 import random
+                from argparse import Namespace
         
                 source_ip = address_adapter = ip_to_use = self.host
 
@@ -321,7 +325,7 @@ class BACnetClient:
         return devices
     
     
-    async def get_device_name(self) -> Optional[str]:
+    async def get_device_name(self) -> str | None:
         """Get device name."""
         try:
             if not self._connected or not self.device_id:
@@ -339,7 +343,7 @@ class BACnetClient:
         object_type: str, 
         object_instance: int, 
         property_name: str
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Read BACnet property."""
         if not self._connected or not self.app:
             _LOGGER.error("Not connected to BACnet network")

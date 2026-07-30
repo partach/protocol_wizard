@@ -2,64 +2,70 @@
 #-- base init.py protocol wizard
 #------------------------------------------
 """The Protocol Wizard integration."""
-import shutil
+import asyncio
 import logging
 import os
-import asyncio
 import re
+import shutil
+from datetime import timedelta
 
-from homeassistant.helpers import device_registry as dr, entity_registry as er, config_validation as cv
-from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
-from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.service import SupportsResponse
-from datetime import timedelta
-# Import protocol registry and plugins
-from .protocols import ProtocolRegistry
-from .protocols.modbus import ModbusClient
-from .protocols.snmp import SNMPClient
-from .protocols.mqtt import MQTTClient
-from .protocols.bacnet.client import BACnetClient
-from .template_utils import ensure_user_template_dirs, load_template
+from pymodbus.client import (
+    AsyncModbusSerialClient,
+    AsyncModbusTcpClient,
+    AsyncModbusUdpClient,
+)
 
 from .const import (
+    CONF_BACNET_DEVICES,
     CONF_BAUDRATE,
     CONF_BYTESIZE,
     CONF_CONNECTION_TYPE,
+    CONF_ENTITIES,
     CONF_HOST,
+    CONF_NAME,
     CONF_PARITY,
     CONF_PORT,
+    CONF_PROTOCOL,
+    CONF_PROTOCOL_BACNET,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_SNMP,
+    CONF_REGISTERS,
     CONF_SERIAL_PORT,
     CONF_SLAVE_ID,
+    CONF_SLAVES,
     CONF_STOPBITS,
+    CONF_TEMPLATE,
+    CONF_TEMPLATE_APPLIED,
     CONF_UPDATE_INTERVAL,
-    CONF_NAME,
-    CONNECTION_TYPE_SERIAL,
     CONNECTION_TYPE_IP,
-    CONNECTION_TYPE_UDP,
+    CONNECTION_TYPE_SERIAL,
     CONNECTION_TYPE_TCP,
+    CONNECTION_TYPE_UDP,
     DEFAULT_BAUDRATE,
     DEFAULT_BYTESIZE,
     DEFAULT_PARITY,
     DEFAULT_STOPBITS,
     DOMAIN,
-    CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_SNMP,
-    CONF_PROTOCOL_MQTT,
-    CONF_PROTOCOL_BACNET,
-    CONF_PROTOCOL,
-    CONF_TEMPLATE,
-    CONF_TEMPLATE_APPLIED,
-    CONF_ENTITIES,
-    CONF_REGISTERS,
-    CONF_SLAVES,
-    CONF_BACNET_DEVICES,
     SIGNAL_ENTITY_SYNC,
 )
 
+# Import protocol registry and plugins
+from .protocols import ProtocolRegistry
+from .protocols.bacnet.client import BACnetClient
+from .protocols.modbus import ModbusClient
+from .protocols.mqtt import MQTTClient
+from .protocols.snmp import SNMPClient
+from .template_utils import ensure_user_template_dirs, load_template
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -613,7 +619,13 @@ def _create_snmp_client(config: dict) -> SNMPClient:
 
 def _create_mqtt_client(config: dict) -> MQTTClient:
     """Create MQTT client (no caching needed - manages its own connection)."""
-    from .protocols.mqtt import MQTTClient, CONF_BROKER, CONF_USERNAME, CONF_PASSWORD, DEFAULT_PORT
+    from .protocols.mqtt import (
+        CONF_BROKER,
+        CONF_PASSWORD,
+        CONF_USERNAME,
+        DEFAULT_PORT,
+        MQTTClient,
+    )
 
     return MQTTClient(
         broker=config[CONF_BROKER],
@@ -804,7 +816,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
             # Add optional fields if provided
             for field in ["format", "options", "device_class", "state_class", "entity_category", "icon", "min", "max", "step"]:
-                if field in call.data and call.data[field]:
+                if call.data.get(field):
                     new_entity[field] = call.data[field]
 
             # Check for duplicates
@@ -869,7 +881,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
         except Exception as err:
             _LOGGER.error("Failed to add entity: %s", err, exc_info=True)
-            raise HomeAssistantError(f"Failed to add entity: {str(err)}") from err
+            raise HomeAssistantError(f"Failed to add entity: {err!s}") from err
 
     async def handle_write_register(call: ServiceCall):
         """Generic write service (protocol-agnostic) with detailed logging."""
@@ -901,7 +913,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
         except Exception as err:
             _LOGGER.error("Unexpected exception in write_register service for address %s: %s", address, err, exc_info=True)
-            raise HomeAssistantError(f"Write failed for address {address}: {str(err)}") from err
+            raise HomeAssistantError(f"Write failed for address {address}: {err!s}") from err
 
     async def handle_read_register(call: ServiceCall):
         """Generic read service (protocol-agnostic)."""

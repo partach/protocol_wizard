@@ -1,8 +1,9 @@
 """Tests for BACnet coordinator decode/encode logic."""
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from custom_components.protocol_wizard.protocols.bacnet.coordinator import (
     BACnetCoordinator,

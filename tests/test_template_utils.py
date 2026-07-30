@@ -4,13 +4,14 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-import pytest
 from pathlib import Path
 
+import pytest
+
 from custom_components.protocol_wizard.template_utils import (
+    PROTOCOL_SUBDIRS,
     get_protocol_subdir,
     get_template_dropdown_choices,
-    PROTOCOL_SUBDIRS,
 )
 
 

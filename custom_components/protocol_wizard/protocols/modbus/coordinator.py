@@ -4,20 +4,20 @@
 """Modbus protocol coordinator implementation."""
 from __future__ import annotations
 
-import logging
 import asyncio
-from typing import Any
+import logging
 from datetime import timedelta
+from typing import Any
 
-from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from pymodbus.client.mixin import ModbusClientMixin
-from .client import ModbusClient
 
-from ..base import BaseProtocolCoordinator
+from ...const import CONF_REGISTERS, CONF_SLAVES
 from .. import ProtocolRegistry
+from ..base import BaseProtocolCoordinator
+from .client import ModbusClient
 from .const import TYPE_SIZES, reg_key
-from ...const import CONF_REGISTERS,CONF_SLAVES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -355,7 +355,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
             # Single register integer
             if data_type in ("uint16", "int16"):
                 try:
-                    value = int(round(float(value)))
+                    value = round(float(value))
                 except Exception:
                     _LOGGER.error("Failed to convert to int for %s: %s", data_type, original_value)
                     return None
@@ -379,7 +379,7 @@ class ModbusCoordinator(BaseProtocolCoordinator):
         if target_type == ModbusClientMixin.DATATYPE.FLOAT32:
             value = float(value)
         else:
-            value = int(round(float(value)))
+            value = round(float(value))
     
         try:
             return self.client.raw_client.convert_to_registers(
