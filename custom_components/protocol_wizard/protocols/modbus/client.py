@@ -187,16 +187,17 @@ class ModbusClient(BaseProtocolClient):
                         device_id=self.slave_id,
                     )
             elif reg_type == "holding":
-                if isinstance(value, list):
+                if isinstance(value, list) and len(value) > 1:
                     result = await self._client.write_registers(
                         address=addr,
                         values=[int(v) for v in value],
                         device_id=self.slave_id,
                     )
                 else:
+                    single_val = value[0] if isinstance(value, list) else value
                     result = await self._client.write_register(
                         address=addr,
-                        value=int(value),
+                        value=int(single_val),
                         device_id=self.slave_id,
                     )
             elif reg_type in ("input", "discrete"):
