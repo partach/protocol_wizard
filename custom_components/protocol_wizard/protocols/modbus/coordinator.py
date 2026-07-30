@@ -425,10 +425,10 @@ class ModbusCoordinator(BaseProtocolCoordinator):
                                 values = test_values
                                 detected_type = test_type
                                 break
-                        except ModbusIOException:
+                        except (ModbusIOException, OSError, ConnectionError):
                             continue  # Try next type
 
-            except ModbusIOException as err:
+            except (ModbusIOException, OSError, ConnectionError) as err:
                 _LOGGER.warning("[Modbus] I/O error reading address %s: %s - will attempt reconnect on next request", address, err)
                 # Connection will be recovered on next _async_connect call
                 return None
