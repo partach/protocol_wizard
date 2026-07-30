@@ -15,6 +15,7 @@ from pymodbus.client import (
     AsyncModbusTcpClient,
     AsyncModbusUdpClient,
 )
+from pymodbus.exceptions import ModbusIOException
 
 from .const import (
     CONF_BAUDRATE,
@@ -318,7 +319,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
 
-            except (OSError, ConnectionError, TimeoutError):
+            except (ModbusIOException, OSError, ConnectionError, TimeoutError):
                 _LOGGER.exception("Connection test failed")
                 errors["base"] = "cannot_connect"
 
@@ -435,7 +436,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         if not result.isError() and hasattr(result, "registers") and len(result.registers) == count:
                             success = True
                             break
-                except (OSError, ConnectionError, TimeoutError) as inner_err:
+                except (ModbusIOException, OSError, ConnectionError, TimeoutError) as inner_err:
                     _LOGGER.debug("Test read failed for %s at addr %d: %s", name, address, inner_err)
 
             if not success:
