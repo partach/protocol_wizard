@@ -109,7 +109,7 @@ class TestModbusDecodeValue:
 
     def test_decode_exception_returns_none(self):
         coord = _make_coordinator()
-        coord.client.raw_client.convert_from_registers.side_effect = Exception("fail")
+        coord.client.raw_client.convert_from_registers.side_effect = ValueError("fail")
         result = coord._decode_value([42], {"data_type": "uint16"})
         assert result is None
 
