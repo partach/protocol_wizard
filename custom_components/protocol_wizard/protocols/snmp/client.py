@@ -7,12 +7,12 @@ import logging
 from typing import Any
 
 from pysnmp.hlapi.v3arch.asyncio import (
-    SnmpEngine,
     CommunityData,
-    UdpTransportTarget,
     ContextData,
-    ObjectType,
     ObjectIdentity,
+    ObjectType,
+    SnmpEngine,
+    UdpTransportTarget,
     get_cmd,
     set_cmd,
     walk_cmd,

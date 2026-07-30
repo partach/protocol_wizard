@@ -1,53 +1,63 @@
 """Config flow for Protocol Wizard."""
+import asyncio
 import logging
 from typing import Any
+
 import serial.tools.list_ports
 import voluptuous as vol
-import asyncio
 from homeassistant import config_entries
-from homeassistant.helpers import selector
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
-from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient, AsyncModbusUdpClient
-from .protocols.mqtt import CONF_BROKER, DEFAULT_PORT, CONF_USERNAME, CONF_PASSWORD
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import selector
+from pymodbus.client import (
+    AsyncModbusSerialClient,
+    AsyncModbusTcpClient,
+    AsyncModbusUdpClient,
+)
+
 from .const import (
-    CONNECTION_TYPE_SERIAL,
-    CONNECTION_TYPE_IP,
-    CONNECTION_TYPE_TCP,
-    CONNECTION_TYPE_UDP,
-    CONF_CONNECTION_TYPE,
-    CONF_HOST,
-    CONF_PORT,
-    CONF_SERIAL_PORT,
-    CONF_SLAVE_ID,
     CONF_BAUDRATE,
-    CONF_PARITY,
-    CONF_NAME,
-    CONF_STOPBITS,
     CONF_BYTESIZE,
+    CONF_CONNECTION_TYPE,
     CONF_FIRST_REG,
     CONF_FIRST_REG_SIZE,
-    CONF_UPDATE_INTERVAL,
-    CONF_SLAVES,
-    DEFAULT_SLAVE_ID,
-    DEFAULT_BAUDRATE,
-    DEFAULT_TCP_PORT,
-    DEFAULT_PARITY,
-    DEFAULT_STOPBITS,
-    DEFAULT_BYTESIZE,
-    DOMAIN,
-    CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_SNMP,
-    CONF_PROTOCOL_MQTT,
-    CONF_PROTOCOL_BACNET,
-    CONF_PROTOCOL,
+    CONF_HOST,
     CONF_IP,
+    CONF_NAME,
+    CONF_PARITY,
+    CONF_PORT,
+    CONF_PROTOCOL,
+    CONF_PROTOCOL_BACNET,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_SNMP,
+    CONF_SERIAL_PORT,
+    CONF_SLAVE_ID,
+    CONF_SLAVES,
+    CONF_STOPBITS,
     CONF_TEMPLATE,
+    CONF_UPDATE_INTERVAL,
+    CONNECTION_TYPE_IP,
+    CONNECTION_TYPE_SERIAL,
+    CONNECTION_TYPE_TCP,
+    CONNECTION_TYPE_UDP,
+    DEFAULT_BAUDRATE,
+    DEFAULT_BYTESIZE,
+    DEFAULT_PARITY,
+    DEFAULT_SLAVE_ID,
+    DEFAULT_STOPBITS,
+    DEFAULT_TCP_PORT,
+    DOMAIN,
 )
 from .options_flow import ProtocolWizardOptionsFlow
 from .protocols import ProtocolRegistry
-from .template_utils import get_available_templates, get_template_dropdown_choices, load_template
+from .protocols.mqtt import CONF_BROKER, CONF_PASSWORD, CONF_USERNAME, DEFAULT_PORT
+from .template_utils import (
+    get_available_templates,
+    get_template_dropdown_choices,
+    load_template,
+)
 
 _LOGGER = logging.getLogger(__name__)
 # Reduce noise from pymodbus

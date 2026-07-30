@@ -2,19 +2,19 @@
 """MQTT protocol coordinator implementation - Event-Driven Architecture."""
 from __future__ import annotations
 
-import logging
-from typing import Any
-from datetime import timedelta
 import asyncio
 import json
+import logging
+from datetime import timedelta
+from typing import Any
 
-from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
-from ..base import BaseProtocolCoordinator
-from .. import ProtocolRegistry
-from .client import MQTTClient
 from ...const import CONF_ENTITIES, CONF_PROTOCOL_MQTT
+from .. import ProtocolRegistry
+from ..base import BaseProtocolCoordinator
+from .client import MQTTClient
 from .const import topic_key
 
 _LOGGER = logging.getLogger(__name__)

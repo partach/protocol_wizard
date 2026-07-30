@@ -4,35 +4,37 @@ from __future__ import annotations
 import pytest
 
 from custom_components.protocol_wizard.const import (
-    DOMAIN,
-    SIGNAL_ENTITY_SYNC,
-    CONF_PROTOCOL_MODBUS,
-    CONF_PROTOCOL_SNMP,
-    CONF_PROTOCOL_MQTT,
     CONF_PROTOCOL_BACNET,
-    DEFAULT_SLAVE_ID,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_SNMP,
     DEFAULT_BAUDRATE,
+    DEFAULT_SLAVE_ID,
     DEFAULT_TCP_PORT,
     DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+    SIGNAL_ENTITY_SYNC,
+)
+from custom_components.protocol_wizard.protocols.bacnet.const import (
+    BACNET_DATA_TYPES,
+    BACNET_OBJECT_TYPES,
+    entity_key,
+    format_bacnet_address,
+    parse_bacnet_address,
 )
 from custom_components.protocol_wizard.protocols.modbus.const import (
     TYPE_SIZES,
     reg_key,
 )
+from custom_components.protocol_wizard.protocols.mqtt.const import (
+    DATA_TYPES as MQTT_DATA_TYPES,
+)
+from custom_components.protocol_wizard.protocols.mqtt.const import (
+    topic_key,
+)
 from custom_components.protocol_wizard.protocols.snmp.const import (
     SNMP_DATA_TYPES,
     oid_key,
-)
-from custom_components.protocol_wizard.protocols.mqtt.const import (
-    DATA_TYPES as MQTT_DATA_TYPES,
-    topic_key,
-)
-from custom_components.protocol_wizard.protocols.bacnet.const import (
-    parse_bacnet_address,
-    format_bacnet_address,
-    entity_key,
-    BACNET_OBJECT_TYPES,
-    BACNET_DATA_TYPES,
 )
 
 

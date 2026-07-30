@@ -2,15 +2,16 @@
 """SNMP protocol coordinator implementation."""
 from __future__ import annotations
 
-import logging
-from typing import Any
-from datetime import timedelta
 import asyncio
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
+import logging
+from datetime import timedelta
+from typing import Any
 
-from ..base import BaseProtocolCoordinator
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
 from .. import ProtocolRegistry
+from ..base import BaseProtocolCoordinator
 from .client import SNMPClient
 from .const import CONF_ENTITIES, oid_key
 
@@ -176,7 +177,7 @@ class SNMPCoordinator(BaseProtocolCoordinator):
                     value = (value - offset) / scale
 
                 if data_type != "float":
-                    value = int(round(float(value)))
+                    value = round(float(value))
 
             # pysnmp handles type mapping — just return clean Python value
             return value

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
 from datetime import timedelta
+from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,28 +28,23 @@ class BaseProtocolClient(ABC):
     @abstractmethod
     async def connect(self) -> bool:
         """Establish connection. Returns True if successful."""
-        pass
     
     @abstractmethod
     async def disconnect(self) -> None:
         """Close connection."""
-        pass
     
     @abstractmethod
     async def read(self, address: str, **kwargs) -> Any:
         """Read value from address. Protocol-specific kwargs."""
-        pass
     
     @abstractmethod
     async def write(self, address: str, value: Any, **kwargs) -> bool:
         """Write value to address. Returns True if successful."""
-        pass
     
     @property
     @abstractmethod
     def is_connected(self) -> bool:
         """Connection status."""
-        pass
 
 class _SafeFormatDict(dict):
     """Returns placeholder unchanged if key is missing."""
@@ -87,7 +82,6 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         Should return a dict where keys are entity identifiers
         and values are the decoded/processed values.
         """
-        pass
     
     @abstractmethod
     def _decode_value(self, raw_value: Any, entity_config: dict) -> Any:
@@ -101,7 +95,6 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         Returns:
             Decoded Python value (int, float, str, bool, etc.)
         """
-        pass
     
     @abstractmethod
     def _encode_value(self, value: Any, entity_config: dict) -> Any:
@@ -115,7 +108,6 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         Returns:
             Protocol-specific encoded value
         """
-        pass
 
     def _format_value(self, value: Any, entity_config: dict) -> Any:
         format_str = str(entity_config.get("format", "")).strip()
@@ -185,7 +177,6 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         Returns:
             Decoded value or None if failed
         """
-        pass
     
     @abstractmethod
     async def async_write_entity(
@@ -207,7 +198,6 @@ class BaseProtocolCoordinator(DataUpdateCoordinator, ABC):
         Returns:
             True if successful
         """
-        pass
     
     async def _async_connect(self) -> bool:
         """

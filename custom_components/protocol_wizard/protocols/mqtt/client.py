@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import json
+import logging
 from typing import Any
 
 import paho.mqtt.client as mqtt_client

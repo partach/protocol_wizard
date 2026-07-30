@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import logging
-from homeassistant.core import HomeAssistant
+
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .entity_base import BaseEntityManager, ProtocolWizardSwitchBase, get_all_coordinators_for_entry
+from .entity_base import (
+    BaseEntityManager,
+    ProtocolWizardSwitchBase,
+    get_all_coordinators_for_entry,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

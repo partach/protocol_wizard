@@ -6,15 +6,22 @@ with a single, consistent interface supporting both built-in and user templates.
 """
 from __future__ import annotations
 
-import logging
 import json
+import logging
+
 #import os
 from pathlib import Path
 from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, CONF_PROTOCOL_MODBUS, CONF_PROTOCOL_SNMP , CONF_PROTOCOL_MQTT, CONF_PROTOCOL_BACNET
+from .const import (
+    CONF_PROTOCOL_BACNET,
+    CONF_PROTOCOL_MODBUS,
+    CONF_PROTOCOL_MQTT,
+    CONF_PROTOCOL_SNMP,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +68,7 @@ def ensure_user_template_dirs(hass: HomeAssistant) -> None:
     try:
         base_path = Path(hass.config.path(USER_TEMPLATES_DIR))
         
-        for protocol in PROTOCOL_SUBDIRS.keys():
+        for protocol in PROTOCOL_SUBDIRS:
             protocol_dir = base_path / protocol
             protocol_dir.mkdir(parents=True, exist_ok=True)
         
@@ -369,7 +376,7 @@ async def get_available_templates_legacy(
     Returns list of filenames without .json extension, from both directories.
     """
     templates = await get_available_templates(hass, protocol)
-    return [tid.split(":", 1)[1] for tid in templates.keys()]
+    return [tid.split(":", 1)[1] for tid in templates]
 
 
 async def load_template_legacy(

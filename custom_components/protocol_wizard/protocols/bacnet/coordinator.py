@@ -1,17 +1,20 @@
 # protocols/bacnet/coordinator.py
 """BACnet coordinator for Protocol Wizard."""
 
-import logging
-from typing import Any
 import asyncio
+import logging
 from datetime import timedelta
-from .. import ProtocolRegistry
-from ...protocols.base import BaseProtocolCoordinator
-from homeassistant.core import HomeAssistant
+from typing import Any
+
 from homeassistant.config_entries import ConfigEntry
-from .const import parse_bacnet_address, entity_key
+from homeassistant.core import HomeAssistant
+
+from ...const import CONF_BACNET_DEVICES, CONF_ENTITIES, CONF_PROTOCOL_BACNET
+from ...protocols.base import BaseProtocolCoordinator
+from .. import ProtocolRegistry
 from .client import BACnetClient
-from ...const import CONF_ENTITIES, CONF_PROTOCOL_BACNET, CONF_BACNET_DEVICES
+from .const import entity_key, parse_bacnet_address
+
 _LOGGER = logging.getLogger(__name__)
 
 @ProtocolRegistry.register(CONF_PROTOCOL_BACNET)

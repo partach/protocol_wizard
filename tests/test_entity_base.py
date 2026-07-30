@@ -4,15 +4,14 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from custom_components.protocol_wizard.entity_base import (
-    get_safe_number_defaults,
     apply_common_entity_attributes,
+    get_safe_number_defaults,
     set_readonly_protocol_settings,
 )
-from custom_components.protocol_wizard.sensor import SensorManager
 from custom_components.protocol_wizard.number import NumberManager
-from custom_components.protocol_wizard.switch import SwitchManager
 from custom_components.protocol_wizard.select import SelectManager
-
+from custom_components.protocol_wizard.sensor import SensorManager
+from custom_components.protocol_wizard.switch import SwitchManager
 
 # ---------------------------------------------------------------------------
 # get_safe_number_defaults
@@ -77,8 +76,8 @@ class TestApplyCommonEntityAttributes:
 
     def _make_entity(self, entity_type="sensor"):
         """Create a mock entity with the right base classes."""
-        from homeassistant.components.sensor import SensorEntity
         from homeassistant.components.number import NumberEntity
+        from homeassistant.components.sensor import SensorEntity
 
         if entity_type == "sensor":
             entity = MagicMock(spec=SensorEntity)

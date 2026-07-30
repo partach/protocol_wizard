@@ -5,16 +5,17 @@
 from __future__ import annotations
 
 import logging
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
 
-from .const import DOMAIN, CONF_PROTOCOL, CONF_PROTOCOL_MODBUS
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
+from .const import CONF_PROTOCOL, CONF_PROTOCOL_MODBUS, DOMAIN
 from .entity_base import (
     BaseEntityManager,
-    ProtocolWizardSensorBase,
-    ProtocolWizardHubEntity,
-    ModbusSlaveIdEntity,
     ModbusConnectionInfoEntity,
+    ModbusSlaveIdEntity,
+    ProtocolWizardHubEntity,
+    ProtocolWizardSensorBase,
     get_all_coordinators_for_entry,
 )
 
