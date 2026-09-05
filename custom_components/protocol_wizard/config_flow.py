@@ -818,6 +818,7 @@ class ProtocolWizardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             port=data.get(CONF_PORT, 161),
             community=data["community"],
             version=data["version"],
+            hass=self.hass,
         )
 
         try:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import Any
 
 from pysnmp.hlapi.v3arch.asyncio import (
@@ -22,6 +23,81 @@ from ..base import BaseProtocolClient
 
 _LOGGER = logging.getLogger(__name__)
 
+# A single PySNMP engine is shared by every SNMP client in this process. Creating
+# one is expensive (it loads MIB modules from disk), so it is built once inside an
+# executor and kept for the lifetime of the process.
+_SNMP_ENGINE: SnmpEngine | None = None
+_ENGINE_LOCK = asyncio.Lock()
+
+
+def _iter_pysnmp_mib_module_names(mib_builder):
+    """Yield bundled PySNMP MIB module names from file-backed MIB sources."""
+    seen = set()
+
+    for mib_source in mib_builder.get_mib_sources():
+        source_dir = getattr(mib_source, "_srcName", None)
+        if not source_dir or not os.path.isdir(source_dir):
+            continue
+
+        for _root, _dirs, files in os.walk(source_dir):
+            for filename in files:
+                if not filename.endswith(".py") or filename == "__init__.py":
+                    continue
+
+                module_name = os.path.splitext(filename)[0]
+                if module_name not in seen:
+                    seen.add(module_name)
+                    yield module_name
+
+
+def _create_engine() -> SnmpEngine:
+    """Create and warm PySNMP's engine before it is used on the event loop."""
+    engine = SnmpEngine()
+
+    # PySNMP lazily loads bundled MIB modules during the first request and
+    # response. Home Assistant flags those file reads when they happen on the
+    # event loop, so force the lazy work into the executor with engine creation.
+    mib_builder = engine.get_mib_builder()
+    module_names = [
+        "SNMPv2-SMI",
+        "SNMPv2-TC",
+        "SNMPv2-CONF",
+        "SNMPv2-TM",
+        "SNMPv2-MIB",
+        "PYSNMP-SOURCE-MIB",
+        "__SNMPv2-MIB",
+    ]
+    module_names.extend(_iter_pysnmp_mib_module_names(mib_builder))
+
+    for module_name in dict.fromkeys(module_names):
+        try:
+            mib_builder.load_modules(module_name)
+        except Exception as err:
+            _LOGGER.debug("Unable to preload PySNMP MIB module %s: %s", module_name, err)
+
+    try:
+        mib_builder.import_symbols("SNMPv2-MIB", "snmpInPkts", "snmpOutPkts")
+    except Exception as err:
+        _LOGGER.debug("Unable to preload PySNMP MIB symbols: %s", err)
+
+    return engine
+
+
+async def _async_get_shared_engine(hass=None) -> SnmpEngine:
+    """Return the process-wide SNMP engine, creating it off the event loop."""
+    global _SNMP_ENGINE
+
+    async with _ENGINE_LOCK:
+        if _SNMP_ENGINE is None:
+            if hass is not None:
+                _SNMP_ENGINE = await hass.async_add_executor_job(_create_engine)
+            else:
+                loop = asyncio.get_running_loop()
+                _SNMP_ENGINE = await loop.run_in_executor(None, _create_engine)
+            _LOGGER.debug("SNMP engine created")
+
+    return _SNMP_ENGINE
+
 
 class SNMPClient(BaseProtocolClient):
     """SNMP client using pysnmp asyncio v3arch."""
@@ -34,7 +110,9 @@ class SNMPClient(BaseProtocolClient):
         version: str = "2c",
         timeout: float = 5.0,
         retries: int = 3,
+        hass=None,
     ):
+        self.hass = hass
         self.host = host
         self.port = port
         self.community = community
@@ -57,10 +135,12 @@ class SNMPClient(BaseProtocolClient):
         self._context = ContextData()
 
     async def _ensure_engine(self) -> None:
-        """Lazily create engine and transport."""
+        """Lazily attach the shared engine and create this client's transport."""
         async with self._engine_lock:
             if self._engine is None:
-                self._engine = SnmpEngine()
+                # Engine creation reads MIB files from disk, so it is done once in
+                # an executor rather than on Home Assistant's event loop.
+                self._engine = await _async_get_shared_engine(self.hass)
                 self._transport = await UdpTransportTarget.create(
                     (self.host, self.port),
                     timeout=self.timeout,
@@ -81,16 +161,14 @@ class SNMPClient(BaseProtocolClient):
             return False
 
     async def disconnect(self) -> None:
-        """Clean up SNMP engine."""
-        if self._engine:
-            try:
-                self._engine.close_dispatcher()
-            except Exception as err:
-                _LOGGER.debug("Error closing SNMP dispatcher: %s", err)
-            finally:
-                self._engine = None
-                self._transport = None
-                self._connected = False
+        """Release this client's SNMP resources.
+
+        The engine is shared process-wide, so its dispatcher is deliberately left
+        open here — closing it would break every other SNMP client still in use.
+        """
+        self._engine = None
+        self._transport = None
+        self._connected = False
 
     async def read(self, address: str, **kwargs) -> Any | None:
         """Read a single OID."""
