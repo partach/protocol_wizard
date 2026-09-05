@@ -416,7 +416,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
         elif protocol_name == CONF_PROTOCOL_SNMP:
-            client = _create_snmp_client(config)
+            client = _create_snmp_client(config, hass)
         elif protocol_name == CONF_PROTOCOL_MQTT:
             client = _create_mqtt_client(config)
         else:
@@ -600,7 +600,7 @@ async def _create_modbus_client(hass: HomeAssistant, config: dict, entry: Config
                  slave_id, id(pymodbus_client))
     return ModbusClient(pymodbus_client, slave_id)
 
-def _create_snmp_client(config: dict) -> SNMPClient:
+def _create_snmp_client(config: dict, hass: HomeAssistant | None = None) -> SNMPClient:
     """Create SNMP client (no caching needed - connectionless)."""
     from .protocols.snmp import SNMPClient
 
@@ -609,6 +609,7 @@ def _create_snmp_client(config: dict) -> SNMPClient:
         port=config.get(CONF_PORT, 161),
         community=config.get("community", "public"),
         version=config.get("version", "2c"),
+        hass=hass,
     )
 
 def _create_mqtt_client(config: dict) -> MQTTClient:
