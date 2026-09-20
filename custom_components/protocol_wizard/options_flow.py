@@ -182,7 +182,13 @@ class ProtocolWizardOptionsFlow(config_entries.OptionsFlow):
                     # Clean up device registry entry for this slave
                     device_registry = dr.async_get(self.hass)
                     coordinator_key = f"{self._config_entry.entry_id}_slave_{deleted_slave_id}"
-                    device = device_registry.async_get_device(identifiers={(DOMAIN, coordinator_key)})
+                    identifier = (DOMAIN, coordinator_key)
+                    if hasattr(device_registry, "async_get_device_by_identifier"):
+                        device = device_registry.async_get_device_by_identifier(
+                            identifier, self._config_entry.entry_id
+                        )
+                    else:
+                        device = device_registry.async_get_device(identifiers={identifier})
                     if device:
                         device_registry.async_remove_device(device.id)
                         _LOGGER.info("Removed device for slave %d from device registry", deleted_slave_id)
