@@ -310,7 +310,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 devicename = f"{hub_name} - {slave_name}"
 
                 # Check if device already exists (may need name update after adding slaves)
-                existing_device = device_registry.async_get_device(identifiers={(DOMAIN, coordinator_key)})
+                # async_get_device(identifiers=...) is deprecated since identifiers are
+                # only unique per config entry. Use the scoped lookup where available and
+                # fall back for cores older than it (manifest supports HA 2025.6+).
+                identifier = (DOMAIN, coordinator_key)
+                if hasattr(device_registry, "async_get_device_by_identifier"):
+                    existing_device = device_registry.async_get_device_by_identifier(
+                        identifier, entry.entry_id
+                    )
+                else:
+                    existing_device = device_registry.async_get_device(identifiers={identifier})
                 if existing_device:
                     # Update name if it changed (e.g., was "Hub" now should be "Hub - Slave 1")
                     if existing_device.name != devicename:
