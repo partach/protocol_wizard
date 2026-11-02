@@ -1,5 +1,13 @@
 ## Changelog
 
+### [0.7.7] - Duplicate dashboard resource fix
+- Fixes a second card resource being added on every restart with HA 2026.11, where the Marketplace moves `/hacsfiles/...` to `/local/community/...`
+- Duplicates left behind by earlier versions are now cleaned up automatically on restart
+- Card registers under `/local/community/`, which works with and without HACS/Marketplace
+- No more "protocol_wizard-card has already been used" errors in the browser console
+- Silenced the `async_get_device` deprecation warning from HA 2026.11
+- Thanks to @user45876 for the detailed report (#82)
+
 ### [0.7.4] - Ehanced Template Handling
 - if you come from 0.7.0 or before: Needs re-install of your devices (should be less painfull then it sounds)
 - fixes for drop down / options
