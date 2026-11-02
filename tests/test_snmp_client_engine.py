@@ -160,8 +160,11 @@ class TestClientUsesSharedEngine:
         async def _create_transport(*args, **kwargs):
             return MagicMock()
 
+        # Patch the module's name with a fresh mock rather than setting "create" on
+        # the shared pysnmp stub: since pytest 9.2 monkeypatch undoes that with
+        # delattr, which a MagicMock remembers, breaking every later test.
         monkeypatch.setattr(
-            snmp_client.UdpTransportTarget, "create", _create_transport
+            snmp_client, "UdpTransportTarget", MagicMock(create=_create_transport)
         )
 
         hass = _FakeHass()
@@ -183,8 +186,11 @@ class TestClientUsesSharedEngine:
         async def _create_transport(*args, **kwargs):
             return MagicMock()
 
+        # Patch the module's name with a fresh mock rather than setting "create" on
+        # the shared pysnmp stub: since pytest 9.2 monkeypatch undoes that with
+        # delattr, which a MagicMock remembers, breaking every later test.
         monkeypatch.setattr(
-            snmp_client.UdpTransportTarget, "create", _create_transport
+            snmp_client, "UdpTransportTarget", MagicMock(create=_create_transport)
         )
 
         keeper = snmp_client.SNMPClient(host="10.0.0.1")
