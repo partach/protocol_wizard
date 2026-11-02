@@ -1653,13 +1653,22 @@ class ProtocolWizardCardEditor extends LitElement {
   }
 }
 
-customElements.define("protocol_wizard-card", ProtocolWizardCard);
-customElements.define("protocol_wizard-card-editor", ProtocolWizardCardEditor);
+// Guard the registrations: if the card is served from two resource URLs the
+// module is evaluated twice, and a bare define() throws
+// "the name ... has already been used", breaking the second load.
+if (!customElements.get("protocol_wizard-card")) {
+  customElements.define("protocol_wizard-card", ProtocolWizardCard);
+}
+if (!customElements.get("protocol_wizard-card-editor")) {
+  customElements.define("protocol_wizard-card-editor", ProtocolWizardCardEditor);
+}
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "protocol_wizard-card",
-  name: "Protocol Wizard Card",
-  description: "Multi-protocol device manipulation (Modbus, SNMP, MQTT, BACnet)",
-  preview: true,
-});
+if (!window.customCards.some(card => card.type === "protocol_wizard-card")) {
+  window.customCards.push({
+    type: "protocol_wizard-card",
+    name: "Protocol Wizard Card",
+    description: "Multi-protocol device manipulation (Modbus, SNMP, MQTT, BACnet)",
+    preview: true,
+  });
+}
